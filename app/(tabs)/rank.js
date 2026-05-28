@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { computeRankings } from '../../lib/ranking';
 
 const MOCK_VENUES = [
   { id: 'v1', name: 'The Nocturne', type: 'cocktail lounge', neighborhood: 'Williamsburg' },
@@ -22,24 +23,6 @@ function pickRandomPair(venues, history) {
   return pairs[Math.floor(Math.random() * pairs.length)];
 }
 
-function provisionalRanking(venues, comparisons) {
-  const wins = {};
-  const losses = {};
-  venues.forEach(v => { wins[v.id] = 0; losses[v.id] = 0; });
-  comparisons.forEach(c => {
-    if (c.result === 'too-tough') return;
-    if (c.result === 'a') { wins[c.a]++; losses[c.b]++; }
-    else { wins[c.b]++; losses[c.a]++; }
-  });
-  return [...venues]
-    .map(v => {
-      const total = wins[v.id] + losses[v.id];
-      const score = total === 0 ? 0 : wins[v.id] / total;
-      return { ...v, wins: wins[v.id], losses: losses[v.id], score: Number(score.toFixed(2)) };
-    })
-    .sort((x, y) => y.score - x.score || y.wins - x.wins);
-}
-
 export default function RankScreen() {
   const [comparisons, setComparisons] = useState([]);
   const [pair, setPair] = useState(() => pickRandomPair(MOCK_VENUES, []));
@@ -52,7 +35,7 @@ export default function RankScreen() {
     setPair(pickRandomPair(MOCK_VENUES, next));
   }, [pair, comparisons]);
 
-  const ranking = provisionalRanking(MOCK_VENUES, comparisons);
+  const ranking = computeRankings(MOCK_VENUES, comparisons);
   const venueA = MOCK_VENUES.find(v => v.id === pair?.[0]);
   const venueB = MOCK_VENUES.find(v => v.id === pair?.[1]);
 
@@ -75,13 +58,13 @@ export default function RankScreen() {
           </View>
 
           <View style={styles.buttonRow}>
-            <Pressable style={styles.button} onPress={() => submit('a')}>
+            <Pressable style={styles.button} onPress={() => submit(venueA.id)}>
               <Text style={styles.buttonText}>Pick {venueA.name}</Text>
             </Pressable>
             <Pressable style={[styles.button, styles.buttonSecondary]} onPress={() => submit('too-tough')}>
               <Text style={[styles.buttonText, styles.buttonSecondaryText]}>Too tough</Text>
             </Pressable>
-            <Pressable style={styles.button} onPress={() => submit('b')}>
+            <Pressable style={styles.button} onPress={() => submit(venueB.id)}>
               <Text style={styles.buttonText}>Pick {venueB.name}</Text>
             </Pressable>
           </View>
@@ -100,7 +83,7 @@ export default function RankScreen() {
             <Text style={styles.rankNum}>{i + 1}</Text>
             <Text style={styles.rankName}>{v.name}</Text>
             <Text style={styles.rankScore}>{v.wins}W {v.losses}L</Text>
-            <Text style={styles.rankScore}>{v.score > 0 ? v.score.toFixed(2) : '—'}</Text>
+            <Text style={styles.rankScore}>{v.rating}</Text>
           </View>
         ))}
       </View>
@@ -114,7 +97,13 @@ export default function RankScreen() {
           {comparisons.map((c, i) => {
             const aName = MOCK_VENUES.find(v => v.id === c.a)?.name;
             const bName = MOCK_VENUES.find(v => v.id === c.b)?.name;
-            const label = c.result === 'too-tough' ? 'Too tough' : c.result === 'a' ? `${aName} won` : `${bName} won`;
+            let label;
+            if (c.result === 'too-tough') {
+              label = 'Too tough';
+            } else {
+              const winnerName = MOCK_VENUES.find(v => v.id === c.result)?.name;
+              label = `${winnerName} won`;
+            }
             return (
               <Text key={i} style={styles.historyLine}>
                 {i + 1}. {aName} vs {bName} → {label}
@@ -147,7 +136,7 @@ const styles = StyleSheet.create({
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomColor: '#1e293b', borderBottomWidth: 1 },
   rankNum: { color: '#7dd3fc', fontWeight: '800', width: 24 },
   rankName: { color: '#fff', flex: 1, fontWeight: '600' },
-  rankScore: { color: '#8892b0', fontWeight: '600', width: 50, textAlign: 'right' },
+  rankScore: { color: '#8892b0', fontWeight: '600', width: 55, textAlign: 'right' },
   link: { color: '#7dd3fc', fontSize: 14, fontWeight: '700', marginTop: 12 },
   historyLine: { color: '#8892b0', fontSize: 13 },
 });
