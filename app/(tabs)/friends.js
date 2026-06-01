@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { COLORS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,13 +15,19 @@ const {
   declineFriendRequest,
   subscribeIncomingFriendRequests,
 } = require('../../lib/friends/friendship-service');
+const {
+  hideConversationForSelf,
+  subscribeDirectConversations,
+} = require('../../lib/friends/dm-service');
 
 export default function FriendsScreen() {
   const { user, reloadProfile } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState([]);
+  const [directConversations, setDirectConversations] = useState([]);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
   const [mutatingRequestId, setMutatingRequestId] = useState(null);
-  const viewModel = buildFriendsInboxViewModel([]);
+  const [hidingConversationId, setHidingConversationId] = useState(null);
+  const viewModel = buildFriendsInboxViewModel(directConversations);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -30,6 +37,17 @@ export default function FriendsScreen() {
       uid: user.uid,
       onChange: setIncomingRequests,
       onError: (err) => console.error('Friend requests snapshot error:', err),
+    });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
+    return subscribeDirectConversations({
+      db,
+      uid: user.uid,
+      onChange: setDirectConversations,
+      onError: (err) => console.error('DM inbox snapshot error:', err),
     });
   }, [user]);
 
@@ -52,6 +70,25 @@ export default function FriendsScreen() {
     } finally {
       setMutatingRequestId(null);
     }
+  };
+
+  const hideConversation = async (conversationId) => {
+    if (!user) return;
+    setHidingConversationId(conversationId);
+    try {
+      await hideConversationForSelf({ db, uid: user.uid, conversationId });
+    } catch (err) {
+      Alert.alert('Hide failed', err.message);
+    } finally {
+      setHidingConversationId(null);
+    }
+  };
+
+  const openConversation = (conversation) => {
+    router.push({
+      pathname: '/conversation/[id]',
+      params: { id: conversation.id, otherUid: conversation.otherUid },
+    });
   };
 
   const renderIncomingRequest = (request) => {
@@ -85,6 +122,31 @@ export default function FriendsScreen() {
             <Text style={styles.acceptText}>Accept</Text>
           </Pressable>
         </View>
+      </View>
+    );
+  };
+
+  const renderConversation = (conversation) => {
+    const disabled = hidingConversationId === conversation.id;
+
+    return (
+      <View key={conversation.id} style={styles.conversationRow}>
+        <Pressable style={styles.conversationMain} onPress={() => openConversation(conversation)}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{conversation.displayName.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={styles.conversationCopy}>
+            <Text style={styles.conversationTitle}>{conversation.displayName}</Text>
+            <Text style={styles.conversationPreview} numberOfLines={1}>{conversation.preview}</Text>
+          </View>
+        </Pressable>
+        <Pressable
+          style={styles.hideBtn}
+          disabled={disabled}
+          onPress={() => hideConversation(conversation.id)}
+        >
+          <Text style={styles.hideText}>Hide</Text>
+        </Pressable>
       </View>
     );
   };
@@ -135,13 +197,19 @@ export default function FriendsScreen() {
         <Text style={styles.sectionTitle}>{viewModel.inboxTitle}</Text>
       </View>
 
-      <View style={styles.emptyCard}>
-        <View style={styles.emptyIcon}>
-          <Ionicons name="chatbubbles-outline" size={32} color={COLORS.accent} />
+      {viewModel.isEmpty ? (
+        <View style={styles.emptyCard}>
+          <View style={styles.emptyIcon}>
+            <Ionicons name="chatbubbles-outline" size={32} color={COLORS.accent} />
+          </View>
+          <Text style={styles.emptyTitle}>{viewModel.emptyState.title}</Text>
+          <Text style={styles.emptyBody}>{viewModel.emptyState.body}</Text>
         </View>
-        <Text style={styles.emptyTitle}>{viewModel.emptyState.title}</Text>
-        <Text style={styles.emptyBody}>{viewModel.emptyState.body}</Text>
-      </View>
+      ) : (
+        <View style={styles.conversationsList}>
+          {viewModel.conversations.map(renderConversation)}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -245,6 +313,31 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 12,
   },
+  conversationsList: { gap: 10 },
+  conversationRow: {
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  conversationMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  conversationCopy: { flex: 1 },
+  conversationTitle: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800' },
+  conversationPreview: { color: COLORS.textMuted, fontSize: 13, marginTop: 3 },
+  hideBtn: {
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: COLORS.bgCard,
+  },
+  hideText: { color: COLORS.textMuted, fontWeight: '800', fontSize: 12 },
   sectionTitle: {
     color: COLORS.textPrimary,
     fontSize: 20,

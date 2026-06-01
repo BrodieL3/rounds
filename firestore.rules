@@ -61,6 +61,85 @@ service cloud.firestore {
         && request.auth.uid in request.resource.data.following;
     }
 
+    function validTextMessageShape(data) {
+      return data.keys().hasOnly(['senderUid', 'type', 'text', 'createdAt', 'deletedForEveryoneAt'])
+        && data.senderUid == request.auth.uid
+        && data.type == 'text'
+        && data.text is string
+        && data.text.size() > 0
+        && data.text.size() <= 2000
+        && data.deletedForEveryoneAt == null;
+    }
+
+    function validLastTextMessage(data) {
+      return data.keys().hasOnly(['id', 'senderUid', 'type', 'text', 'createdAt'])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'text'
+        && data.text is string
+        && data.text.size() > 0
+        && data.text.size() <= 2000;
+    }
+
+    function friendshipExistsForDmCreate() {
+      return exists(/databases/$(database)/documents/friendships/$(request.resource.data.memberUids[0] + '_' + request.resource.data.memberUids[1]));
+    }
+
+    function validDmConversationCreate(conversationId) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly(['type', 'memberUids', 'createdAt', 'createdByUid', 'lastMessageAt', 'lastMessage'])
+        && request.resource.data.type == 'dm'
+        && request.resource.data.memberUids is list
+        && request.resource.data.memberUids.size() == 2
+        && request.auth.uid in request.resource.data.memberUids
+        && request.resource.data.createdByUid == request.auth.uid
+        && conversationId == 'dm_' + request.resource.data.memberUids[0] + '_' + request.resource.data.memberUids[1]
+        && friendshipExistsForDmCreate()
+        && validLastTextMessage(request.resource.data.lastMessage);
+    }
+
+    function isConversationMember(conversationId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/conversations/$(conversationId))
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids;
+    }
+
+    function isConversationMemberAfter(conversationId) {
+      return signedIn()
+        && existsAfter(/databases/$(database)/documents/conversations/$(conversationId))
+        && request.auth.uid in getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids;
+    }
+
+    function validDmConversationUpdate() {
+      return signedIn()
+        && request.auth.uid in resource.data.memberUids
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessage'])
+        && request.resource.data.memberUids == resource.data.memberUids
+        && request.resource.data.type == resource.data.type
+        && validLastTextMessage(request.resource.data.lastMessage);
+    }
+
+    function validConversationMemberCreate(conversationId, memberUid) {
+      return isConversationMemberAfter(conversationId)
+        && memberUid in getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids
+        && request.resource.data.keys().hasOnly(['uid', 'role', 'joinedAt', 'leftAt'])
+        && request.resource.data.uid == memberUid
+        && request.resource.data.role == 'member'
+        && request.resource.data.leftAt == null;
+    }
+
+    function validConversationStateWrite(uid, conversationId) {
+      let statePath = /databases/$(database)/documents/users/$(uid)/conversationStates/$(conversationId);
+      return signedIn()
+        && isConversationMemberAfter(conversationId)
+        && uid in getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids
+        && (isSignedInAs(uid)
+          && request.resource.data.keys().hasOnly(['hiddenAt', 'lastSeenAt'])
+          || !exists(statePath)
+            && request.resource.data.keys().hasOnly(['hiddenAt'])
+            && request.resource.data.hiddenAt == null);
+    }
+
     // Users: public read, self write; limited follower/following writes support beta social graph.
     match /users/{uid} {
       allow read: if true;
@@ -72,8 +151,14 @@ service cloud.firestore {
         allow read: if isSignedInAs(uid);
         allow create: if signedIn()
           && request.resource.data.actorUid == request.auth.uid
-          && request.resource.data.type in ['friend_request_received', 'friend_request_accepted'];
+          && request.resource.data.type in ['friend_request_received', 'friend_request_accepted', 'new_direct_message'];
         allow update, delete: if false;
+      }
+
+      match /conversationStates/{conversationId} {
+        allow read: if isSignedInAs(uid);
+        allow create, update: if validConversationStateWrite(uid, conversationId);
+        allow delete: if false;
       }
     }
 
@@ -102,6 +187,27 @@ service cloud.firestore {
         && friendshipId == request.resource.data.memberUids[0] + '_' + request.resource.data.memberUids[1]
         && acceptedRequestForFriendship();
       allow update, delete: if false;
+    }
+
+    // Conversations: private to members; DM creation requires Friendship.
+    match /conversations/{conversationId} {
+      allow get, list: if signedIn() && request.auth.uid in resource.data.memberUids;
+      allow create: if validDmConversationCreate(conversationId);
+      allow update: if validDmConversationUpdate();
+      allow delete: if false;
+
+      match /members/{memberUid} {
+        allow read: if isConversationMember(conversationId);
+        allow create: if validConversationMemberCreate(conversationId, memberUid);
+        allow update, delete: if false;
+      }
+
+      match /messages/{messageId} {
+        allow read: if isConversationMember(conversationId);
+        allow create: if isConversationMemberAfter(conversationId)
+          && validTextMessageShape(request.resource.data);
+        allow update, delete: if false;
+      }
     }
 
     // Reviews: public read, self write

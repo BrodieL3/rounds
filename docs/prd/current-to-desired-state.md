@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 2. Friendship slice.
+Current slice in development: 3. DM slice.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -153,7 +153,7 @@ Recommended agent task sequence:
    - `friendRequests/{fromUid}_{toUid}` fields: `fromUid`, `toUid`, `status: pending|accepted|declined|canceled`, `createdAt`, `respondedAt`.
    - `friendships/{minUid}_{maxUid}` fields: `memberUids`, `createdAt`, `createdFromRequestId`.
    - `blocks/{blockerUid}_{blockedUid}` fields: `blockerUid`, `blockedUid`, `createdAt`.
-   - `conversations/{conversationId}` fields: `type: dm|group`, `memberUids`, `adminUid?`, `name?`, `photoUrl?`, `createdAt`, `lastMessageAt?`, `archivedAt?`.
+   - `conversations/{conversationId}` fields: `type: dm|group`, `memberUids`, `adminUid?`, `name?`, `photoUrl?`, `createdAt`, `createdByUid?`, `lastMessageAt?`, `lastMessage?`, `archivedAt?`.
    - `conversations/{conversationId}/members/{uid}` fields: `uid`, `role: admin|member`, `joinedAt`, `leftAt?`.
    - `conversations/{conversationId}/messages/{messageId}` fields: `senderUid`, `type`, `text?`, `createdAt`, `deletedForEveryoneAt?`.
    - `users/{uid}/conversationStates/{conversationId}` fields: `hiddenAt?`, `deletedForSelfAt?`, `lastSeenAt?`.
@@ -174,11 +174,19 @@ Recommended agent task sequence:
    - Add minimal Firestore rules and emulator-backed tests for `friendRequests`, `friendships`, and limited follow-array updates needed by accepted Friendship. Normal Jest remains separate from `npm run test:rules`.
    - Disable buttons while mutating; show alerts for failures; avoid optimistic status changes until writes succeed.
 3. DM slice
-   - Canonical direct-message thread.
-   - Text messages.
-   - Inbox previews.
-   - Hidden/read state basics.
-   - Initial conversation/message security rules.
+   - Implement text-only direct messages behind `lib/friends/dm-service.js`; do not introduce group chat, attachments, reactions, replies, delete-for-everyone, or Cloud Functions in this slice.
+   - Keep canonical direct-message ID as `dm_{minUid}_{maxUid}`. Tapping `Message` navigates to `app/conversation/[id].js` with `otherUid`, but does not create Firestore docs yet.
+   - First text message creates the canonical conversation in one batch: `conversations/{dmId}`, both `members/{uid}` docs, first `messages/{messageId}` doc, both `conversationStates/{dmId}` docs, and a `new_direct_message` notification for the recipient.
+   - Subsequent text messages update `lastMessageAt` and `lastMessage`, create a new message doc, update sender read/hidden state, and create a recipient notification.
+   - Conversation doc fields for DM: `type: dm`, sorted `memberUids`, `createdAt`, `createdByUid`, `lastMessageAt`, and `lastMessage` with `id`, `senderUid`, `type: text`, `text`, and `createdAt`.
+   - DM member docs use `role: member`, `joinedAt`, and `leftAt: null`; there is no admin for DM.
+   - Text messages trim whitespace, reject empty text, and cap at 2000 characters. Message docs include `senderUid`, `type: text`, `text`, `createdAt`, and `deletedForEveryoneAt: null`.
+   - On first send, sender conversation state gets `lastSeenAt` and `hiddenAt: null`; recipient state exists with `hiddenAt: null` and no visible read state. Opening a chat updates current user's `lastSeenAt`.
+   - Friends inbox subscribes to current user's conversations with `memberUids array-contains uid`, filters hidden conversations client-side, sorts by `lastMessageAt`, fetches the other user for DM display, and shows text previews using the existing inbox formatter.
+   - Add a simple inbox Hide action that sets current user's `hiddenAt`; hidden conversations reappear when `lastMessageAt > hiddenAt`.
+   - Profile `Message` CTA navigates to the DM route only for Friends. Friends tab plus/create-chat button remains a placeholder until the group/create-chat slice.
+   - Add Firestore rules and emulator-backed tests for DM conversation creation, member/message reads, text message sends, non-friend denial, non-member denial, conversation state writes, and hide/read state updates.
+   - Keep read state storage only; visible `Seen` labels and unread indicators are deferred.
 4. Group chat slice
    - Create group.
    - Add Friends only.

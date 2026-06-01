@@ -18,6 +18,7 @@ const {
   loadFriendshipStatus,
   sendFriendRequest,
 } = require('../../lib/friends/friendship-service');
+const { buildDirectMessageRouteParams } = require('../../lib/friends/dm-service');
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams();
@@ -173,7 +174,8 @@ export default function UserProfileScreen() {
   };
 
   const handleMessagePress = () => {
-    Alert.alert('Message coming soon', 'Direct messages arrive in the next slice.');
+    if (!currentUser || !profile) return;
+    router.push(buildDirectMessageRouteParams(currentUser.uid, profile.uid));
   };
 
   if (loading) {
