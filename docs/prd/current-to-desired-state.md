@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 1. Foundation agent.
+Current slice in development: 2. Friendship slice.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -161,11 +161,18 @@ Recommended agent task sequence:
    - `ratings/{ratingId}/shares/{conversationId}` fields: `conversationId`, `sharedByUid`, `createdAt`, `revokedAt?`.
    - Timestamp fields are semantic server-write times in the contract; pure modules accept comparable values in tests and adapters later map to Firestore timestamps.
 2. Friendship slice
-   - Friend requests.
-   - Accept/decline.
-   - Friendship separate from Follow.
-   - Auto mutual follow on accept.
-   - Profile/search/Friends CTAs.
+   - Implement Firestore client writes behind `lib/friends/friendship-service.js`; do not introduce Cloud Functions in this slice.
+   - Support Profile-screen Friend Request lifecycle: `Add Friend`, `Requested`, `Respond`, `Friends`, and `Message` placeholder states.
+   - Support creating outgoing requests, canceling outgoing pending requests, accepting incoming requests, and declining incoming requests. Do not delete request docs; use `canceled` and `declined` terminal statuses.
+   - Treat inverse pending request as `Respond`; do not create duplicate inverse requests.
+   - Accepting a Friend Request must use one batch where possible: mark request `accepted`, create `friendships/{minUid}_{maxUid}`, update existing `users/{uid}.following[]` / `followers[]` arrays for mutual follow, and create a `friend_request_accepted` notification for the requester.
+   - Sending a Friend Request creates `friendRequests/{fromUid}_{toUid}` and a `friend_request_received` notification for the recipient.
+   - Keep Friendship separate from Follow in UI: retain Follow/Following button and add separate Friend CTA. Public follower/following stats remain; friend count/list stays private.
+   - Friends tab request card subscribes to incoming pending requests, shows a pending count, expands in place, and lets the recipient accept or decline. Outgoing requests are not shown on Friends tab in this slice.
+   - Defer Search quick-action buttons; search results continue to open Profile where Friend CTA exists.
+   - Defer remove-friend behavior; `Friends` state is informational and `Message` remains a placeholder until the DM slice.
+   - Add minimal Firestore rules and emulator-backed tests for `friendRequests`, `friendships`, and limited follow-array updates needed by accepted Friendship. Normal Jest remains separate from `npm run test:rules`.
+   - Disable buttons while mutating; show alerts for failures; avoid optimistic status changes until writes succeed.
 3. DM slice
    - Canonical direct-message thread.
    - Text messages.
