@@ -1,0 +1,353 @@
+{
+  "timestamp": "2026-05-28T18:53:42.615Z",
+  "events": [
+    {
+      "event": "Ellen Allien All Night Long",
+      "venue": "public records",
+      "artists": [
+        {
+          "query": "Ellen Allien",
+          "matched": "Ellen Allien",
+          "genres": [
+            "acid techno",
+            "techno",
+            "minimal techno",
+            "electroclash"
+          ],
+          "popularity": 34
+        }
+      ],
+      "genreVector": {
+        "acid techno": 0.25,
+        "techno": 0.25,
+        "minimal techno": 0.25,
+        "electroclash": 0.25
+      }
+    },
+    {
+      "event": "AGAPĒ PRESENTS: Luke Slater + LPV",
+      "venue": "The Chocolate Factory",
+      "artists": [
+        {
+          "query": "Luke Slater",
+          "matched": "Luke Slater",
+          "genres": [
+            "acid house",
+            "idm",
+            "techno",
+            "minimal techno"
+          ],
+          "popularity": 26
+        },
+        {
+          "query": "LPV",
+          "matched": "LPB Poody",
+          "genres": [],
+          "popularity": 54
+        },
+        {
+          "query": "Annie Lew",
+          "matched": "SALOME",
+          "genres": [
+            "miami bass",
+            "breakbeat"
+          ],
+          "popularity": 11
+        },
+        {
+          "query": "Diossa",
+          "matched": "Diossa",
+          "genres": [],
+          "popularity": 1
+        },
+        {
+          "query": "Marco Neves",
+          "matched": "Marco Neves",
+          "genres": [],
+          "popularity": 2
+        },
+        {
+          "query": "Mos (NYC)",
+          "matched": "Mos Def",
+          "genres": [
+            "east coast hip hop",
+            "old school hip hop",
+            "hip hop"
+          ],
+          "popularity": 66
+        }
+      ],
+      "genreVector": {
+        "acid house": 0.1111111111111111,
+        "idm": 0.1111111111111111,
+        "techno": 0.1111111111111111,
+        "minimal techno": 0.1111111111111111,
+        "miami bass": 0.1111111111111111,
+        "breakbeat": 0.1111111111111111,
+        "east coast hip hop": 0.1111111111111111,
+        "old school hip hop": 0.1111111111111111,
+        "hip hop": 0.1111111111111111
+      }
+    },
+    {
+      "event": "Echo Chamber S1.E02: Madam X, Star Eyes, Edica",
+      "venue": "public records",
+      "artists": [
+        {
+          "query": "Madam X",
+          "matched": "Madam X",
+          "genres": [],
+          "popularity": 11
+        },
+        {
+          "query": "Star Eyes",
+          "matched": "Star Eyes",
+          "genres": [],
+          "popularity": 1
+        },
+        {
+          "query": "EDICA+",
+          "matched": "Edicion Especial",
+          "genres": [
+            "corrido",
+            "corridos bélicos",
+            "norteño",
+            "sad sierreño",
+            "corridos tumbados"
+          ],
+          "popularity": 70
+        }
+      ],
+      "genreVector": {
+        "corrido": 0.2,
+        "corridos bélicos": 0.2,
+        "norteño": 0.2,
+        "sad sierreño": 0.2,
+        "corridos tumbados": 0.2
+      }
+    },
+    {
+      "event": "Loco Dice & Harvy Valencia",
+      "venue": "Club Space Miami",
+      "artists": [
+        {
+          "query": "Loco Dice",
+          "matched": "Loco Dice",
+          "genres": [
+            "minimal techno",
+            "tech house",
+            "techno"
+          ],
+          "popularity": 36
+        },
+        {
+          "query": "Harvy Valencia",
+          "matched": "Harvy Valencia",
+          "genres": [
+            "tech house",
+            "guaracha",
+            "latin house",
+            "techengue"
+          ],
+          "popularity": 40
+        },
+        {
+          "query": "Ms. Mada",
+          "matched": "Ms. Mada",
+          "genres": [],
+          "popularity": 3
+        },
+        {
+          "query": "slugg",
+          "matched": "Slugg",
+          "genres": [
+            "tech house"
+          ],
+          "popularity": 19
+        }
+      ],
+      "genreVector": {
+        "minimal techno": 0.125,
+        "tech house": 0.375,
+        "techno": 0.125,
+        "guaracha": 0.125,
+        "latin house": 0.125,
+        "techengue": 0.125
+      }
+    },
+    {
+      "event": "BLOND:ISH presents ABRACADABRA",
+      "venue": "Club Space Miami",
+      "artists": [
+        {
+          "query": "BLOND:ISH",
+          "matched": "BLOND:ISH",
+          "genres": [
+            "afro house",
+            "techengue",
+            "latin house"
+          ],
+          "popularity": 64
+        },
+        {
+          "query": "Antdot",
+          "matched": "Antdot",
+          "genres": [
+            "afro house",
+            "afro tech",
+            "organic house",
+            "latin house"
+          ],
+          "popularity": 57
+        },
+        {
+          "query": "Vanjee",
+          "matched": "Vanjee",
+          "genres": [
+            "latin house",
+            "tribal house"
+          ],
+          "popularity": 20
+        },
+        {
+          "query": "Airrica",
+          "matched": "Airrica",
+          "genres": [],
+          "popularity": 16
+        },
+        {
+          "query": "Tiffy Vera",
+          "matched": "Tiffy Vera",
+          "genres": [
+            "latin house"
+          ],
+          "popularity": 19
+        },
+        {
+          "query": "AABEL",
+          "matched": "AABEL",
+          "genres": [
+            "future house",
+            "bass house"
+          ],
+          "popularity": 1
+        }
+      ],
+      "genreVector": {
+        "afro house": 0.16666666666666666,
+        "techengue": 0.08333333333333333,
+        "latin house": 0.3333333333333333,
+        "afro tech": 0.08333333333333333,
+        "organic house": 0.08333333333333333,
+        "tribal house": 0.08333333333333333,
+        "future house": 0.08333333333333333,
+        "bass house": 0.08333333333333333
+      }
+    },
+    {
+      "event": "Hernan Cattaneo & ZAC",
+      "venue": "Club Space Miami",
+      "artists": [
+        {
+          "query": "Hernan Cattaneo",
+          "matched": "Hernan Cattaneo",
+          "genres": [
+            "progressive house",
+            "organic house",
+            "melodic house",
+            "melodic techno",
+            "electronica"
+          ],
+          "popularity": 46
+        },
+        {
+          "query": "ZAC",
+          "matched": "Zach Bryan",
+          "genres": [
+            "country",
+            "red dirt"
+          ],
+          "popularity": 86
+        },
+        {
+          "query": "Layla Benitez",
+          "matched": "Layla Benitez",
+          "genres": [
+            "melodic techno",
+            "melodic house"
+          ],
+          "popularity": 35
+        },
+        {
+          "query": "DIFFER",
+          "matched": "differentchris",
+          "genres": [],
+          "popularity": 23
+        },
+        {
+          "query": "Patrick M",
+          "matched": "Patrick Mayberry",
+          "genres": [
+            "worship",
+            "christian",
+            "ccm"
+          ],
+          "popularity": 50
+        }
+      ],
+      "genreVector": {
+        "progressive house": 0.08333333333333333,
+        "organic house": 0.08333333333333333,
+        "melodic house": 0.16666666666666666,
+        "melodic techno": 0.16666666666666666,
+        "electronica": 0.08333333333333333,
+        "country": 0.08333333333333333,
+        "red dirt": 0.08333333333333333,
+        "worship": 0.08333333333333333,
+        "christian": 0.08333333333333333,
+        "ccm": 0.08333333333333333
+      }
+    }
+  ],
+  "demoUserVector": {
+    "techno": 0.45454545454545453,
+    "acid techno": 0.09090909090909091,
+    "hard techno": 0.09090909090909091,
+    "minimal techno": 0.09090909090909091,
+    "tech house": 0.09090909090909091,
+    "industrial": 0.09090909090909091,
+    "electro": 0.09090909090909091
+  },
+  "demoRankings": [
+    {
+      "event": "Ellen Allien All Night Long",
+      "venue": "public records",
+      "score": 0.6286185570937122
+    },
+    {
+      "event": "Loco Dice & Harvy Valencia",
+      "venue": "Club Space Miami",
+      "score": 0.4320138246635874
+    },
+    {
+      "event": "AGAPĒ PRESENTS: Luke Slater + LPV",
+      "venue": "The Chocolate Factory",
+      "score": 0.35921060405354976
+    },
+    {
+      "event": "Echo Chamber S1.E02: Madam X, Star Eyes, Edica",
+      "venue": "public records",
+      "score": 0
+    },
+    {
+      "event": "BLOND:ISH presents ABRACADABRA",
+      "venue": "Club Space Miami",
+      "score": 0
+    },
+    {
+      "event": "Hernan Cattaneo & ZAC",
+      "venue": "Club Space Miami",
+      "score": 0
+    }
+  ]
+}

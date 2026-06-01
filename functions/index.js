@@ -1,11 +1,23 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const { createGroupConversationCallable } = require('./group-create');
+const {
+  inviteToGroupCallable,
+  leaveGroupCallable,
+  removeGroupMemberCallable,
+} = require('./group-lifecycle');
 
 admin.initializeApp();
 
-exports.createGroupConversation = onCall(async (request) => createGroupConversationCallable(request, {
-  db: admin.firestore(),
-  ErrorClass: HttpsError,
-  now: () => admin.firestore.FieldValue.serverTimestamp(),
-}));
+function callableDeps() {
+  return {
+    db: admin.firestore(),
+    ErrorClass: HttpsError,
+    now: () => admin.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
+exports.createGroupConversation = onCall(async (request) => createGroupConversationCallable(request, callableDeps()));
+exports.inviteToGroup = onCall(async (request) => inviteToGroupCallable(request, callableDeps()));
+exports.removeGroupMember = onCall(async (request) => removeGroupMemberCallable(request, callableDeps()));
+exports.leaveGroup = onCall(async (request) => leaveGroupCallable(request, callableDeps()));

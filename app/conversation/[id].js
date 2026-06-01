@@ -116,6 +116,11 @@ export default function ConversationScreen() {
   ), [isGroup, title]);
   const emptyBody = isGroup ? 'Send the first message to this group.' : 'Send the first message to create this DM.';
 
+  const openGroupInfo = useCallback(() => {
+    if (!isGroup || !conversationId) return;
+    router.push({ pathname: '/conversation/[id]/info', params: { id: conversationId } });
+  }, [conversationId, isGroup]);
+
   const send = useCallback(async () => {
     if (!user || sending) return;
     if (!isGroup && !recipientUid) return;
@@ -193,10 +198,18 @@ export default function ConversationScreen() {
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
         </Pressable>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{title.charAt(0).toUpperCase()}</Text>
-        </View>
-        <Text style={styles.title}>{title}</Text>
+        <Pressable
+          style={styles.headerTitleArea}
+          onPress={openGroupInfo}
+          disabled={!isGroup}
+          accessibilityRole={isGroup ? 'button' : undefined}
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{title.charAt(0).toUpperCase()}</Text>
+          </View>
+          <Text style={styles.title}>{title}</Text>
+          {isGroup ? <Ionicons name="information-circle-outline" size={22} color={COLORS.textMuted} /> : null}
+        </Pressable>
       </View>
 
       <FlatList
@@ -247,6 +260,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.bgCard,
   },
   backButton: { padding: 4 },
+  headerTitleArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: {
     width: 36,
     height: 36,

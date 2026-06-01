@@ -1,0 +1,1881 @@
+{
+  "ra": {
+    "NYC": {
+      "ok": true,
+      "count": 50,
+      "sample": [
+        {
+          "id": "2450197",
+          "title": "swamp $lut party - ana's bday&going away bash",
+          "venue": "ErF Gallery",
+          "city": "1 Ingraham St, Bushwick, Brooklyn, NY 11206, USA",
+          "startTime": "2026-05-29T20:00:00.000",
+          "lineup": [
+            "dj smob",
+            "forl8ter",
+            "goodnight goodnight",
+            "Stephen’s Wet"
+          ],
+          "genres": [
+            "Breakbeat",
+            "Techno"
+          ],
+          "minAge": 21,
+          "price": "0.00",
+          "isFestival": false
+        },
+        {
+          "id": "2407484",
+          "title": "Ellen Allien All Night Long",
+          "venue": "public records",
+          "city": "233 Butler St, Brooklyn, NY 11217, USA",
+          "startTime": "2026-05-28T22:30:00.000",
+          "lineup": [
+            "Ellen Allien"
+          ],
+          "genres": [
+            "Techno"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2436528",
+          "title": "AGAPĒ PRESENTS: Luke Slater + LPV",
+          "venue": "The Chocolate Factory",
+          "city": "70 Scott Ave Brooklyn, NY 11237",
+          "startTime": "2026-06-13T22:00:00.000",
+          "lineup": [
+            "Luke Slater",
+            "LPV",
+            "Annie Lew",
+            "Diossa",
+            "Marco Neves",
+            "Mos (NYC)"
+          ],
+          "genres": [
+            "Techno"
+          ],
+          "minAge": 21,
+          "price": "30.0",
+          "isFestival": false
+        },
+        {
+          "id": "2415001",
+          "title": "Echo Chamber S1.E02: Madam X, Star Eyes, Edica",
+          "venue": "public records",
+          "city": "233 Butler St, Brooklyn, NY 11217, USA",
+          "startTime": "2026-05-28T22:30:00.000",
+          "lineup": [
+            "Madam X",
+            "Star Eyes",
+            "EDICA+"
+          ],
+          "genres": [
+            "Bass",
+            "Dubstep"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2426943",
+          "title": "Subversion Therapy, A Wax-Based Transexualized Dance Ritual",
+          "venue": "Hart Bar",
+          "city": "538 Hart Street, Brooklyn, NY 11221 USA",
+          "startTime": "2026-06-24T19:30:00.000",
+          "lineup": [
+            "A lana",
+            "Unique Devices",
+            "kieeef plz"
+          ],
+          "genres": [
+            "House",
+            "Acid"
+          ],
+          "minAge": 21,
+          "price": "10-15",
+          "isFestival": false
+        },
+        {
+          "id": "2396693",
+          "title": "HVH: An Intimate House Night In BK",
+          "venue": "Hart Bar",
+          "city": "538 Hart Street, Brooklyn, NY 11221 USA",
+          "startTime": "2026-05-30T23:30:00.000",
+          "lineup": [
+            "Norty Cotto Zeno (3)"
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "$10",
+          "isFestival": false
+        },
+        {
+          "id": "2438555",
+          "title": "SELKETRA'S BIRTHDAY BASH",
+          "venue": "Hart Bar",
+          "city": "538 Hart Street, Brooklyn, NY 11221 USA",
+          "startTime": "2026-05-29T22:00:00.000",
+          "lineup": [
+            "SELEKTRA",
+            "WADDLE",
+            "ogd (1)",
+            "Paluma Sound",
+            "Lo"
+          ],
+          "genres": [
+            "House",
+            "Club"
+          ],
+          "minAge": 21,
+          "price": "$0",
+          "isFestival": false
+        },
+        {
+          "id": "2435739",
+          "title": "Volvox & Dominga / AMORAL / Mos / Massimiliano Pagliara / Lauren Flax / Sterling Juan Diaz",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-27T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Volvox & Dominga",
+            "AMORAL",
+            "Mos (NYC)",
+            "STUDIO:",
+            "Massimiliano Pagliara",
+            "Lauren Flax",
+            "Sterling Juan Diaz"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435738",
+          "title": "BOUND PRIDE: Samantha Togni / cotton / Katie Rex / Sedef Adasï / Josh Steers / JOSELO",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-26T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Samantha Togni",
+            "cotton",
+            "Katie Rex",
+            "STUDIO:",
+            "Sedef Adasï",
+            "Josh Steers",
+            "JOSELO"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435736",
+          "title": "X-TRA.SERVICES: Kaiser / Ma Haiping / Antenes / Faustin / LYDO / Connor Wrong",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-20T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Kaiser (K S R)",
+            "Ma Haiping",
+            "Antenes",
+            "STUDIO:",
+            "Faustin",
+            "LYDO",
+            "Connor Wrong"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435734",
+          "title": "FIST: DJ T-1000 / Sevyn 0000 / Dj Warning / Mother Daughter Dance / DJ Shannon",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-19T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "DJ T-1000",
+            "Sevyn 0000",
+            "Word of Command",
+            "DJ Clone",
+            "STUDIO:",
+            "Dj Warning",
+            "Mother Daughter Dance (RYKER & TT (NYC))",
+            "DJ Shannon"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435728",
+          "title": "Perc / Creams b2b Markus / Elle Dee / Ouissam / The Carry Nation / Karim Olen Ash",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-13T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Perc",
+            "Creams b2b Markus (US)",
+            "Elle Dee",
+            "STUDIO:",
+            "Ouissam",
+            "The Carry Nation",
+            "Karim Olen Ash"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435724",
+          "title": "Wrecked: Mary Yuzovskaya / Scotia / Heidi Lawden / Ryan Smith / Ron Like Hell",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-06T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Mary Yuzovskaya",
+            "Ron Like Hell",
+            "STUDIO:",
+            "Scotia",
+            "Heidi Lawden",
+            "Ryan Smith"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2413898",
+          "title": "Function / 1morning / Marteka Fair / Analog Soul / Michael Cignarale / J. Aria",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-06-05T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Function",
+            "1morning",
+            "Marteka Fair",
+            "STUDIO",
+            "Analog Soul",
+            "Michael Cignarale",
+            "J. Aria"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2413905",
+          "title": "DJ Stingray 313 / Elle Dee / Juno / DJ KILLING / Manu Miran / Peter Napoli",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-05-30T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "DJ Stingray 313",
+            "Elle Dee",
+            "Juno (NY)",
+            "STUDIO:",
+            "DJ KILLING",
+            "Manu Miran",
+            "Peter Napoli"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2413904",
+          "title": "Setaoc Mass / Haruka / Lychee / Tommy Hart / Anastazja / Saia",
+          "venue": "BASEMENT",
+          "city": "52-19 Flushing Ave., Maspeth, NY 11378 USA",
+          "startTime": "2026-05-29T22:30:00.000",
+          "lineup": [
+            "BASEMENT:",
+            "Setaoc Mass",
+            "Haruka",
+            "Lychee",
+            "STUDIO:",
+            "Tommy Hart",
+            "Anastazja",
+            "Saia"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2446540",
+          "title": "Area of Effect",
+          "venue": "Wonderville",
+          "city": "1186 Broadway, Brooklyn, NY 11221, USA",
+          "startTime": "2026-06-23T23:00:00.000",
+          "lineup": [
+            "Emiglio",
+            "Stanton"
+          ],
+          "genres": [
+            "Techno",
+            "House"
+          ],
+          "minAge": 21,
+          "price": "0",
+          "isFestival": false
+        },
+        {
+          "id": "2443607",
+          "title": "'Fun' & Games Podcast Live: An Interview with Stephanie Gross and Mark Kleback",
+          "venue": "Wonderville",
+          "city": "1186 Broadway, Brooklyn, NY 11221, USA",
+          "startTime": "2026-06-14T14:30:00.000",
+          "lineup": [
+            "A live podcast interview with Stephanie Gross and Mark Kleback about the origins of Wonderville and the indie arcade scene"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "0.00",
+          "isFestival": false
+        },
+        {
+          "id": "2444451",
+          "title": "Gorgeous Gorgeous NY: Pride",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-06-26T23:00:00.000",
+          "lineup": [
+            "Gorgeous Gorgeous NY: Pride"
+          ],
+          "genres": [
+            "Pop"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2424937",
+          "title": "Afrobeat Nights NYC",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-06-19T23:00:00.000",
+          "lineup": [
+            "Afrobeat Nights NYC"
+          ],
+          "genres": [
+            "Hip-Hop",
+            "Afrobeat"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2424929",
+          "title": "Disclosure vs. Fred Again.. Tribute Dance Party",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-06-12T23:00:00.000",
+          "lineup": [
+            "Disclosure vs. Fred Again.. Tribute Dance Party"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444449",
+          "title": "GARAGE",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-06-11T17:00:00.000",
+          "lineup": [
+            "Christian Whelan",
+            "SIETE",
+            "thembow",
+            "Feonix (2)",
+            "Franzini",
+            "miss monroe",
+            "coexist.420"
+          ],
+          "genres": [
+            "Disco"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2435674",
+          "title": "Samantha DaSilva presents: Active In The Jungle",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-06-05T17:00:00.000",
+          "lineup": [
+            "DJs",
+            "Ayanna Heaven",
+            "Dazegxd",
+            "samisosa",
+            "Samantha DaSilva",
+            "MCs",
+            "Lord of Ciphers",
+            "Little L (UK)",
+            "Vending by Anne Hero",
+            "Tattoos by Diego Prieto"
+          ],
+          "genres": [
+            "Jungle"
+          ],
+          "minAge": 21,
+          "price": "20",
+          "isFestival": false
+        },
+        {
+          "id": "2408631",
+          "title": "Afrobeat Nights NYC",
+          "venue": "The Sultan Room",
+          "city": "234 Starr St. Brooklyn, NY 11237",
+          "startTime": "2026-05-29T23:00:00.000",
+          "lineup": [
+            "Afrobeat Nights NYC"
+          ],
+          "genres": [
+            "Hip-Hop",
+            "Dancehall"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2420685",
+          "title": "Paraiso Sunset with SPECIAL GUEST",
+          "venue": "The William Vale",
+          "city": "111 North 12th Street",
+          "startTime": "2026-06-21T16:00:00.000",
+          "lineup": [
+            "Special Guest DJ"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2420678",
+          "title": "Paraiso Sunset with Night Tales",
+          "venue": "The William Vale",
+          "city": "111 North 12th Street",
+          "startTime": "2026-06-14T14:00:00.000",
+          "lineup": [
+            "Night Tales"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2420671",
+          "title": "Paraiso Sunset with MELE",
+          "venue": "The William Vale",
+          "city": "111 North 12th Street",
+          "startTime": "2026-06-07T16:00:00.000",
+          "lineup": [
+            "Melé"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2420650",
+          "title": "Paraiso Sunset with Tom & Collins",
+          "venue": "The William Vale",
+          "city": "111 North 12th Street",
+          "startTime": "2026-05-31T16:00:00.000",
+          "lineup": [
+            "Tom & Collins"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2441311",
+          "title": "Augurs EP Release with Sweeper and iL03",
+          "venue": "Cobra Club",
+          "city": "6 Wyckoff Ave, Brooklyn, New York 11237",
+          "startTime": "2026-05-31T21:00:00.000",
+          "lineup": [
+            "Augurs",
+            "Sweeper",
+            "iL03"
+          ],
+          "genres": [
+            "Club",
+            "Noise"
+          ],
+          "minAge": 21,
+          "price": "5",
+          "isFestival": false
+        },
+        {
+          "id": "2448798",
+          "title": "DJ Pierre: LoHi Rooftop",
+          "venue": "LoHi",
+          "city": "314 Scholes St, Brooklyn, NY 11206",
+          "startTime": "2026-05-30T16:00:00.000",
+          "lineup": [
+            "DJ Pierre"
+          ],
+          "genres": [
+            "House",
+            "Acid"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2432777",
+          "title": "OF GOLDEN SUN",
+          "venue": "LoHi",
+          "city": "314 Scholes St, Brooklyn, NY 11206",
+          "startTime": "2026-05-29T16:00:00.000",
+          "lineup": [
+            "Kevin Aviance",
+            "DJ Gomi",
+            "Kandi Milk"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": null,
+          "price": "12",
+          "isFestival": false
+        },
+        {
+          "id": "2419897",
+          "title": "DOUBLEHEADER: Apache x Nico de Andrea",
+          "venue": "Superior Ingredients",
+          "city": "74 Wythe Avenue, Brooklyn, NY 11249",
+          "startTime": "2026-06-19T14:00:00.000",
+          "lineup": [
+            "Apache",
+            "Nico de Andrea",
+            "Franc Fala",
+            "RNÉ"
+          ],
+          "genres": [
+            "Afro House",
+            "Afro Tech"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2359039",
+          "title": "Fedde Le Grand with EDX on The Roof",
+          "venue": "Superior Ingredients",
+          "city": "74 Wythe Avenue, Brooklyn, NY 11249",
+          "startTime": "2026-06-14T14:00:00.000",
+          "lineup": [
+            "Fedde Le Grand",
+            "EDX",
+            "BERK",
+            "chellzz"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2377286",
+          "title": "Aly & Fila [Extended Set] on The Roof",
+          "venue": "Superior Ingredients",
+          "city": "74 Wythe Avenue, Brooklyn, NY 11249",
+          "startTime": "2026-06-07T14:00:00.000",
+          "lineup": [
+            "Aly & Fila",
+            "Dan Miles",
+            "SunrYse"
+          ],
+          "genres": [
+            "Trance"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2367642",
+          "title": "GENNARO (Blackchild) with Cristina Lazic & Jay de Lys on The Roof",
+          "venue": "Superior Ingredients",
+          "city": "74 Wythe Avenue, Brooklyn, NY 11249",
+          "startTime": "2026-05-31T14:00:00.000",
+          "lineup": [
+            "GENNARO (formerly known as Blackchild)",
+            "Cristina Lazic",
+            "Jay de Lys",
+            "Mikayla Wolf",
+            "Motum"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2432676",
+          "title": "Sam Allan The Roof 05/29",
+          "venue": "Superior Ingredients",
+          "city": "74 Wythe Avenue, Brooklyn, NY 11249",
+          "startTime": "2026-05-29T16:00:00.000",
+          "lineup": [
+            "Sam Allan joined by Marc Raziano, EM X RE, Caviar Bumps, Pozzi B2B Russo, Zaynah, and a special live performance by Sam Reed."
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "15.00",
+          "isFestival": false
+        },
+        {
+          "id": "2431707",
+          "title": "ARMANA KHAN presents: The Khanistan Tour NYC Pride",
+          "venue": "The Brooklyn Monarch",
+          "city": "23 Meadow Street, Brooklyn, NY 11206 USA",
+          "startTime": "2026-06-26T22:00:00.000",
+          "lineup": [
+            "ARMANA KHAN SAMIA Riobamba Daniro Mansaf Mama, Ivy Fischer, Stella Sundari"
+          ],
+          "genres": [
+            "Baile Funk"
+          ],
+          "minAge": null,
+          "price": "0",
+          "isFestival": false
+        },
+        {
+          "id": "2432003",
+          "title": "WHORECHATA PRIDE: MJ Nebreda, Mexican Jihad, Shy Margiela, SINKITTY, OYYSTER, Roman Sensation",
+          "venue": "The Brooklyn Monarch",
+          "city": "23 Meadow Street, Brooklyn, NY 11206 USA",
+          "startTime": "2026-06-20T22:00:00.000",
+          "lineup": [
+            "LINEUP",
+            "MJ Nebreda",
+            "Mexican Jihad",
+            "Shy Margiela",
+            "SINKITTY",
+            "Roman Sensation",
+            "OYYSTER"
+          ],
+          "genres": [
+            "Club"
+          ],
+          "minAge": 21,
+          "price": "15-60",
+          "isFestival": false
+        },
+        {
+          "id": "2416977",
+          "title": "Matrix & Futurebound",
+          "venue": "The Brooklyn Monarch",
+          "city": "23 Meadow Street, Brooklyn, NY 11206 USA",
+          "startTime": "2026-06-13T23:00:00.000",
+          "lineup": [
+            "Matrix & Futurebound"
+          ],
+          "genres": [
+            "Drum & Bass"
+          ],
+          "minAge": 21,
+          "price": "$24.94",
+          "isFestival": false
+        },
+        {
+          "id": "2447625",
+          "title": "WATCH LIVE SOCCER ON GIANT SCREENS → FREE RSVP",
+          "venue": "The Brooklyn Monarch",
+          "city": "23 Meadow Street, Brooklyn, NY 11206 USA",
+          "startTime": "2026-06-11T15:00:00.000",
+          "lineup": [
+            "Presented by reggaetonLABS at The Brooklyn Monarch"
+          ],
+          "genres": [
+            "Pop",
+            "Reggaeton"
+          ],
+          "minAge": 18,
+          "price": "0.00",
+          "isFestival": false
+        },
+        {
+          "id": "2430336",
+          "title": "Reggaeton Warehouse (21+)",
+          "venue": "The Brooklyn Monarch",
+          "city": "23 Meadow Street, Brooklyn, NY 11206 USA",
+          "startTime": "2026-05-29T23:00:00.000",
+          "lineup": [
+            "REGGAETON WAREHOUSE 🏭🔥",
+            "is a genre-by-hour reggaeton journey.",
+            "Every hour shifts into a different side of reggaeton.",
+            "From MEXA, All-Girls, and La Nueva, to Throwbacks and Bad Bunny, then into Dembow, Reggaeton Colombiano, Perreo, Marroneo, Reggaeton Hits, Latin EDM, and Romantiqueo — the whole night is built like a ride through the culture, one sound at a time.",
+            "360 Stage. Low light. Heavy bass. Real crowd. No mainstream formula. No VIP nonsense. Just a packed warehouse moving through the many worlds of reggaeton from open to close.",
+            "This isn’t one-note reggaeton.",
+            "It’s hour by hour, mood by mood, genre by genre.",
+            "If you know, you know. If not, this is your entry point.",
+            "Reggaeton Warehouse — global takeover loading 2026.",
+            "NO REFUNDS",
+            "All tickets are non-refundable and non-exchangeable. Event cancellations without a rescheduled date will result in an automatic full refund to the original credit card used for the purchase. Your purchase of a ticket implies agreement with this policy. Please verify event details before buying tickets.",
+            "By attending this event, you grant reggaetonLABS permission to photograph and record you, and to use your image for promotional purposes.",
+            "Please ensure you bring a government-issued ID with your date of birth.**",
+            "TERMS & CONDITIONS",
+            "By purchasing this ticket, you agree to our Terms & Conditions"
+          ],
+          "genres": [
+            "Club",
+            "Reggaeton"
+          ],
+          "minAge": 21,
+          "price": "0.00",
+          "isFestival": false
+        },
+        {
+          "id": "2418803",
+          "title": "Eli Fola with Niara Sterling & Guests *Open Air*",
+          "venue": "H0l0 Yard",
+          "city": "1563 Decatur St., Ridgewood, NY 11385",
+          "startTime": "2026-06-06T15:00:00.000",
+          "lineup": [
+            "Eli Fola",
+            "Niara Sterling",
+            "BL SUEDE",
+            "La' Dell"
+          ],
+          "genres": [
+            "Afro House",
+            "Afrobeats"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2436936",
+          "title": "LET'S DANCE (BOWIE DANCE PARTY)",
+          "venue": "TV EYE",
+          "city": "1647 Weirfield St, Ridgewood, NY 11385",
+          "startTime": "2026-06-27T23:00:00.000",
+          "lineup": [
+            "Michael T"
+          ],
+          "genres": [
+            "Disco"
+          ],
+          "minAge": 21,
+          "price": "10.00",
+          "isFestival": false
+        },
+        {
+          "id": "2436958",
+          "title": "LOVE 2 LOVE (A DONNA SUMMER DISCO PARTY)",
+          "venue": "TV EYE",
+          "city": "1647 Weirfield St, Ridgewood, NY 11385",
+          "startTime": "2026-06-19T23:00:00.000",
+          "lineup": [
+            "With DJs: Michal T& Bill Coleman",
+            "Hosted by: Mother Juan Aviance"
+          ],
+          "genres": [
+            "Disco"
+          ],
+          "minAge": 21,
+          "price": "10.00",
+          "isFestival": false
+        },
+        {
+          "id": "2415368",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-26T23:00:00.000",
+          "lineup": [
+            "Special Guest"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2415367",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-21T23:00:00.000",
+          "lineup": [
+            "Special Guest"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2415366",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-20T23:00:00.000",
+          "lineup": [
+            "Special Guests"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2415365",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-19T23:00:00.000",
+          "lineup": [
+            "Special Guests"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2415364",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-13T23:00:00.000",
+          "lineup": [
+            "Special Guests"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2415363",
+          "title": "Apollo Studio presents",
+          "venue": "Apollo Studio",
+          "city": "72 Apollo St Brooklyn, NY 11222",
+          "startTime": "2026-06-12T23:00:00.000",
+          "lineup": [
+            "Special Guests"
+          ],
+          "genres": [],
+          "minAge": null,
+          "price": "",
+          "isFestival": false
+        }
+      ]
+    },
+    "Miami": {
+      "ok": true,
+      "count": 50,
+      "sample": [
+        {
+          "id": "2444625",
+          "title": "Loco Dice & Harvy Valencia",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-27T23:00:00.000",
+          "lineup": [
+            "Loco Dice",
+            "Harvy Valencia",
+            "Ms. Mada",
+            "slugg"
+          ],
+          "genres": [
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444623",
+          "title": "BLOND:ISH presents ABRACADABRA",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-26T23:00:00.000",
+          "lineup": [
+            "BLOND:ISH",
+            "Antdot",
+            "Vanjee",
+            "Airrica",
+            "Tiffy Vera",
+            "AABEL"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444621",
+          "title": "TBA",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-24T23:00:00.000",
+          "lineup": [
+            "TBA"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444620",
+          "title": "Hernan Cattaneo & ZAC",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-20T23:00:00.000",
+          "lineup": [
+            "Hernan Cattaneo",
+            "ZAC",
+            "Layla Benitez",
+            "DIFFER",
+            "Patrick M"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444619",
+          "title": "Chris Lorenzo, Jazzy & RUZE",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-19T23:00:00.000",
+          "lineup": [
+            "Chris Lorenzo",
+            "JAZZY (2)",
+            "RUZE",
+            "Ms. Mada",
+            "Danyelino",
+            "Will Buck"
+          ],
+          "genres": [
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444617",
+          "title": "Kerri Chandler, GENNARO, LF SYSTEM & IDEMI",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-13T23:00:00.000",
+          "lineup": [
+            "Kerri Chandler",
+            "GENNARO",
+            "LF SYSTEM",
+            "IDEMI",
+            "Ms. Mada",
+            "Natalia Roth"
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444615",
+          "title": "Tchami & J. Worra",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-12T23:00:00.000",
+          "lineup": [
+            "Tchami",
+            "J. Worra",
+            "Danyelino",
+            "Bakke",
+            "Monoky"
+          ],
+          "genres": [
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444614",
+          "title": "TBA",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-06T23:00:00.000",
+          "lineup": [
+            "TBA"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2444613",
+          "title": "WHYNOTUS vs Nervous Records",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-06-05T23:00:00.000",
+          "lineup": [
+            "Oscar G",
+            "Malone",
+            "Jay de Lys",
+            "Nacho Scoppa",
+            "Amal Nemer",
+            "Mai iachetti"
+          ],
+          "genres": [
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2421596",
+          "title": "Beltran, LuSiD & Simas",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-05-30T23:00:00.000",
+          "lineup": [
+            "Beltran",
+            "LuSiD",
+            "Simas",
+            "Ms. Mada",
+            "Bakke"
+          ],
+          "genres": [
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2421595",
+          "title": "Deborah De Luca & Clara Cuvé",
+          "venue": "Club Space Miami",
+          "city": "United States",
+          "startTime": "2026-05-29T23:00:00.000",
+          "lineup": [
+            "Deborah De Luca",
+            "Clara Cuvé",
+            "Danyelino",
+            "Pressure Point (US)"
+          ],
+          "genres": [
+            "Techno"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2430890",
+          "title": "Gorgon City",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-06-26T23:30:00.000",
+          "lineup": [
+            "Gorgon City"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2407581",
+          "title": "Massano",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-06-20T23:30:00.000",
+          "lineup": [
+            "Massano",
+            "Seth Hills"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2441602",
+          "title": "MK",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-06-13T23:30:00.000",
+          "lineup": [
+            "MK"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2441594",
+          "title": "Cedric Gervais",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-06-06T23:30:00.000",
+          "lineup": [
+            "Cedric Gervais"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2440504",
+          "title": "La Joaqui",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-06-04T23:30:00.000",
+          "lineup": [
+            "La Joaqui"
+          ],
+          "genres": [],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2450214",
+          "title": "Sexyy Red",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-05-31T22:30:00.000",
+          "lineup": [
+            "Sexyy Red"
+          ],
+          "genres": [
+            "Hip-Hop"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2397575",
+          "title": "Mathame",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-05-30T23:30:00.000",
+          "lineup": [
+            "Mathame"
+          ],
+          "genres": [
+            "Techno"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2430896",
+          "title": "Jason Derulo",
+          "venue": "LIV Nightclub Miami",
+          "city": "United States",
+          "startTime": "2026-05-29T23:30:00.000",
+          "lineup": [
+            "Jason Derulo"
+          ],
+          "genres": [
+            "Pop",
+            "R&B"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2447661",
+          "title": "Soundtuary 360 Xperience W/ Deep Dish & Apache",
+          "venue": "Jungle Island",
+          "city": "1111 Parrot Jungle Trail, Miami, FL 33132",
+          "startTime": "2026-05-29T20:00:00.000",
+          "lineup": [
+            "Deep Dish",
+            "Apache",
+            "@Avi Snow",
+            "ANDREATENS",
+            "@Kamcoco b2b Manu Magick"
+          ],
+          "genres": [
+            "Progressive House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "28.38",
+          "isFestival": false
+        },
+        {
+          "id": "2431929",
+          "title": "Naza [Gardens Of Babylon]",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-27T22:00:00.000",
+          "lineup": [
+            "NAZA (MUSIK)"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2431903",
+          "title": "Wild Dark",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-26T22:00:00.000",
+          "lineup": [
+            "Wild Dark",
+            "baez"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2421511",
+          "title": "Sydney Blu [KaterMukke] ",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-20T22:00:00.000",
+          "lineup": [
+            "Sydney Blu"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2421478",
+          "title": "Ramy Mishriky [Hafla]",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-19T22:00:00.000",
+          "lineup": [
+            "Ramy Mishriky"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2454805",
+          "title": "Organic House Rules",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-18T22:00:00.000",
+          "lineup": [
+            "Sebastian Morxx",
+            "Francesco Theodoli",
+            "Mick Floyd",
+            "Caroline Désire",
+            "Niceshot"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2421473",
+          "title": "Eli Light",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-13T22:00:00.000",
+          "lineup": [
+            "Eli Light",
+            "baez"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2421468",
+          "title": "Albuquerque [Get Physical]",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-12T22:00:00.000",
+          "lineup": [
+            "Albuquerque"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2421459",
+          "title": "LUM",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-05T22:00:00.000",
+          "lineup": [
+            "LUM (MX)",
+            "Jason Rader"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2449432",
+          "title": "Secret Thursdays",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-04T22:00:00.000",
+          "lineup": [
+            "HOPEFUL JO",
+            "SPCL.K",
+            "Justin (US) & Leo (2)",
+            "AbueKev",
+            "Antonee",
+            "Shafik",
+            "Keith Prior"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2449932",
+          "title": "Jessy & Friends",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-06-03T22:00:00.000",
+          "lineup": [
+            "Danielle",
+            "Opi (CZ) & V-WYSS",
+            "Mori",
+            "JESSY NIMNI",
+            "FEDERICO BECERRA"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2403505",
+          "title": "Nico Stojan [Ouie / Berlin]",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-05-30T22:00:00.000",
+          "lineup": [
+            "Nico Stojan"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2403502",
+          "title": "Eduardo McGregor",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-05-29T22:00:00.000",
+          "lineup": [
+            "Eduardo McGregor",
+            "baez"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2431932",
+          "title": "Chatterbox at DO NOT SIT ",
+          "venue": "Do Not Sit On The Furniture",
+          "city": "423 16th St, Miami Beach, FL 33139",
+          "startTime": "2026-05-28T22:00:00.000",
+          "lineup": [
+            "BabyBass",
+            "Ben Roberts",
+            "Elvis",
+            "LA Combi",
+            "Spinn"
+          ],
+          "genres": [
+            "House",
+            "Deep House"
+          ],
+          "minAge": 21,
+          "price": "$",
+          "isFestival": false
+        },
+        {
+          "id": "2453912",
+          "title": "Peace Control",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-21T23:00:00.000",
+          "lineup": [
+            "Peace Control",
+            "SIEGEL (2)",
+            "FALYN"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2449534",
+          "title": "Club Rats",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-20T23:00:00.000",
+          "lineup": [
+            "Baby Jesus",
+            "BENDR",
+            "MEGUSTA",
+            "Roll-e",
+            "Blotter",
+            "FULANO."
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2452539",
+          "title": "Sports Records 10 Year Anniversary",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-19T23:00:00.000",
+          "lineup": [
+            "Liquid Earth",
+            "Onirik",
+            "Sportswax"
+          ],
+          "genres": [
+            "House",
+            "Electro"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2437796",
+          "title": "Azzecca",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-14T23:00:00.000",
+          "lineup": [
+            "Azzecca",
+            "Cole Knight",
+            "Lucaz"
+          ],
+          "genres": [
+            "Techno",
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2453808",
+          "title": "Wakyin",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-12T23:00:00.000",
+          "lineup": [
+            "Wakyin",
+            "Peter Guzman",
+            "Cami di Marzo"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2443662",
+          "title": "Dan Molinari + slugg",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-07T23:00:00.000",
+          "lineup": [
+            "Dan Molinari",
+            "slugg",
+            "BASALYGA"
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2446324",
+          "title": "Jubilee presents: Magic City",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-06T23:00:00.000",
+          "lineup": [
+            "Jubilee",
+            "DJ SWISHA",
+            "Ale Acosta"
+          ],
+          "genres": [
+            "Techno",
+            "House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2447384",
+          "title": "Marco Strous",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-05T23:00:00.000",
+          "lineup": [
+            "Marco Strous",
+            "Ms. Mada",
+            "Danyelino"
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2452794",
+          "title": "PERREO DEL FUTURO presents: Jyoty",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-06-04T23:00:00.000",
+          "lineup": [
+            "Jyoty",
+            "Marte (US)",
+            "SUZ (US)",
+            "Mr. Bitch"
+          ],
+          "genres": [
+            "Baile Funk",
+            "Afrobeats"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2436638",
+          "title": "LOSTBOYJAY",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-05-31T23:00:00.000",
+          "lineup": [
+            "LOSTBOYJAY",
+            "Monty Kiddo",
+            "La BB"
+          ],
+          "genres": [
+            "House",
+            "Tech House"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2430977",
+          "title": "Escape Room presents: Second Nature",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-05-30T23:00:00.000",
+          "lineup": [
+            "DJ JAYHOOD",
+            "DRAGONNQUEEN",
+            "RUDE BOY (US)",
+            "FORESEER"
+          ],
+          "genres": [
+            "Club",
+            "R&B"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2442660",
+          "title": "ODD: Wata Igarashi + livwutang",
+          "venue": "Floyd",
+          "city": "34 NE 11th Street Miami, FL 33132",
+          "startTime": "2026-05-29T23:00:00.000",
+          "lineup": [
+            "Wata Igarashi",
+            "livwutang",
+            "Jonny From Space"
+          ],
+          "genres": [
+            "Techno",
+            "Dub"
+          ],
+          "minAge": 21,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2442947",
+          "title": "1-800-Rumble: A Galactic Celebration",
+          "venue": "1-800-Lucky",
+          "city": "143 NW 23rd St, Miami, FL 33127, USA",
+          "startTime": "2026-06-11T21:00:00.000",
+          "lineup": [
+            "Galactic Effect",
+            "Zamurai",
+            "LAMEBOT",
+            "Twiin",
+            "Rumble in the Jungle Crew"
+          ],
+          "genres": [
+            "Bass",
+            "Dubstep"
+          ],
+          "minAge": 21,
+          "price": "0",
+          "isFestival": false
+        },
+        {
+          "id": "2452685",
+          "title": "Nervous Fridays! Oscar G, Lazaro Casanova, Beck VM",
+          "venue": "1-800-Lucky",
+          "city": "143 NW 23rd St, Miami, FL 33127, USA",
+          "startTime": "2026-05-29T18:00:00.000",
+          "lineup": [
+            "Oscar G",
+            "Lazaro Casanova",
+            "Beck VM"
+          ],
+          "genres": [
+            "House",
+            "Afro House"
+          ],
+          "minAge": 21,
+          "price": "0",
+          "isFestival": false
+        },
+        {
+          "id": "2437794",
+          "title": "Tinzo + Jojo",
+          "venue": "The Ground at Club Space",
+          "city": "34 NE 11 Street, Miami, FL 33132, USA",
+          "startTime": "2026-06-20T23:00:00.000",
+          "lineup": [
+            "Tinzo + Jojo Lorenzo",
+            "GUDFELLA",
+            "Nicole Gallamini"
+          ],
+          "genres": [
+            "House"
+          ],
+          "minAge": 18,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2446262",
+          "title": "HANDS OFF: 454 + Black Rave Culture",
+          "venue": "The Ground at Club Space",
+          "city": "34 NE 11 Street, Miami, FL 33132, USA",
+          "startTime": "2026-06-13T23:00:00.000",
+          "lineup": [
+            "454",
+            "Black Rave Culture",
+            "Berrakka",
+            "Pressure Point (US)",
+            "Lady Narcisse"
+          ],
+          "genres": [
+            "Techno",
+            "Tech House"
+          ],
+          "minAge": 18,
+          "price": "",
+          "isFestival": false
+        },
+        {
+          "id": "2426021",
+          "title": "TECH G1RLS",
+          "venue": "The Ground at Club Space",
+          "city": "34 NE 11 Street, Miami, FL 33132, USA",
+          "startTime": "2026-06-06T23:00:00.000",
+          "lineup": [
+            "TECH G1RLS",
+            "Miguel Angeles",
+            "ilykimchi",
+            "binx",
+            "mason norris"
+          ],
+          "genres": [
+            "Techno",
+            "Electronica"
+          ],
+          "minAge": 18,
+          "price": "",
+          "isFestival": false
+        }
+      ]
+    },
+    "Berlin": {
+      "ok": false,
+      "error": "Actor run did not succeed (run ID: 4Ie0CgZgjkKPGLAe0, status: ABORTED)."
+    },
+    "Amsterdam": {
+      "ok": false,
+      "error": "Monthly usage hard limit exceeded"
+    }
+  },
+  "posh": {
+    "ok": false,
+    "error": "Monthly usage hard limit exceeded"
+  },
+  "timestamp": "2026-05-28T18:33:38.172Z"
+}

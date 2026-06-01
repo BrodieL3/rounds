@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 4a. Group create, text, and inbox.
+Current slice in development: 4b. Group lifecycle/admin.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -225,15 +225,41 @@ Recommended agent task sequence:
    - Tests: pure group name/payload validation, group inbox preview/sort, group text write builder; callable function tests for unauthenticated, invalid name, invalid member count, non-friend selected, and successful doc/state/notification writes; rules tests for denied direct client group create, active member read/send, non-member read/send denial, and left-member read/send denial; UI/view-model tests for create disabled state, group title, and group sender labels.
 5. Group lifecycle/admin slice 4b
    - Group membership lifecycle mutations use trusted callable Functions, following ADR 004.
-   - `inviteToGroup` lets admin add Friends to existing groups.
+   - All lifecycle Functions require an existing non-archived `group` conversation and caller active membership; admin-only Functions additionally require caller is current `adminUid`.
+   - Add user-visible minimal lifecycle UI: group header opens `/conversation/[id]/info` for group conversations.
+   - DM header stays unchanged; no DM info route in 4b.
+   - Group info screen is accessible only to active members; former/non-members get normal no-access/not-found behavior from conversation reads.
+   - Group info screen lists active members only and owns lifecycle actions; former members stay in `members/{uid}.leftAt` for audit/function logic but are not shown in 4b UI.
+   - Group info active member list uses `conversation.memberUids` as the active source, fetches `users/{uid}` for display, and may fetch `members/{uid}` for role/joinedAt metadata; it does not query all member docs.
+   - Only admin sees Add members and Remove buttons; non-admins see member list plus Leave group only.
+   - `inviteToGroup({ conversationId, selectedMemberUids })` lets admin add Friends to existing groups.
+   - Add-member UI uses a multi-select Friend picker like group creation, excluding current active members, current user, and non-Friends.
+   - Add-member selection allows 1 through remaining group slots up to the 25-member cap.
+   - `inviteToGroup` rejects the whole request if any selected uid is already an active member, is not a Friend of the admin, or if `activeCount + selectedUniqueCount > 25`; no partial add.
+   - Former members can be re-added; re-add restores them to `conversation.memberUids`, sets/merges `members/{uid}` to `role: member`, new `joinedAt`, `leftAt: null`, and `invitedByUid: adminUid`, creates/restores their conversation state with `hiddenAt: null`, and sends `added_to_group` notification.
+   - Added members receive `added_to_group` notifications; existing members and admin receive no lifecycle notifications in 4b.
    - `removeGroupMember` lets admin remove non-admin members.
+   - Admin cannot remove themselves through `removeGroupMember`; admin self-exit must use `leaveGroup` with next-admin rules.
+   - Member removal is silent in 4b: no system message and no notification to the removed member; they disappear from active member list/inbox through membership loss.
    - `leaveGroup` lets any non-admin member leave self.
    - `leaveGroup` lets admin leave only if they select another active member as next admin.
+   - Admin leave requires explicit `nextAdminUid` whenever any member remains, even if only one member remains; UI may preselect the sole remaining member but the Function still requires the value.
+   - Admin leave uses one Leave group flow: if remaining members exist, show next-admin picker and confirm `Leave and make [user] admin`; do not add standalone transfer-admin in 4b.
+   - Remove member requires a destructive confirmation prompt.
+   - Leave group requires a destructive confirmation prompt; admin next-admin picker confirmation counts as the leave confirmation.
+   - Add members does not require an extra confirmation after picker submission.
+   - Leaving is silent in 4b: no system message and no notifications.
+   - After successful leave, client navigates back to Friends; the group disappears from that user's inbox because their uid is removed from `memberUids`.
+   - If the last member leaves, the group is archived and client navigates back to Friends.
    - Leaving/removing a member removes their uid from `conversation.memberUids` and sets `members/{uid}.leftAt`.
+   - Leave/remove does not update `lastMessageAt` or `lastMessage`; silent lifecycle changes do not bump inbox order for remaining members.
    - Former members lose normal inbox and message read access after leaving/removal; beta rules read access is active-member only.
-   - Archived empty groups have `memberUids: []` and `archivedAt`.
-   - Keep exactly one active admin for active groups.
-   - Add basic group member management UI only after create/text/inbox passes.
+   - After self-leave succeeds, client navigates to Friends immediately.
+   - If a user is removed while viewing chat/info, later read/listener failure shows the existing no-access/not-found fallback with Go back; no special real-time redirect in 4b.
+   - Archived empty groups have `memberUids: []`, `archivedAt: now`, and `adminUid: null`.
+   - Last leaver's member doc gets `leftAt`.
+   - Keep exactly one active admin for non-archived groups with active members.
+   - Tests: pure/service tests for invite payload validation, remaining slot limits, admin leave outcome, and group info action visibility for admin vs non-admin; callable Function tests for invite rejects non-admin/non-friend/active member/cap and succeeds add/re-add docs/state/notifications, remove rejects non-admin/self/admin target/non-member and succeeds `memberUids` removal plus `leftAt`, leave rejects non-member/admin missing next admin/invalid next admin and succeeds non-admin leave, admin leave transfer, and last-member archive; UI/view-model tests for group header opening info, active-member-only list, member list/add picker loading and empty states, name fallback to `displayName || username || uid`, admin badge, admin-only Add/Remove controls, non-admin Leave-only controls, Remove hidden for self/admin target, mutation disabled states, add picker excluding active members/current user through search filtering, add button disabled for no selection/cap overflow, remove confirmation copy, leave confirmation copy, admin next-admin picker with sole remaining member preselected, admin next-admin confirmation copy, function error alerts, post-leave navigation to Friends, and removed/no-access fallback; rules tests keep/regress former member cannot read/send.
 6. Review/social planning slice
    - Venue links.
    - Review links.

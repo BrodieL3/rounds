@@ -1,19 +1,35 @@
-# Mission: Expo
+# Mission: Rounds
 
 ## Why
-Learn Expo well enough to turn the Rounds nightlife app vision into a working mobile product: pairwise venue ranking first, then Spotify onboarding, geofenced crowd reporting, social features, and bookings.
 
-## Success looks like
-- Choose when to use Expo Go, a development build, or native code.
-- Build and run the app locally on phone/simulator.
-- Add routing, location, auth, API calls, and native permissions without cargo-culting.
-- Know which app features require backend services versus Expo/client code.
+Build Rounds into a nightlife-native mobile app: discover city venues, log visits, share activity, and turn cohort-scoped pairwise comparisons into personal rankings.
+
+## Current state
+
+- Expo SDK 54 app using Expo Router.
+- Firebase Auth, Firestore, and Storage back the current prototype.
+- Static venue seed covers NYC, Boston, Chicago, and San Francisco.
+- Implemented flows: onboarding, login, venue list/detail, venue rating, feed posts, post detail comments/likes, profiles, people search, following, and `/compare` pairwise ranking.
+- Placeholder/unfinished flows: leaderboard/rank projection, backend-owned feed, backend-owned ranking, geofenced crowd reports, bookings, event recommendations.
+
+## Success looks like now
+
+- Core MVP flows run reliably on device and web.
+- Cohort isolation is enforced consistently for venue discovery, ratings, comparisons, and rankings.
+- Ranking, feed, and social graph behavior are testable through deep modules, not duplicated inside screens.
+- Firestore writes that create product state have clear ownership: client-owned MVP write or future backend-owned projection.
+- Spotify/BestTime/TicketsData/event scraping stay available as capability modules but do not distract from stabilizing the MVP path.
 
 ## Constraints
-- Current project is a fresh Expo SDK 56 app.
-- Teaching should stay tied to the Rounds product, not generic mobile trivia.
-- Prefer official Expo docs and high-trust sources.
 
-## Out of scope
-- Deep native iOS/Android module authoring unless Rounds needs it.
-- Production ranking/recommendation math unless it affects Expo app architecture.
+- Keep route ownership clear: `/compare` owns pairwise comparison; venue detail owns place metadata and report entry; rating route owns rating/post creation.
+- Current screens call Firestore directly; refactors should improve locality before adding new product features.
+- Use official Expo docs before Expo changes. Current dependencies are SDK 54 even if future upgrade work targets a newer SDK.
+- Prefer small tested modules around domain behavior before adding backend infrastructure.
+
+## Out of scope unless explicitly chosen
+
+- Production booking/reservation flows.
+- Geofenced real-time crowd/queue reporting.
+- Native module authoring.
+- Production recommendation math beyond preserving current Spotify genre-vector capability.
