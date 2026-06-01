@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -24,19 +24,27 @@ const {
   sendDirectTextMessage,
   subscribeConversationMessages,
 } = require('../../lib/friends/dm-service');
+const { sendGroupTextMessage } = require('../../lib/friends/group-service');
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
   const { user } = useAuth();
   const [otherUser, setOtherUser] = useState(null);
+  const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [conversationReady, setConversationReady] = useState(false);
+  const [conversationReloadKey, setConversationReloadKey] = useState(0);
+  const [notFound, setNotFound] = useState(false);
+  const [senderProfiles, setSenderProfiles] = useState({});
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
-  const title = otherUser?.displayName || otherUser?.username || 'Direct message';
+  const isGroup = conversation?.type === 'group';
+  const title = isGroup
+    ? (conversation?.name || 'Group chat')
+    : (otherUser?.displayName || otherUser?.username || 'Direct message');
 
   useEffect(() => {
     if (!recipientUid) return;
@@ -51,34 +59,67 @@ export default function ConversationScreen() {
     let mounted = true;
     let unsubscribe;
 
+    setConversationReady(false);
+    setNotFound(false);
     loadConversation({ db, conversationId })
-      .then((conversation) => {
-        if (!mounted || !conversation) return;
+      .then((loadedConversation) => {
+        if (!mounted) return;
+        if (!loadedConversation) {
+          if (!recipientUid) setNotFound(true);
+          return;
+        }
+        setConversation(loadedConversation);
         setConversationReady(true);
         unsubscribe = subscribeConversationMessages({
           db,
           conversationId,
           onChange: setMessages,
-          onError: (err) => console.error('DM messages snapshot error:', err),
+          onError: (err) => console.error('Conversation messages snapshot error:', err),
         });
       })
-      .catch((err) => console.error('DM conversation load error:', err));
+      .catch((err) => console.error('Conversation load error:', err));
 
     return () => {
       mounted = false;
       if (unsubscribe) unsubscribe();
     };
-  }, [conversationId, conversationReady]);
+  }, [conversationId, recipientUid, conversationReloadKey]);
 
   useEffect(() => {
     if (!user || !conversationId || !conversationReady) return;
 
     markConversationSeen({ db, uid: user.uid, conversationId })
-      .catch((err) => console.error('DM seen update error:', err));
+      .catch((err) => console.error('Conversation seen update error:', err));
   }, [user, conversationId, conversationReady, messages.length]);
 
+  useEffect(() => {
+    if (!isGroup) return;
+    const missingSenderUids = Array.from(new Set(
+      messages
+        .map((message) => message.senderUid)
+        .filter((uid) => uid && uid !== user?.uid && !senderProfiles[uid]),
+    ));
+    if (missingSenderUids.length === 0) return;
+
+    Promise.all(missingSenderUids.map(async (uid) => {
+      const profile = await loadUserProfile({ db, uid });
+      return [uid, profile || { uid }];
+    }))
+      .then((entries) => {
+        setSenderProfiles((current) => ({ ...current, ...Object.fromEntries(entries) }));
+      })
+      .catch((err) => console.error('Group sender profile load error:', err));
+  }, [isGroup, messages, senderProfiles, user]);
+
+  const emptyTitle = useMemo(() => (
+    isGroup ? `Start planning in ${title}.` : `Start planning with ${title}.`
+  ), [isGroup, title]);
+  const emptyBody = isGroup ? 'Send the first message to this group.' : 'Send the first message to create this DM.';
+
   const send = useCallback(async () => {
-    if (!user || !recipientUid || sending) return;
+    if (!user || sending) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
 
     let normalized;
     try {
@@ -90,34 +131,58 @@ export default function ConversationScreen() {
 
     setSending(true);
     try {
-      await sendDirectTextMessage({
-        db,
-        senderUid: user.uid,
-        recipientUid,
-        text: normalized,
-      });
+      if (conversation?.type === 'group') {
+        await sendGroupTextMessage({ db, conversation, senderUid: user.uid, text: normalized });
+      } else {
+        await sendDirectTextMessage({
+          db,
+          senderUid: user.uid,
+          recipientUid,
+          text: normalized,
+        });
+        setConversationReloadKey((key) => key + 1);
+      }
       setText('');
-      setConversationReady(true);
     } catch (err) {
       Alert.alert('Message failed', err.message);
     } finally {
       setSending(false);
     }
-  }, [recipientUid, sending, text, user]);
+  }, [conversation, isGroup, recipientUid, sending, text, user]);
 
   const renderMessage = ({ item }) => {
     const isMine = item.senderUid === user?.uid;
+    const sender = senderProfiles[item.senderUid];
+    const senderLabel = isGroup && !isMine
+      ? (sender?.displayName || sender?.username || item.senderUid)
+      : null;
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
-        <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
-          <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
-            {item.deletedForEveryoneAt ? 'Message deleted.' : item.text}
-          </Text>
+        <View style={[styles.messageStack, isMine ? styles.messageStackMine : styles.messageStackTheirs]}>
+          {senderLabel ? <Text style={styles.senderLabel}>{senderLabel}</Text> : null}
+          <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+            <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
+              {item.deletedForEveryoneAt ? 'Message deleted.' : item.text}
+            </Text>
+          </View>
         </View>
       </View>
     );
   };
+
+  if (notFound) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.notFoundCard}>
+          <Text style={styles.emptyTitle}>Conversation not found</Text>
+          <Pressable onPress={() => router.back()} style={styles.sendButton}>
+            <Text style={styles.sendText}>Go back</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -141,8 +206,8 @@ export default function ConversationScreen() {
         contentContainerStyle={messages.length === 0 ? styles.emptyContent : styles.messagesContent}
         ListEmptyComponent={(
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Start planning with {title}.</Text>
-            <Text style={styles.emptyBody}>Send the first message to create this DM.</Text>
+            <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+            <Text style={styles.emptyBody}>{emptyBody}</Text>
           </View>
         )}
       />
@@ -201,12 +266,17 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
   },
+  notFoundCard: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 16 },
   emptyTitle: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '800', textAlign: 'center' },
   emptyBody: { color: COLORS.textSecondary, fontSize: 14, marginTop: 8, textAlign: 'center' },
   messageRow: { flexDirection: 'row' },
   messageRowMine: { justifyContent: 'flex-end' },
   messageRowTheirs: { justifyContent: 'flex-start' },
-  bubble: { maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
+  messageStack: { maxWidth: '78%' },
+  messageStackMine: { alignItems: 'flex-end' },
+  messageStackTheirs: { alignItems: 'flex-start' },
+  senderLabel: { color: COLORS.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 4, marginLeft: 6 },
+  bubble: { borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleMine: { backgroundColor: COLORS.accent },
   bubbleTheirs: { backgroundColor: COLORS.bgElevated },
   messageText: { fontSize: 15, lineHeight: 20 },

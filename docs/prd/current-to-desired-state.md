@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 3. DM slice.
+Current slice in development: 4a. Group create, text, and inbox.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -154,7 +154,7 @@ Recommended agent task sequence:
    - `friendships/{minUid}_{maxUid}` fields: `memberUids`, `createdAt`, `createdFromRequestId`.
    - `blocks/{blockerUid}_{blockedUid}` fields: `blockerUid`, `blockedUid`, `createdAt`.
    - `conversations/{conversationId}` fields: `type: dm|group`, `memberUids`, `adminUid?`, `name?`, `photoUrl?`, `createdAt`, `createdByUid?`, `lastMessageAt?`, `lastMessage?`, `archivedAt?`.
-   - `conversations/{conversationId}/members/{uid}` fields: `uid`, `role: admin|member`, `joinedAt`, `leftAt?`.
+   - `conversations/{conversationId}/members/{uid}` fields: `uid`, `role: admin|member`, `joinedAt`, `leftAt?`, `invitedByUid?`.
    - `conversations/{conversationId}/messages/{messageId}` fields: `senderUid`, `type`, `text?`, `createdAt`, `deletedForEveryoneAt?`.
    - `users/{uid}/conversationStates/{conversationId}` fields: `hiddenAt?`, `deletedForSelfAt?`, `lastSeenAt?`.
    - `users/{uid}/notifications/{notificationId}` fields: `type`, `actorUid?`, `conversationId?`, `createdAt`, `readAt?`.
@@ -187,28 +187,69 @@ Recommended agent task sequence:
    - Profile `Message` CTA navigates to the DM route only for Friends. Friends tab plus/create-chat button remains a placeholder until the group/create-chat slice.
    - Add Firestore rules and emulator-backed tests for DM conversation creation, member/message reads, text message sends, non-friend denial, non-member denial, conversation state writes, and hide/read state updates.
    - Keep read state storage only; visible `Seen` labels and unread indicators are deferred.
-4. Group chat slice
-   - Create group.
-   - Add Friends only.
-   - Admin rules.
-   - Leave/remove members.
+4. Group chat slice 4a: group create, text, and inbox
+   - Create group conversation immediately from Friends `+`, before any message is sent.
+   - Use a callable Cloud Function for group creation because client-only Firestore rules cannot securely validate 2–24 invitees are all Friends within rule read limits.
+   - Use Firestore auto IDs for group conversations; group identity is not deterministic from member set.
+   - Require creator to set a group name and select 2–24 Friends, creating a 3–25 member group including creator.
+   - Group name trims whitespace, must be 1–60 characters after trim, and does not need to be unique.
+   - Defer rename UI, member add/remove UI, leave UI, and admin transfer UI to slice 4b, but keep service/rules shape compatible with those lifecycle operations.
+   - Friends `+` opens `/conversation/new` with group name input and Friend picker/search.
+   - `Create` stays disabled until group name is valid and 2–24 Friends are selected.
+   - Successful creation navigates to `/conversation/[id]`.
+   - `/conversation/[id]` handles both DM and group conversations: group routes load by id and use `conversation.name`; pending DM routes still use `otherUid` before the first message creates the conversation.
+   - If `/conversation/[id]` has no existing conversation and no `otherUid`, show a not-found/error state.
+   - Empty groups are valid before first message; conversation empty state says `Start planning in [group name].`
+   - Group chat UI shows sender display name above non-current-user message bubbles; no avatars or read receipts in 4a.
+   - Conversation screen loads user profiles for group message senders as needed.
+   - Inbox preview for groups with no messages says `No messages yet`.
+   - Inbox sorts active conversations by `lastMessageAt`; conversations without `lastMessageAt` sort after active conversations by newest `createdAt`.
+   - `conversation.memberUids` means active members only; `members/{uid}` preserves membership history with `leftAt`.
+   - Any active group member can send text messages through client Firestore writes; membership requires `members/{uid}.leftAt == null`, not only presence in `conversation.memberUids`.
+   - Rules allow group text sends only when `conversation.type == group`, the sender is in `conversation.memberUids`, sender member doc has `leftAt == null`, `senderUid == request.auth.uid`, and text is valid.
+   - Sending a group text updates `lastMessageAt` and `lastMessage`, creates a message doc, creates `new_group_message` notifications for every other active member, and updates sender state with `lastSeenAt` plus `hiddenAt: null`.
+   - Group message notification fanout remains client-written in 4a and moves to a trusted function later with broader message-send hardening.
+   - Group create creates conversation state docs for all initial members; sending a message does not create recipient state docs.
+   - Group conversation doc fields in 4a: `type: group`, sorted active `memberUids`, `adminUid`, `name`, `photoUrl: null`, `createdAt`, `createdByUid`, `lastMessageAt: null`, `lastMessage: null`, and `archivedAt: null`.
+   - Group member docs use `{ uid, role, joinedAt, leftAt: null, invitedByUid }`; creator has `role: admin` and `invitedByUid: null`, selected friends have `role: member` and `invitedByUid: creatorUid`.
+   - Group create sends `added_to_group` notifications to selected friends only, with `actorUid`, `conversationId`, and `createdAt`; creator receives no create notification.
+   - First group message later uses normal `new_group_message` notifications.
+   - Do not add a separate DM picker in this slice; DMs still start from Profile.
+   - Add Friends only; group picker eligibility comes from canonical `friendships` docs where `memberUids array-contains viewerUid`, not mutual follow arrays.
+   - Implement `createGroupConversation` as Firebase Functions v2 JavaScript/CommonJS callable in a minimal `functions/` package.
+   - `createGroupConversation` Cloud Function validates auth, normalized group name, 2–24 selected friend UIDs, 3–25 total active members including creator, and Friendships for every selected member before writing group docs.
+   - `createGroupConversation` returns `{ conversationId }`; client loads/subscribes to the conversation after navigation rather than receiving full conversation data.
+   - Direct client group conversation creation is denied by rules; the Cloud Function owns group membership grants.
+   - Creator is exactly one admin.
    - 25 member cap.
-5. Review/social planning slice
+   - Tests: pure group name/payload validation, group inbox preview/sort, group text write builder; callable function tests for unauthenticated, invalid name, invalid member count, non-friend selected, and successful doc/state/notification writes; rules tests for denied direct client group create, active member read/send, non-member read/send denial, and left-member read/send denial; UI/view-model tests for create disabled state, group title, and group sender labels.
+5. Group lifecycle/admin slice 4b
+   - Group membership lifecycle mutations use trusted callable Functions, following ADR 004.
+   - `inviteToGroup` lets admin add Friends to existing groups.
+   - `removeGroupMember` lets admin remove non-admin members.
+   - `leaveGroup` lets any non-admin member leave self.
+   - `leaveGroup` lets admin leave only if they select another active member as next admin.
+   - Leaving/removing a member removes their uid from `conversation.memberUids` and sets `members/{uid}.leftAt`.
+   - Former members lose normal inbox and message read access after leaving/removal; beta rules read access is active-member only.
+   - Archived empty groups have `memberUids: []` and `archivedAt`.
+   - Keep exactly one active admin for active groups.
+   - Add basic group member management UI only after create/text/inbox passes.
+6. Review/social planning slice
    - Venue links.
    - Review links.
    - Review companion tagging.
    - Unlisted private rating shares.
-6. Feed/List/Profile polish slice
+7. Feed/List/Profile polish slice
    - Real Feed actions.
    - Bookmark / want-to-try behavior.
    - Confirm Profile personal list excludes discovery rows.
    - Cohort isolation regression tests.
-7. Safety slice
+8. Safety slice
    - Block.
    - Report.
    - Delete/hide messages.
    - Notification privacy basics.
-8. Rich attachment slices
+9. Rich attachment slices
    - Polls.
    - Photos.
    - Voice notes.

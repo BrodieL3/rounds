@@ -17,17 +17,17 @@ const {
 } = require('../../lib/friends/friendship-service');
 const {
   hideConversationForSelf,
-  subscribeDirectConversations,
+  subscribeUserConversations,
 } = require('../../lib/friends/dm-service');
 
 export default function FriendsScreen() {
   const { user, reloadProfile } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState([]);
-  const [directConversations, setDirectConversations] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
   const [mutatingRequestId, setMutatingRequestId] = useState(null);
   const [hidingConversationId, setHidingConversationId] = useState(null);
-  const viewModel = buildFriendsInboxViewModel(directConversations);
+  const viewModel = buildFriendsInboxViewModel(conversations);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -43,11 +43,11 @@ export default function FriendsScreen() {
   useEffect(() => {
     if (!user) return undefined;
 
-    return subscribeDirectConversations({
+    return subscribeUserConversations({
       db,
       uid: user.uid,
-      onChange: setDirectConversations,
-      onError: (err) => console.error('DM inbox snapshot error:', err),
+      onChange: setConversations,
+      onError: (err) => console.error('Conversation inbox snapshot error:', err),
     });
   }, [user]);
 
@@ -162,7 +162,7 @@ export default function FriendsScreen() {
           accessibilityRole="button"
           accessibilityLabel={viewModel.actions.createChatLabel}
           style={styles.createButton}
-          onPress={() => Alert.alert('Create chat coming soon', 'Direct messages arrive in the next slice.')}
+          onPress={() => router.push('/conversation/new')}
         >
           <Ionicons name="add" size={26} color="#ffffff" />
         </Pressable>

@@ -110,13 +110,24 @@ service cloud.firestore {
         && request.auth.uid in getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids;
     }
 
-    function validDmConversationUpdate() {
+    function activeMemberDocExists(conversationId, uid) {
+      let memberPath = /databases/$(database)/documents/conversations/$(conversationId)/members/$(uid);
+      return exists(memberPath) && get(memberPath).data.leftAt == null;
+    }
+
+    function activeMemberDocExistsAfter(conversationId, uid) {
+      let memberPath = /databases/$(database)/documents/conversations/$(conversationId)/members/$(uid);
+      return existsAfter(memberPath) && getAfter(memberPath).data.leftAt == null;
+    }
+
+    function validConversationTextUpdate(conversationId) {
       return signedIn()
         && request.auth.uid in resource.data.memberUids
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessage'])
         && request.resource.data.memberUids == resource.data.memberUids
         && request.resource.data.type == resource.data.type
-        && validLastTextMessage(request.resource.data.lastMessage);
+        && validLastTextMessage(request.resource.data.lastMessage)
+        && (resource.data.type == 'dm' || activeMemberDocExists(conversationId, request.auth.uid));
     }
 
     function validConversationMemberCreate(conversationId, memberUid) {
@@ -151,7 +162,7 @@ service cloud.firestore {
         allow read: if isSignedInAs(uid);
         allow create: if signedIn()
           && request.resource.data.actorUid == request.auth.uid
-          && request.resource.data.type in ['friend_request_received', 'friend_request_accepted', 'new_direct_message'];
+          && request.resource.data.type in ['friend_request_received', 'friend_request_accepted', 'new_direct_message', 'new_group_message'];
         allow update, delete: if false;
       }
 
@@ -193,7 +204,7 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       allow get, list: if signedIn() && request.auth.uid in resource.data.memberUids;
       allow create: if validDmConversationCreate(conversationId);
-      allow update: if validDmConversationUpdate();
+      allow update: if validConversationTextUpdate(conversationId);
       allow delete: if false;
 
       match /members/{memberUid} {
@@ -205,7 +216,9 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isConversationMember(conversationId);
         allow create: if isConversationMemberAfter(conversationId)
-          && validTextMessageShape(request.resource.data);
+          && validTextMessageShape(request.resource.data)
+          && (getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.type == 'dm'
+            || activeMemberDocExistsAfter(conversationId, request.auth.uid));
         allow update, delete: if false;
       }
     }
