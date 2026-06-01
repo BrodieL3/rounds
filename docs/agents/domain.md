@@ -11,6 +11,7 @@ This is a single-context repo:
 
 ## Before exploring, read these
 
+- **`CONTEXT-MAP.md`** at the repo root if present. It defines current vs legacy context sources and startup order.
 - **`CONTEXT.md`** at the repo root.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in.
 

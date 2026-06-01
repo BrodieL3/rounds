@@ -1,5 +1,8 @@
 # Rounds Context
 
+## Status
+Current source of truth for Rounds domain vocabulary and product priorities. This file is a glossary/context guide, not an implementation spec. See `CONTEXT-MAP.md` for doc loading order and `docs/prd/current-to-desired-state.md` for implementation roadmap.
+
 ## Current goal
 
 Rounds is now a working Expo/Firebase mobile prototype shifting from nightlife discovery/ranking toward friend-coordinated nightlife planning. Near-term work should deepen the MVP already in code while making Friends the hero surface: onboarding, city venue lists, venue rating, social feed, profiles, cohort-scoped pairwise comparison, and friend planning.

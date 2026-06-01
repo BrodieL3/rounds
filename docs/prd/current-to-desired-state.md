@@ -1,7 +1,7 @@
 # Rounds Current-to-Desired State PRD
 
 ## Status
-Draft synthesized from current app screenshots, `CONTEXT.md`, ADRs, existing Friends PRD, and `/tmp` handoffs.
+Current implementation roadmap and slice tracker for moving Rounds toward the Friends-first MVP. Product behavior details still defer to `docs/prd/friends-tab.md`; domain language defers to `CONTEXT.md`.
 
 ## Problem Statement
 Rounds has a coherent mobile shell for a friends-first nightlife app: Friends, Feed, Add, List, and Profile now visually match the desired direction. The app still behaves like a client-owned prototype: Friends is an empty inbox, social planning state is missing, feed/list/profile actions are shallow, and sensitive social data has no backend seam or security model.

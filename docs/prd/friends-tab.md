@@ -1,7 +1,7 @@
 # Friends Tab PRD
 
 ## Status
-Decision draft.
+Current product source of truth for Friends behavior. Use `docs/prd/current-to-desired-state.md` for slice order and implementation tracker.
 
 ## Product vision
 Friends is the hero tab for coordinating nights out with people the user actually plans with. It replaces the current Feed tab position. Feed moves to the current List tab position. List moves to the current Leaderboard/Rank position. Leaderboard/Rank is removed.
