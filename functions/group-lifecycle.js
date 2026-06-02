@@ -74,8 +74,15 @@ function requireAdmin({ conversation, callerUid, ErrorClass }) {
 
 async function assertFriendshipsExist({ db, callerUid, selectedMemberUids, ErrorClass }) {
   await Promise.all(selectedMemberUids.map(async (uid) => {
-    const snap = await db.collection('friendships').doc(pairId(callerUid, uid)).get();
-    if (!snap.exists) throw makeError(ErrorClass, 'permission-denied', 'Can only add Friends to a group');
+    const [friendshipSnap, callerBlockSnap, inviteeBlockSnap] = await Promise.all([
+      db.collection('friendships').doc(pairId(callerUid, uid)).get(),
+      db.collection('blocks').doc(`${callerUid}_${uid}`).get(),
+      db.collection('blocks').doc(`${uid}_${callerUid}`).get(),
+    ]);
+    if (!friendshipSnap.exists) throw makeError(ErrorClass, 'permission-denied', 'Can only add Friends to a group');
+    if (callerBlockSnap.exists || inviteeBlockSnap.exists) {
+      throw makeError(ErrorClass, 'permission-denied', 'Cannot add blocked users to a group');
+    }
   }));
 }
 

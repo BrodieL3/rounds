@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
-import { db } from '../../lib/firebase';
+import { db, functions as cloudFunctions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getVenueVisualFallback } from '../../lib/venue-visuals';
 
@@ -26,6 +26,12 @@ const {
   subscribeConversationMessages,
 } = require('../../lib/friends/dm-service');
 const { sendGroupTextMessage } = require('../../lib/friends/group-service');
+const {
+  buildReportPayload,
+  deleteMessageForEveryone,
+  hideMessageForSelf,
+  reportTarget,
+} = require('../../lib/friends/safety-service');
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
@@ -73,6 +79,7 @@ export default function ConversationScreen() {
         setConversationReady(true);
         unsubscribe = subscribeConversationMessages({
           db,
+          uid: user?.uid,
           conversationId,
           onChange: setMessages,
           onError: (err) => console.error('Conversation messages snapshot error:', err),
@@ -84,7 +91,7 @@ export default function ConversationScreen() {
       mounted = false;
       if (unsubscribe) unsubscribe();
     };
-  }, [conversationId, recipientUid, conversationReloadKey]);
+  }, [conversationId, recipientUid, conversationReloadKey, user]);
 
   useEffect(() => {
     if (!user || !conversationId || !conversationReady) return;
@@ -156,6 +163,56 @@ export default function ConversationScreen() {
     }
   }, [conversation, isGroup, recipientUid, sending, text, user]);
 
+  const hideMessage = useCallback(async (message) => {
+    if (!user || !conversationId) return;
+    try {
+      await hideMessageForSelf({ db, uid: user.uid, conversationId, messageId: message.id });
+      setMessages((current) => current.filter((entry) => entry.id !== message.id));
+    } catch (err) {
+      Alert.alert('Hide failed', err.message);
+    }
+  }, [conversationId, user]);
+
+  const deleteForEveryone = useCallback((message) => {
+    if (!user || !conversationId) return;
+    Alert.alert('Delete message?', 'This leaves a tombstone for everyone in the chat.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete for everyone',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteMessageForEveryone({ functions: cloudFunctions, conversationId, messageId: message.id });
+          } catch (err) {
+            Alert.alert('Delete failed', err.message);
+          }
+        },
+      },
+    ]);
+  }, [conversationId, user]);
+
+  const reportMessage = useCallback(async (message) => {
+    if (!user || !conversationId) return;
+    try {
+      const report = buildReportPayload({
+        reporterUid: user.uid,
+        targetType: 'message',
+        targetId: message.id,
+        conversationId,
+        messageId: message.id,
+        reportedUid: message.senderUid,
+        reason: 'Reported from conversation',
+        createdAt: new Date(),
+      });
+      await reportTarget({ db, report });
+      await hideMessageForSelf({ db, uid: user.uid, conversationId, messageId: message.id });
+      setMessages((current) => current.filter((entry) => entry.id !== message.id));
+      Alert.alert('Report submitted', 'Message hidden for you.');
+    } catch (err) {
+      Alert.alert('Report failed', err.message);
+    }
+  }, [conversationId, user]);
+
   const renderMessage = ({ item }) => {
     const isMine = item.senderUid === user?.uid;
     const sender = senderProfiles[item.senderUid];
@@ -172,6 +229,8 @@ export default function ConversationScreen() {
     const sentimentColor = isReviewLink
       ? (item.sentiment === 'loved' ? COLORS.success : item.sentiment === 'fine' ? COLORS.accent : COLORS.danger)
       : null;
+    const canDeleteForEveryone = isMine && !item.deletedForEveryoneAt;
+    const canReport = !isMine && !item.deletedForEveryoneAt;
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
@@ -238,6 +297,21 @@ export default function ConversationScreen() {
               </Text>
             </View>
           )}
+          <View style={[styles.messageActions, isMine ? styles.messageActionsMine : styles.messageActionsTheirs]}>
+            <Pressable onPress={() => hideMessage(item)}>
+              <Text style={styles.messageActionText}>Hide message</Text>
+            </Pressable>
+            {canDeleteForEveryone ? (
+              <Pressable onPress={() => deleteForEveryone(item)}>
+                <Text style={styles.messageActionDanger}>Delete for everyone</Text>
+              </Pressable>
+            ) : null}
+            {canReport ? (
+              <Pressable onPress={() => reportMessage(item)}>
+                <Text style={styles.messageActionDanger}>Report message</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       </View>
     );
@@ -363,6 +437,11 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15, lineHeight: 20 },
   messageTextMine: { color: '#ffffff' },
   messageTextTheirs: { color: COLORS.textPrimary },
+  messageActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4, paddingHorizontal: 6 },
+  messageActionsMine: { justifyContent: 'flex-end' },
+  messageActionsTheirs: { justifyContent: 'flex-start' },
+  messageActionText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '700' },
+  messageActionDanger: { color: COLORS.danger, fontSize: 11, fontWeight: '800' },
   venueLinkCard: {
     width: 260,
     borderRadius: 18,

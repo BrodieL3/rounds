@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 9. Feed/List/Profile polish. Next likely slice: 10. Safety slice.
+Current slice in development: none. Last completed slice: 10. Safety slice. Next likely slice: 11. Rich attachment slices.
 
 Verification audit 2026-06-02:
 - Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
@@ -146,6 +146,8 @@ Verification audit 2026-06-02:
 - Firebase emulator client wiring was added after this audit: `firebase.json` declares Auth/Firestore/Functions/Storage emulator ports; set `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1` plus optional host/port overrides, restart Expo, and the app connects Auth, Firestore, Functions, and Storage clients to local emulators for manual UI QA.
 
 Slice 9 completion note: Feed row like/comment/share/saved-review actions are wired; non-functional Feed plus icon was removed intentionally; Post engagement rules are narrowed to self-only like/bookmark toggles with derived counts; Profile/List personal ranking remains cohort-scoped and excludes discovery rows. Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`. Manual emulator UI QA is still recommended before broad beta testing.
+
+Slice 10 completion note: Block user, report user/message, hide message for self, delete message for everyone, and notification privacy basics are wired behind safety service seams and trusted callables. Block writes remove Friendship/follows, cancel pending requests, hide the blocker DM, and rules deny blocked direct requests/DMs/comments/invites. Report rules require safe reporter-owned payloads while preserving legacy venue miscategorization reports. Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 

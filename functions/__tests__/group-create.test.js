@@ -86,6 +86,20 @@ describe('createGroupConversation callable core', () => {
       .rejects.toMatchObject({ code: 'permission-denied' });
   });
 
+  test('rejects group creation when creator or selected Friend has blocked the other', async () => {
+    const db = new FakeDb(Object.fromEntries([
+      friendship('alice', 'bob'),
+      friendship('alice', 'cara'),
+      ['blocks/cara_alice', { blockerUid: 'cara', blockedUid: 'alice', createdAt: 1 }],
+    ]));
+
+    await expect(createGroupConversationCallable({
+      auth: { uid: 'alice' },
+      data: { name: 'Blocked group', selectedMemberUids: ['bob', 'cara'] },
+    }, { db, now: () => 10, ErrorClass: GroupCreateError }))
+      .rejects.toMatchObject({ code: 'permission-denied' });
+  });
+
   test('writes group conversation and returns only conversation id', async () => {
     const db = new FakeDb(Object.fromEntries([
       friendship('alice', 'bob'),

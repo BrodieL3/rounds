@@ -7,7 +7,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import {
   collection, query, where, getDocs, getDoc, doc, updateDoc, arrayUnion, arrayRemove, limit,
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db, functions as cloudFunctions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 
@@ -20,6 +20,11 @@ const {
   sendFriendRequest,
 } = require('../../lib/friends/friendship-service');
 const { buildDirectMessageRouteParams } = require('../../lib/friends/dm-service');
+const {
+  blockUser,
+  buildReportPayload,
+  reportTarget,
+} = require('../../lib/friends/safety-service');
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams();
@@ -189,6 +194,45 @@ export default function UserProfileScreen() {
     router.push(buildDirectMessageRouteParams(currentUser.uid, profile.uid));
   };
 
+  const handleReportUser = async () => {
+    if (!currentUser || !profile) return;
+    try {
+      const report = buildReportPayload({
+        reporterUid: currentUser.uid,
+        targetType: 'user',
+        targetId: profile.uid,
+        reportedUid: profile.uid,
+        reason: 'Reported from profile',
+        createdAt: new Date(),
+      });
+      await reportTarget({ db, report });
+      Alert.alert('Report submitted', 'Thanks. We will review this user.');
+    } catch (err) {
+      Alert.alert('Report failed', err.message);
+    }
+  };
+
+  const handleBlockUser = () => {
+    if (!currentUser || !profile) return;
+    Alert.alert('Block user?', 'This removes Friendship and follows both ways, and prevents future messages or requests.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Block user',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await blockUser({ functions: cloudFunctions, blockedUid: profile.uid });
+            setFriendshipStatus('blocked_by_me');
+            setIsFollowing(false);
+            await reloadProfile?.();
+          } catch (err) {
+            Alert.alert('Block failed', err.message);
+          }
+        },
+      },
+    ]);
+  };
+
   if (loading) {
     return (
       <View style={styles.screen}>
@@ -280,6 +324,12 @@ export default function UserProfileScreen() {
                 <Text style={styles.messageBtnText}>Message</Text>
               </Pressable>
             ) : null}
+            <Pressable style={styles.reportUserBtn} onPress={handleReportUser}>
+              <Text style={styles.reportUserBtnText}>Report user</Text>
+            </Pressable>
+            <Pressable style={styles.blockUserBtn} onPress={handleBlockUser}>
+              <Text style={styles.blockUserBtnText}>Block user</Text>
+            </Pressable>
           </View>
         )}
       </View>
@@ -359,6 +409,16 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1, borderColor: COLORS.accent,
   },
   messageBtnText: { color: COLORS.accent, fontWeight: '800', fontSize: 14 },
+  reportUserBtn: {
+    backgroundColor: COLORS.bgElevated, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1, borderColor: COLORS.textMuted,
+  },
+  reportUserBtnText: { color: COLORS.textMuted, fontWeight: '800', fontSize: 14 },
+  blockUserBtn: {
+    backgroundColor: COLORS.bgCard, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1, borderColor: COLORS.danger,
+  },
+  blockUserBtnText: { color: COLORS.danger, fontWeight: '800', fontSize: 14 },
   statsRow: {
     flexDirection: 'row', justifyContent: 'space-around',
     backgroundColor: COLORS.bgElevated, borderRadius: 16,

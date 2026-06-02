@@ -94,9 +94,16 @@ function buildGroupCreateDocuments({ conversationId, creatorUid, selectedMemberU
 
 async function assertFriendshipsExist({ db, creatorUid, selectedMemberUids, ErrorClass }) {
   await Promise.all(selectedMemberUids.map(async (uid) => {
-    const snap = await db.collection('friendships').doc(pairId(creatorUid, uid)).get();
-    if (!snap.exists) {
+    const [friendshipSnap, creatorBlockSnap, inviteeBlockSnap] = await Promise.all([
+      db.collection('friendships').doc(pairId(creatorUid, uid)).get(),
+      db.collection('blocks').doc(`${creatorUid}_${uid}`).get(),
+      db.collection('blocks').doc(`${uid}_${creatorUid}`).get(),
+    ]);
+    if (!friendshipSnap.exists) {
       throw makeError(ErrorClass, 'permission-denied', 'Group members must be Friends');
+    }
+    if (creatorBlockSnap.exists || inviteeBlockSnap.exists) {
+      throw makeError(ErrorClass, 'permission-denied', 'Cannot invite blocked users to a group');
     }
   }));
 }

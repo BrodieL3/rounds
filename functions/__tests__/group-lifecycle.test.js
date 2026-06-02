@@ -90,6 +90,13 @@ describe('group lifecycle callable core', () => {
         ...Object.fromEntries([friendship('u0', 'newbie')]),
       })), now: () => 10, ErrorClass: GroupLifecycleError,
     })).rejects.toMatchObject({ code: 'failed-precondition' });
+
+    await expect(inviteToGroupCallable({ auth: { uid: 'alice' }, data: { conversationId: 'group1', selectedMemberUids: ['dana'] } }, {
+      db: new FakeDb(seedBase({
+        ...Object.fromEntries([friendship('alice', 'dana')]),
+        'blocks/dana_alice': { blockerUid: 'dana', blockedUid: 'alice', createdAt: 1 },
+      })), now: () => 10, ErrorClass: GroupLifecycleError,
+    })).rejects.toMatchObject({ code: 'permission-denied' });
   });
 
   test('invite adds and re-adds Friends without partial writes', async () => {

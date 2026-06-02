@@ -7,6 +7,10 @@ const {
   removeGroupMemberCallable,
 } = require('./group-lifecycle');
 const { sharePrivateRatingCallable } = require('./unlisted-share');
+const {
+  blockUserCallable,
+  deleteMessageForEveryoneCallable,
+} = require('./safety');
 
 admin.initializeApp();
 
@@ -15,6 +19,7 @@ function callableDeps() {
     db: admin.firestore(),
     ErrorClass: HttpsError,
     now: () => admin.firestore.FieldValue.serverTimestamp(),
+    FieldValue: admin.firestore.FieldValue,
   };
 }
 
@@ -23,3 +28,5 @@ exports.inviteToGroup = onCall(async (request) => inviteToGroupCallable(request,
 exports.removeGroupMember = onCall(async (request) => removeGroupMemberCallable(request, callableDeps()));
 exports.leaveGroup = onCall(async (request) => leaveGroupCallable(request, callableDeps()));
 exports.sharePrivateRating = onCall(async (request) => sharePrivateRatingCallable(request, callableDeps()));
+exports.blockUser = onCall(async (request) => blockUserCallable(request, callableDeps()));
+exports.deleteMessageForEveryone = onCall(async (request) => deleteMessageForEveryoneCallable(request, callableDeps()));
