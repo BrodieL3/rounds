@@ -110,10 +110,16 @@ export default function ProfileScreen() {
 
   const cityKey = profile?.city || 'nyc';
   const cityVenues = VENUE_DATA.cities[cityKey]?.venues || [];
-  const personalList = useMemo(
-    () => buildStackRankings(cityVenues, comparisons).filter((venue) => venue.hasPersonalRank),
-    [cityVenues, comparisons]
-  );
+  const personalList = useMemo(() => {
+    const cohorts = [...new Set(cityVenues.map((v) => v.cohort))];
+    return cohorts.flatMap((cohort) =>
+      buildStackRankings(
+        cityVenues.filter((v) => v.cohort === cohort),
+        comparisons,
+        { cohort }
+      ).filter((venue) => venue.hasPersonalRank)
+    );
+  }, [cityVenues, comparisons]);
 
   const loadData = useCallback(async () => {
     if (!user) {

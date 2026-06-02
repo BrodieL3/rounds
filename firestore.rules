@@ -283,7 +283,7 @@ service cloud.firestore {
     function canReadRating() {
       return resource.data.visibility == 'public'
         || isSignedInAs(resource.data.userId)
-        || hasActiveShare(request.auth.uid, resource.id);
+        || (signedIn() && hasActiveShare(request.auth.uid, resource.id));
     }
 
     function publicRatingExistsAfter(ratingId) {

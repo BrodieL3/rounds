@@ -56,10 +56,19 @@ export default function ListScreen() {
     });
   }, [cityVenues, activeCohort, queryText]);
 
-  const rankedVenues = useMemo(
-    () => buildStackRankings(filtered, comparisons),
-    [filtered, comparisons]
-  );
+  const rankedVenues = useMemo(() => {
+    if (activeCohort !== 'all') {
+      return buildStackRankings(filtered, comparisons, { cohort: activeCohort });
+    }
+    const cohorts = [...new Set(filtered.map((v) => v.cohort))];
+    return cohorts.flatMap((cohort) =>
+      buildStackRankings(
+        filtered.filter((v) => v.cohort === cohort),
+        comparisons,
+        { cohort }
+      )
+    );
+  }, [filtered, comparisons, activeCohort]);
 
   const handleBookmarkPress = async (venue) => {
     if (!user) return;
