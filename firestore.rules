@@ -341,6 +341,11 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // Venue bookmarks: private owner-only read/write.
+    match /users/{uid}/venueBookmarks/{venueId} {
+      allow read, write, delete: if isSignedInAs(uid);
+    }
+
     // Leaderboard entries: public read, backend write
     match /leaderboardEntries/{city}/{cohort}/entries/{userId} {
       allow read: if true;

@@ -1,9 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { COHORT_LABELS } from '../lib/constants';
+import { COLORS, COHORT_LABELS } from '../lib/constants';
 import { formatVenueMetadataLines } from '../lib/venue-display';
+import { getVenueVisualFallback } from '../lib/venue-visuals';
 
-export default function VenueRow({ item, cityKey, onPress, actionMode }) {
+export default function VenueRow({
+  item,
+  cityKey,
+  onPress,
+  actionMode,
+  bookmarked,
+  onBookmarkPress,
+}) {
   const hasRank = item.hasPersonalRank && item.personalRank;
   const metadata = formatVenueMetadataLines(
     item,
@@ -12,9 +20,15 @@ export default function VenueRow({ item, cityKey, onPress, actionMode }) {
   );
   const mode = actionMode || (hasRank ? 'ranked' : 'discovery');
   const title = hasRank ? `${item.personalRank}. ${item.name}` : item.name;
+  const visual = getVenueVisualFallback(item);
 
   return (
     <Pressable style={styles.row} onPress={onPress}>
+      {/* Thumbnail */}
+      <View style={[styles.thumb, { backgroundColor: visual.colors[0] }]}>
+        <Ionicons name={visual.iconName} size={18} color="#ffffff" />
+      </View>
+
       <View style={styles.copy}>
         <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
           {title}
@@ -38,14 +52,23 @@ export default function VenueRow({ item, cityKey, onPress, actionMode }) {
 
       {mode === 'ranked' ? (
         <View style={styles.rankAction}>
-          <Ionicons name="lock-closed-outline" size={13} color="#9ca3af" />
+          <Ionicons name="lock-closed-outline" size={13} color={COLORS.textMuted} />
         </View>
       ) : (
-        <View style={styles.discoveryActions}>
-          <Ionicons name="add" size={16} color="#6b7280" />
-          <Ionicons name="bookmark-outline" size={15} color="#6b7280" />
-          <Ionicons name="close" size={16} color="#9ca3af" />
-        </View>
+        <Pressable
+          style={styles.bookmarkAction}
+          onPress={(e) => {
+            e.stopPropagation();
+            onBookmarkPress?.(item);
+          }}
+          hitSlop={8}
+        >
+          <Ionicons
+            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={18}
+            color={bookmarked ? COLORS.accent : COLORS.textMuted}
+          />
+        </Pressable>
       )}
     </Pressable>
   );
@@ -57,28 +80,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e7eb',
-    paddingVertical: 8,
+    borderBottomColor: COLORS.bgCard,
+    paddingVertical: 10,
+    gap: 12,
+  },
+  thumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   copy: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: 4,
   },
   name: {
-    color: '#111111',
+    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '800',
     lineHeight: 20,
   },
   meta: {
-    color: '#6b7280',
+    color: COLORS.textMuted,
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 15,
     marginTop: 1,
   },
   status: {
-    color: '#6b7280',
+    color: COLORS.textMuted,
     fontSize: 11,
     fontWeight: '500',
     lineHeight: 14,
@@ -89,14 +120,15 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#d1d5db',
+    borderColor: COLORS.bgCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  discoveryActions: {
-    width: 76,
-    flexDirection: 'row',
+  bookmarkAction: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
 });

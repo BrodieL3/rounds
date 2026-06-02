@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import {
   collection, query, where, getDocs,
 } from 'firebase/firestore';
@@ -22,6 +23,7 @@ import { pickReviewImagesAsync } from '../../../lib/media-upload';
 import { createRatingWithProjectionAsync } from '../../../lib/ratings/rating-service';
 import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
+import { getVenueVisualFallback } from '../../../lib/venue-visuals';
 
 const VENUE_DATA = require('../../../assets/venues.json');
 
@@ -37,6 +39,7 @@ export default function RateScreen() {
   const { id } = useLocalSearchParams();
   const { user, profile } = useAuth();
   const venue = findVenue(id);
+  const visual = venue ? getVenueVisualFallback(venue) : null;
 
   const [sentiment, setSentiment] = useState(null);
   const [notes, setNotes] = useState('');
@@ -141,6 +144,13 @@ export default function RateScreen() {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
+      {/* Venue thumbnail */}
+      {visual && (
+        <View style={[styles.venueThumb, { backgroundColor: visual.colors[0] }]}>
+          <Ionicons name={visual.iconName} size={32} color="#ffffff" />
+        </View>
+      )}
+
       <Text style={styles.title}>{venue.name}</Text>
       <Text style={styles.meta}>{COHORT_LABELS[venue.cohort] || venue.cohort}</Text>
 
@@ -184,6 +194,35 @@ export default function RateScreen() {
         onChangeText={setNotes}
       />
 
+      {/* Review preview */}
+      {sentiment && (
+        <View style={styles.previewCard}>
+          <Text style={styles.sectionTitle}>Preview</Text>
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Venue</Text>
+            <Text style={styles.previewValue}>{venue.name}</Text>
+          </View>
+          <View style={styles.previewRow}>
+            <Text style={styles.previewLabel}>Sentiment</Text>
+            <Text style={styles.previewValue}>
+              {sentiment === 'loved' ? 'Loved it' : sentiment === 'fine' ? 'It was fine' : "Didn't like it"}
+            </Text>
+          </View>
+          {notes.trim() ? (
+            <View style={styles.previewRow}>
+              <Text style={styles.previewLabel}>Notes</Text>
+              <Text style={styles.previewValue} numberOfLines={2}>{notes.trim()}</Text>
+            </View>
+          ) : null}
+          {photos.length > 0 ? (
+            <View style={styles.previewRow}>
+              <Text style={styles.previewLabel}>Photos</Text>
+              <Text style={styles.previewValue}>{photos.length} selected</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+
       <Pressable
         style={[styles.submitBtn, !sentiment && styles.submitBtnDisabled]}
         onPress={submit}
@@ -192,9 +231,9 @@ export default function RateScreen() {
         <Text style={styles.submitText}>{submitting ? 'Saving...' : 'Submit'}</Text>
       </Pressable>
 
-        <Pressable onPress={() => router.back()} style={styles.cancel}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </Pressable>
+      <Pressable onPress={() => router.back()} style={styles.cancel}>
+        <Text style={styles.cancelText}>Cancel</Text>
+      </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -242,4 +281,36 @@ const styles = StyleSheet.create({
   submitText: { color: '#fff', fontWeight: '800', fontSize: 16 },
   cancel: { marginTop: 16, alignItems: 'center' },
   cancelText: { color: COLORS.textMuted, fontSize: 14 },
+  venueThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  previewCard: {
+    backgroundColor: COLORS.bgElevated,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 24,
+  },
+  previewRow: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  previewLabel: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+    width: 80,
+  },
+  previewValue: {
+    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
 });

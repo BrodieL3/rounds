@@ -6,6 +6,7 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
+import { getBookmarkAsync, setBookmarkAsync, removeBookmarkAsync } from '../../lib/venue-bookmark-service';
 import VenueRow from '../../components/VenueRow';
 
 const VENUE_DATA = require('../../assets/venues.json');
@@ -15,6 +16,7 @@ export default function ListScreen() {
   const [queryText, setQueryText] = useState('');
   const [activeCohort, setActiveCohort] = useState('all');
   const [comparisons, setComparisons] = useState([]);
+  const [bookmarks, setBookmarks] = useState(new Set());
 
   const cityKey = profile?.city || 'nyc';
   const cityVenues = VENUE_DATA.cities[cityKey]?.venues || [];
@@ -30,6 +32,10 @@ export default function ListScreen() {
       const comparisonsQ = query(collection(db, 'comparisons'), where('userId', '==', user.uid));
       const comparisonsSnap = await getDocs(comparisonsQ);
       setComparisons(comparisonsSnap.docs.map((d) => d.data()));
+
+      const bookmarksQ = query(collection(db, 'users', user.uid, 'venueBookmarks'));
+      const bookmarksSnap = await getDocs(bookmarksQ);
+      setBookmarks(new Set(bookmarksSnap.docs.map((d) => d.id)));
     } catch (err) {
       console.error('List personal data load error:', err);
     }
@@ -55,11 +61,40 @@ export default function ListScreen() {
     [filtered, comparisons]
   );
 
+  const handleBookmarkPress = async (venue) => {
+    if (!user) return;
+    const isBookmarked = bookmarks.has(venue.id);
+    try {
+      if (isBookmarked) {
+        const result = await removeBookmarkAsync(user.uid, venue.id);
+        if (!result.success) throw new Error(result.error);
+        setBookmarks((prev) => {
+          const next = new Set(prev);
+          next.delete(venue.id);
+          return next;
+        });
+      } else {
+        const result = await setBookmarkAsync(user.uid, {
+          id: venue.id,
+          name: venue.name,
+          city: cityKey,
+          cohort: venue.cohort,
+        });
+        if (!result.success) throw new Error(result.error);
+        setBookmarks((prev) => new Set(prev).add(venue.id));
+      }
+    } catch (err) {
+      console.error('Bookmark toggle error:', err);
+    }
+  };
+
   const renderVenue = ({ item }) => (
     <VenueRow
       item={item}
       cityKey={cityKey}
       onPress={() => router.push(`/venue/${item.id}`)}
+      bookmarked={bookmarks.has(item.id)}
+      onBookmarkPress={handleBookmarkPress}
     />
   );
 

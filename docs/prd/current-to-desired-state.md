@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 6. Rating canonicalization and public projection cleanup. Next likely slice: 7. Review/social planning slices, split before implementation.
+Current slice in development: none. Last completed slice: 7. Venue enrichment. Next likely slice: 8. Venue link messages (Friends attachments).
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -285,7 +285,7 @@ Recommended agent task sequence:
    - Use `userId` as the owner field on both `ratings/{ratingId}` and `posts/{ratingId}`; do not introduce `authorUid` in slice 6.
    - Do not implement Post re-projection/update behavior in slice 6; `posts/{ratingId}` create-only is enough for the current Rating creation flow.
    - Firestore update rules for `posts/{ratingId}` should default-deny in slice 6; owner display re-projection and non-owner engagement writes belong to later edit/feed-action slices.
-   - Defer non-owner engagement write rules for likes/bookmarks to the Feed/List/Profile polish slice; slice 6 only establishes projection create shape and keeps future engagement fields off Rating.
+   - Defer non-owner Post engagement write rules for likes/bookmarks to the Feed/List/Profile polish slice; venue want-to-try bookmarks are user-owned and belong to the venue enrichment slice; slice 6 only establishes projection create shape and keeps future engagement fields off Rating.
    - Keep engagement state (`likes`, `likedBy`, comments, bookmarks) and the existing comments subcollection on `posts/{ratingId}`, not on the private Rating.
    - Initialize public projection engagement fields for compatibility: `likes: 0`, `likedBy: []`, `bookmarks: 0`, and `bookmarkedBy: []`.
    - Use `notes` as the canonical Rating text field; do not write new `description` fields. Legacy reads may fall back from `notes` to `description`.
@@ -304,22 +304,33 @@ Recommended agent task sequence:
    - Rating update rules should default-deny in slice 6. If a defensive update scaffold is kept, it must keep `userId`, `createdAt`, and `visibility` immutable, deny engagement fields on Rating, and must not open updates for `notes`, `mediaPaths`, or `sentiment`.
    - Add pure Jest tests for canonical Rating payloads, no Firebase import in builder helpers, public-only projection decisions, canonical `mediaPaths` with no new persisted download URLs, and projection pointer/display shape.
    - Add adapter/emulator tests for no new `reviews` writes, no new `reviewId` alias fields, Rating media paths/storage write/read rules, deterministic `posts/{ratingId}` public projection creates with no random Post fork, `existsAfter/getAfter` public projection gating, public Rating batch atomicity, legacy `reviewId`/`postId` avoidance in new link contracts, Rating/Post update denial, and Rating/Post visibility/read/write rules.
-7. Review/social planning slices, split before implementation
+7. Venue enrichment slice
+   - Goal: make venue pages credible enough for social sharing without broad redesign drift. Build a blueprint component for future full venue page redesign.
+   - Venue detail adds: hero photo fallback (deterministic color/pattern per venue), Website and Directions action buttons, open/closed status from seed `hours.openNow`, average public Rating sentiment score, and recent public Ratings as "popular posts".
+   - Venue detail wires bookmark/want-to-try as user-owned Firestore write: `users/{uid}/venueBookmarks/{venueId}` with `venueId`, `venueName`, `city`, `cohort`, `createdAt`.
+   - Firestore rules: owner-only read/write/delete for venue bookmarks.
+   - List row: thumbnail/fallback, wired bookmark icon, fix hardcoded light-mode colors to use `COLORS` tokens. Add/Dismiss icons removed or made non-tappable.
+   - Rate screen: venue thumbnail/fallback, minimal review preview before submit.
+   - Blueprint component `components/VenueDetailBlueprint.js`: commented placeholder sections for future map hero, swipeable photo gallery, friend score, deep link sharing, drink pricing. Compiles but does not render in production routes.
+   - Defer to post-messaging slices: interactive map, Places Photo API, deep links to external apps, friend rank aggregation.
+   - Tests: pure helpers for visual fallback, open status, bookmark payload; service/rules tests for bookmark owner access; UI assertions for detail hero/bookmark/popular posts, list row thumbnail/colors, rate preview.
+   - Run `npm test -- --runInBand`, `npm run test:rules`, `npx expo export --platform web` before handoff.
+8. Review/social planning slices, split before implementation
    - Venue link messages.
    - Review link messages by `ratingId`.
    - Review companion tagging.
    - Unlisted private Rating shares.
-8. Feed/List/Profile polish slice
+9. Feed/List/Profile polish slice
    - Real Feed actions.
-   - Bookmark / want-to-try behavior.
+   - Feed Post like/comment/share/bookmark engagement, excluding venue want-to-try bookmarks already handled in slice 7.
    - Confirm Profile personal list excludes discovery rows.
    - Cohort isolation regression tests.
-9. Safety slice
+10. Safety slice
    - Block.
    - Report.
    - Delete/hide messages.
    - Notification privacy basics.
-10. Rich attachment slices
+11. Rich attachment slices
    - Polls.
    - Photos.
    - Voice notes.
