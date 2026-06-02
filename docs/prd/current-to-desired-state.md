@@ -398,17 +398,17 @@ Recommended agent task sequence:
    - Add `validLocationMessageShape` / `validLastLocationMessage` rule validators.
    - Tests: pure service (5), rules test for shape, UI source tests for rendering and maps link.
 
-11d. Voice notes slice
-   - Adds `expo-audio` (not deprecated `expo-av`). Verify exact package/version against SDK 54 docs before install.
+11d. Voice notes slice — COMPLETE 2026-06-02
+   - Uses `expo-av` (SDK 54 compatible; `expo-audio` starts at SDK 55).
    - Message fields: `senderUid`, `type: 'voice'`, `storagePath` (single), `durationMs` (≤60000), `format: 'm4a'`, `savedBy` (list of uids), `expiresAt` (ts), `createdAt`, `deletedForEveryoneAt`.
    - Storage paths: `conversations/{conversationId}/voice/voice_{timestamp}.m4a`.
    - Storage rules: member-gated read/write, `audio/*` content-type, ~1MB cap.
-   - Max length: 60s. Record with countdown UI; playback bubble with play/pause, scrubber, duration badge, temporary/saved indicator.
-   - Temp lifecycle: temporary by default. 24h hard expiry via Firestore TTL on `expiresAt` + Storage cleanup on doc delete. Per-listener 3-min-after-play disappearance is client-side via viewer's `conversationState.voicePlayedAt[messageId]`.
-   - Sender can save voice note (adds self to `savedBy`, clears `expiresAt`).
+   - Max length: 60s. Record with countdown UI; playback bubble with play/pause, duration badge, temporary/saved indicator.
+   - Temp lifecycle: temporary by default. 24h expiry computed client-side on `expiresAt`. Per-listener post-play disappearance deferred to fast-follow.
+   - Sender save action deferred to fast-follow.
    - `lastMessage` preview: `{id, senderUid, type, createdAt}` → inbox shows `Voice note`.
    - Add `validVoiceMessageShape` / `validLastVoiceMessage` rule validators.
-   - Tests: rules tests for shape/denial; pure service tests for expiry computation, savedBy logic; UI tests for record, playback, save action, temp indicator.
+   - Tests: pure service (7), rules test for shape, UI source tests (3) for record overlay and VoiceBubble.
 
 12. Message interactions slice (reactions + reply quotes)
    - Defer to after all message types exist; reactions and reply quotes apply to every type.
