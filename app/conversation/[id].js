@@ -4,6 +4,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -44,6 +45,10 @@ const {
   sendDirectPollMessage,
   sendGroupPollMessage,
 } = require('../../lib/friends/poll-service');
+const {
+  sendDirectLocationMessage,
+  sendGroupLocationMessage,
+} = require('../../lib/friends/location-service');
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
@@ -64,6 +69,7 @@ export default function ConversationScreen() {
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
   const [sendingPoll, setSendingPoll] = useState(false);
+  const [sendingLocation, setSendingLocation] = useState(false);
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
@@ -284,13 +290,69 @@ export default function ConversationScreen() {
     }
   }, [conversation, isGroup, recipientUid, pollAllowMultiple, pollOptions, pollQuestion, sendingPoll, user]);
 
+  const sendLocation = useCallback(async ({ lat, lng, label }) => {
+    if (!user || sendingLocation) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
+
+    setSendingLocation(true);
+    try {
+      if (conversation?.type === 'group') {
+        await sendGroupLocationMessage({
+          db, conversation, senderUid: user.uid, lat, lng, label,
+        });
+      } else {
+        await sendDirectLocationMessage({
+          db, senderUid: user.uid, recipientUid, lat, lng, label,
+        });
+        setConversationReloadKey((key) => key + 1);
+      }
+    } catch (err) {
+      Alert.alert('Location send failed', err.message);
+    } finally {
+      setSendingLocation(false);
+    }
+  }, [conversation, isGroup, recipientUid, sendingLocation, user]);
+
   const showAttachmentMenu = useCallback(() => {
     Alert.alert('Attach', undefined, [
       { text: 'Photo', onPress: sendPhotos },
       { text: 'Poll', onPress: () => setPollComposerOpen(true) },
+      {
+        text: 'Location',
+        onPress: () => {
+          Alert.alert('Share location', undefined, [
+            {
+              text: 'Current location',
+              onPress: async () => {
+                try {
+                  const { requestForegroundPermissionsAsync, getCurrentPositionAsync } = await import('expo-location');
+                  const { status } = await requestForegroundPermissionsAsync();
+                  if (status !== 'granted') {
+                    Alert.alert('Permission denied', 'Location permission is required.');
+                    return;
+                  }
+                  const { coords } = await getCurrentPositionAsync({});
+                  await sendLocation({
+                    lat: coords.latitude,
+                    lng: coords.longitude,
+                    label: 'My location',
+                  });
+                } catch (err) {
+                  Alert.alert('Location failed', err.message);
+                }
+              },
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ]);
+        },
+      },
       { text: 'Cancel', style: 'cancel' },
     ]);
-  }, [sendPhotos]);
+  }, [sendPhotos, sendLocation]);
 
   const hideMessage = useCallback(async (message) => {
     if (!user || !conversationId) return;
@@ -431,6 +493,20 @@ export default function ConversationScreen() {
                 </Pressable>
               ))}
             </View>
+          ) : item.type === 'location' ? (
+            <Pressable
+              style={[styles.locationCard, isMine ? styles.locationCardMine : styles.locationCardTheirs]}
+              onPress={() => {
+                const url = `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}`;
+                Linking.openURL(url).catch(() => Alert.alert('Could not open maps'));
+              }}
+            >
+              <Ionicons name="location" size={20} color={COLORS.accent} />
+              <View style={styles.locationCopy}>
+                <Text style={styles.locationLabel} numberOfLines={2}>{item.label || 'Location'}</Text>
+                <Text style={styles.locationCoords}>{item.lat?.toFixed(4)}, {item.lng?.toFixed(4)}</Text>
+              </View>
+            </Pressable>
           ) : isVenueLink ? (
             <Pressable
               accessibilityRole="button"
@@ -880,5 +956,33 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 14,
     fontWeight: '700',
+  },
+  locationCard: {
+    width: 240,
+    borderRadius: 18,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+  },
+  locationCardMine: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.accent,
+  },
+  locationCardTheirs: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.bgCard,
+  },
+  locationCopy: { flex: 1, minWidth: 0 },
+  locationLabel: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  locationCoords: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 2,
   },
 });
