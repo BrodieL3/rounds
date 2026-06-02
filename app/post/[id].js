@@ -11,6 +11,8 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 
+const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
+
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams();
   const { user, profile } = useAuth();
@@ -18,6 +20,7 @@ export default function PostDetailScreen() {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [media, setMedia] = useState([]);
 
   useEffect(() => {
     if (!id) return;
@@ -48,6 +51,25 @@ export default function PostDetailScreen() {
     });
     return unsub;
   }, [id]);
+
+  useEffect(() => {
+    if (!post) {
+      setMedia([]);
+      return undefined;
+    }
+    const mediaRefs = getMediaReferences(post);
+    let canceled = false;
+    resolveMediaReferencesAsync(mediaRefs)
+      .then((resolved) => {
+        if (!canceled) setMedia(resolved);
+      })
+      .catch(() => {
+        if (!canceled) setMedia([]);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [post?.id, JSON.stringify(post ? getMediaReferences(post) : [])]);
 
   const toggleLike = async () => {
     if (!user || !post) return;
@@ -146,14 +168,14 @@ export default function PostDetailScreen() {
           </Text>
         </Text>
 
-        {post.description ? (
-          <Text style={styles.description}>{post.description}</Text>
+        {(post.notes || post.description) ? (
+          <Text style={styles.description}>{post.notes || post.description}</Text>
         ) : null}
 
-        {(post.mediaUrls || post.photoURLs) && (post.mediaUrls || post.photoURLs).length > 0 && (
+        {media.length > 0 && (
           <View style={styles.photosWrap}>
-            {(post.mediaUrls || post.photoURLs).map((url, i) => (
-              <Image key={i} source={{ uri: url }} style={styles.photo} />
+            {media.map((url, i) => (
+              <Image key={`${url}-${i}`} source={{ uri: url }} style={styles.photo} />
             ))}
           </View>
         )}

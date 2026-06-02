@@ -15,10 +15,11 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
-  collection, addDoc, query, where, getDocs, serverTimestamp,
+  collection, query, where, getDocs,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
-import { createReviewWithMediaAsync, pickReviewImagesAsync } from '../../../lib/media-upload';
+import { pickReviewImagesAsync } from '../../../lib/media-upload';
+import { createRatingWithProjectionAsync } from '../../../lib/ratings/rating-service';
 import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 
@@ -38,7 +39,7 @@ export default function RateScreen() {
   const venue = findVenue(id);
 
   const [sentiment, setSentiment] = useState(null);
-  const [description, setDescription] = useState('');
+  const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,42 +77,16 @@ export default function RateScreen() {
     try {
       if (!user) throw new Error('Sign in before posting a review.');
 
-      const baseReviewData = {
-        userId: user.uid,
-        username: profile?.username || 'user',
-        displayName: profile?.displayName || 'User',
-        venueId: venue.id,
-        venueName: venue.name,
-        cohort: venue.cohort,
+      const result = await createRatingWithProjectionAsync({
+        user,
+        profile,
+        venue,
         sentiment,
-        description: description.trim(),
-        likes: 0,
-        likedBy: [],
-        city: profile?.city || 'nyc',
-      };
-
-      const reviewUpload = await createReviewWithMediaAsync(baseReviewData, photos);
-      if (!reviewUpload.success) throw new Error(reviewUpload.error || 'Photo upload failed');
-      const mediaUrls = reviewUpload.urls;
-
-      const ratingData = {
-        ...baseReviewData,
-        reviewId: reviewUpload.reviewId,
-        mediaUrls,
-        photoURLs: mediaUrls,
-        createdAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(db, 'ratings'), ratingData);
-
-      const postData = {
-        ...baseReviewData,
-        reviewId: reviewUpload.reviewId,
-        mediaUrls,
-        photoURLs: mediaUrls,
-        createdAt: serverTimestamp(),
-      };
-      await addDoc(collection(db, 'posts'), postData);
+        notes,
+        localPhotoUris: photos,
+        visibility: 'public',
+      });
+      if (!result.success) throw new Error(result.error || 'Rating failed');
 
       const ratingsQ = query(
         collection(db, 'ratings'),
@@ -138,7 +113,7 @@ export default function RateScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [sentiment, description, photos, user, profile, venue]);
+  }, [sentiment, notes, photos, user, profile, venue]);
 
   const sentimentButton = (key, label) => {
     const active = sentiment === key;
@@ -205,8 +180,8 @@ export default function RateScreen() {
         placeholderTextColor={COLORS.textPlaceholder}
         multiline
         numberOfLines={4}
-        value={description}
-        onChangeText={setDescription}
+        value={notes}
+        onChangeText={setNotes}
       />
 
       <Pressable

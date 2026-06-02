@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 6. Rating canonicalization and public projection cleanup.
+Current slice in development: none. Last completed slice: 6. Rating canonicalization and public projection cleanup. Next likely slice: 7. Review/social planning slices, split before implementation.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 

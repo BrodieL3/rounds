@@ -1,10 +1,29 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function ratingDoc(ratingId) {
+      return firestore.get(/databases/(default)/documents/ratings/$(ratingId));
+    }
+
+    function canReadRatingMedia(ratingId) {
+      let rating = ratingDoc(ratingId);
+      return rating.data.visibility == 'public'
+        || (request.auth != null && rating.data.userId == request.auth.uid);
+    }
+
     match /users/{userId}/profile_pic.jpg {
       allow read: if true;
       allow write: if request.auth != null
         && request.auth.uid == userId
+        && request.resource.size <= 500 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /ratings/{ratingId}/{fileName} {
+      allow read: if canReadRatingMedia(ratingId);
+      // Rating media uploads happen before the Rating doc exists, so writes cannot verify ownership here.
+      allow write: if request.auth != null
+        && fileName.matches('photo_[0-9]+_[0-9]+\\.jpg')
         && request.resource.size <= 500 * 1024
         && request.resource.contentType.matches('image/.*');
     }

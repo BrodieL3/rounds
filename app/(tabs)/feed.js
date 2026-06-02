@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 
 const { buildFeedItemDisplay, formatElapsedTime } = require('../../lib/feed-display');
+const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
 const { getVenueNeighborhood } = require('../../lib/venue-display');
 const venueSeed = require('../../assets/venues.json');
 
@@ -42,10 +43,6 @@ function getAvatarUri(item) {
     || (item.userId ? `https://i.pravatar.cc/160?u=${encodeURIComponent(item.userId)}` : PLACEHOLDER_AVATAR);
 }
 
-function getMedia(item) {
-  return item.mediaUrls || item.photoURLs || item.photos || item.media || [];
-}
-
 function IconRow() {
   return (
     <View style={styles.actionsRow}>
@@ -64,7 +61,22 @@ function IconRow() {
 
 export function FeedItem({ item, city }) {
   const display = buildFeedItemDisplay(item, city);
-  const media = getMedia(item);
+  const mediaRefs = getMediaReferences(item);
+  const [media, setMedia] = useState([]);
+
+  useEffect(() => {
+    let canceled = false;
+    resolveMediaReferencesAsync(mediaRefs)
+      .then((resolved) => {
+        if (!canceled) setMedia(resolved);
+      })
+      .catch(() => {
+        if (!canceled) setMedia([]);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [JSON.stringify(mediaRefs)]);
 
   return (
     <Pressable style={styles.feedItem} onPress={() => router.push(`/post/${item.id}`)}>

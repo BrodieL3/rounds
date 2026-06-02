@@ -151,6 +151,70 @@ service cloud.firestore {
             && request.resource.data.hiddenAt == null);
     }
 
+    function validRatingCreate(ratingId) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly([
+          'userId', 'username', 'displayName', 'userPhotoURL',
+          'venueId', 'venueName', 'cohort', 'sentiment', 'notes',
+          'mediaPaths', 'city', 'visibility', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'userId', 'venueId', 'venueName', 'cohort', 'sentiment',
+          'notes', 'mediaPaths', 'city', 'visibility', 'createdAt'
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.venueId is string
+        && request.resource.data.venueName is string
+        && request.resource.data.cohort is string
+        && request.resource.data.sentiment in ['loved', 'fine', 'disliked']
+        && request.resource.data.notes is string
+        && request.resource.data.mediaPaths is list
+        && request.resource.data.city is string
+        && request.resource.data.visibility in ['public', 'unlisted', 'private'];
+    }
+
+    function canReadRating() {
+      return resource.data.visibility == 'public'
+        || isSignedInAs(resource.data.userId);
+    }
+
+    function publicRatingExistsAfter(ratingId) {
+      let ratingPath = /databases/$(database)/documents/ratings/$(ratingId);
+      return existsAfter(ratingPath)
+        && getAfter(ratingPath).data.userId == request.auth.uid
+        && getAfter(ratingPath).data.visibility == 'public';
+    }
+
+    function validPostProjectionCreate(postId) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly([
+          'ratingId', 'userId', 'username', 'displayName', 'userPhotoURL',
+          'venueId', 'venueName', 'cohort', 'sentiment', 'notes',
+          'mediaPaths', 'city', 'visibility', 'likes', 'likedBy',
+          'bookmarks', 'bookmarkedBy', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'ratingId', 'userId', 'venueId', 'venueName', 'cohort',
+          'sentiment', 'notes', 'mediaPaths', 'city', 'visibility',
+          'likes', 'likedBy', 'bookmarks', 'bookmarkedBy', 'createdAt'
+        ])
+        && request.resource.data.ratingId == postId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.visibility == 'public'
+        && request.resource.data.venueId is string
+        && request.resource.data.venueName is string
+        && request.resource.data.cohort is string
+        && request.resource.data.sentiment in ['loved', 'fine', 'disliked']
+        && request.resource.data.notes is string
+        && request.resource.data.mediaPaths is list
+        && request.resource.data.city is string
+        && request.resource.data.likes == 0
+        && request.resource.data.likedBy == []
+        && request.resource.data.bookmarks == 0
+        && request.resource.data.bookmarkedBy == []
+        && publicRatingExistsAfter(postId);
+    }
+
     // Users: public read, self write; limited follower/following writes support beta social graph.
     match /users/{uid} {
       allow read: if true;
@@ -223,23 +287,17 @@ service cloud.firestore {
       }
     }
 
-    // Reviews: public read, self write
+    // Reviews: legacy read only. New canonical writes use ratings/{ratingId}.
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == resource.data.userId;
+      allow create, update, delete: if false;
     }
 
-    // Ratings: public read, self write
+    // Ratings: canonical opinion/review object.
     match /ratings/{ratingId} {
-      allow read: if true;
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+      allow read: if canReadRating();
+      allow create: if validRatingCreate(ratingId);
+      allow update, delete: if false;
     }
 
     // Comparisons: public read, self write
@@ -251,13 +309,11 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
-    // Posts: public read, self write
+    // Posts: interim public projection for public Ratings.
     match /posts/{postId} {
       allow read: if true;
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+      allow create: if validPostProjectionCreate(postId);
+      allow update, delete: if false;
 
       // Comments: public read, authenticated self create
       match /comments/{commentId} {

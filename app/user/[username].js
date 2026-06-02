@@ -65,7 +65,10 @@ export default function UserProfileScreen() {
       setIsFollowing(currentData?.following?.includes(data.uid) || false);
       await refreshFriendshipStatus(data.uid);
 
-      const ratingsQ = query(collection(db, 'ratings'), where('userId', '==', data.uid));
+      const viewingSelf = currentUser?.uid === data.uid;
+      const ratingsQ = viewingSelf
+        ? query(collection(db, 'ratings'), where('userId', '==', data.uid))
+        : query(collection(db, 'ratings'), where('userId', '==', data.uid), where('visibility', '==', 'public'));
       const ratingsSnap = await getDocs(ratingsQ);
       const venueCount = ratingsSnap.size;
 
@@ -75,11 +78,18 @@ export default function UserProfileScreen() {
 
       setStats({ venues: venueCount, comparisons: comparisonCount });
 
-      const recentQ = query(
-        collection(db, 'ratings'),
-        where('userId', '==', data.uid),
-        limit(10)
-      );
+      const recentQ = viewingSelf
+        ? query(
+          collection(db, 'ratings'),
+          where('userId', '==', data.uid),
+          limit(10)
+        )
+        : query(
+          collection(db, 'ratings'),
+          where('userId', '==', data.uid),
+          where('visibility', '==', 'public'),
+          limit(10)
+        );
       const recentSnap = await getDocs(recentQ);
       const recent = recentSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
@@ -206,8 +216,8 @@ export default function UserProfileScreen() {
       <Text style={styles.reviewMeta}>
         {item.sentiment === 'loved' ? 'Loved it' : item.sentiment === 'fine' ? 'It was fine' : "Didn't like it"}
       </Text>
-      {item.description ? (
-        <Text style={styles.reviewDesc}>{item.description}</Text>
+      {(item.notes || item.description) ? (
+        <Text style={styles.reviewDesc}>{item.notes || item.description}</Text>
       ) : null}
     </View>
   );
