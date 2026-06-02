@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { getDownloadURL, ref } from 'firebase/storage';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import VoiceBubble from '../../components/VoiceBubble';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db, functions as cloudFunctions, storage } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,6 +50,22 @@ const {
   sendDirectLocationMessage,
   sendGroupLocationMessage,
 } = require('../../lib/friends/location-service');
+const {
+  sendDirectVoiceMessage,
+  sendGroupVoiceMessage,
+} = require('../../lib/friends/voice-service');
+const {
+  startRecordingTimer,
+  startVoiceRecordingAsync,
+  stopVoiceRecordingAsync,
+} = require('../../lib/friends/voice-recorder');
+
+function formatVoiceDuration(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
@@ -70,6 +87,9 @@ export default function ConversationScreen() {
   const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
   const [sendingPoll, setSendingPoll] = useState(false);
   const [sendingLocation, setSendingLocation] = useState(false);
+  const [voiceRecording, setVoiceRecording] = useState(null);
+  const [voiceRecordElapsed, setVoiceRecordElapsed] = useState(0);
+  const [voiceRecordingTimer, setVoiceRecordingTimer] = useState(null);
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
@@ -314,10 +334,74 @@ export default function ConversationScreen() {
     }
   }, [conversation, isGroup, recipientUid, sendingLocation, user]);
 
+  const startRecording = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { recording } = await startVoiceRecordingAsync();
+      setVoiceRecording(recording);
+      const timer = startRecordingTimer((elapsed) => {
+        setVoiceRecordElapsed(elapsed);
+        if (elapsed >= 60000) {
+          stopRecordingAndSend();
+        }
+      });
+      setVoiceRecordingTimer(timer);
+    } catch (err) {
+      Alert.alert('Recording failed', err.message);
+      setVoiceRecording(null);
+    }
+  }, [user]);
+
+  const stopRecordingAndSend = useCallback(async () => {
+    if (!voiceRecording || !user) return;
+    voiceRecordingTimer?.stop();
+    setVoiceRecordingTimer(null);
+
+    try {
+      const { uri, durationMs } = await stopVoiceRecordingAsync(voiceRecording);
+      setVoiceRecording(null);
+      setVoiceRecordElapsed(0);
+
+      if (durationMs < 1000) {
+        Alert.alert('Voice note too short', 'Hold to record for at least 1 second.');
+        return;
+      }
+
+      // Upload to Storage
+      const timestamp = Date.now();
+      const path = `conversations/${conversationId}/voice/voice_${timestamp}.m4a`;
+      const storageRef = ref(storage, path);
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      await uploadBytes(storageRef, blob, {
+        contentType: 'audio/m4a',
+      });
+
+      if (conversation?.type === 'group') {
+        await sendGroupVoiceMessage({
+          db, conversation, senderUid: user.uid, storagePath: path, durationMs,
+        });
+      } else {
+        await sendDirectVoiceMessage({
+          db, senderUid: user.uid, recipientUid, storagePath: path, durationMs,
+        });
+        setConversationReloadKey((key) => key + 1);
+      }
+    } catch (err) {
+      Alert.alert('Voice send failed', err.message);
+      setVoiceRecording(null);
+      setVoiceRecordElapsed(0);
+    }
+  }, [conversation, conversationId, recipientUid, user, voiceRecording, voiceRecordingTimer]);
+
   const showAttachmentMenu = useCallback(() => {
     Alert.alert('Attach', undefined, [
       { text: 'Photo', onPress: sendPhotos },
       { text: 'Poll', onPress: () => setPollComposerOpen(true) },
+      {
+        text: 'Voice',
+        onPress: startRecording,
+      },
       {
         text: 'Location',
         onPress: () => {
@@ -352,7 +436,7 @@ export default function ConversationScreen() {
       },
       { text: 'Cancel', style: 'cancel' },
     ]);
-  }, [sendPhotos, sendLocation]);
+  }, [sendPhotos, sendLocation, startRecording]);
 
   const hideMessage = useCallback(async (message) => {
     if (!user || !conversationId) return;
@@ -507,6 +591,15 @@ export default function ConversationScreen() {
                 <Text style={styles.locationCoords}>{item.lat?.toFixed(4)}, {item.lng?.toFixed(4)}</Text>
               </View>
             </Pressable>
+          ) : item.type === 'voice' ? (
+            <VoiceBubble
+              message={item}
+              isMine={isMine}
+              conversationId={conversationId}
+              db={db}
+              storage={storage}
+              user={user}
+            />
           ) : isVenueLink ? (
             <Pressable
               accessibilityRole="button"
@@ -631,7 +724,19 @@ export default function ConversationScreen() {
         )}
       />
 
-      {pollComposerOpen ? (
+      {voiceRecording ? (
+        <View style={styles.voiceRecordingOverlay}>
+          <View style={styles.voiceRecordingRow}>
+            <View style={styles.voiceRecordingDot} />
+            <Text style={styles.voiceRecordingText}>
+              Recording {formatVoiceDuration(voiceRecordElapsed)}
+            </Text>
+          </View>
+          <Pressable onPress={stopRecordingAndSend} style={styles.voiceRecordingStop}>
+            <Ionicons name="stop" size={24} color="#ffffff" />
+          </Pressable>
+        </View>
+      ) : pollComposerOpen ? (
         <View style={styles.pollComposer}>
           <TextInput
             style={styles.input}
@@ -984,5 +1089,38 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 11,
     marginTop: 2,
+  },
+  voiceRecordingOverlay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.bgCard,
+    backgroundColor: COLORS.bg,
+  },
+  voiceRecordingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  voiceRecordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.danger,
+  },
+  voiceRecordingText: {
+    color: COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  voiceRecordingStop: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
