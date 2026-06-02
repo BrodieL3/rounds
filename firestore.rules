@@ -323,6 +323,36 @@ service cloud.firestore {
         && publicRatingExistsAfter(postId);
     }
 
+    function validSelfOnlyArrayToggle(oldList, newList) {
+      return signedIn()
+        && oldList is list
+        && newList is list
+        && (
+          (!(request.auth.uid in oldList)
+            && request.auth.uid in newList
+            && newList.size() == oldList.size() + 1
+            && newList.hasAll(oldList))
+          || (request.auth.uid in oldList
+            && !(request.auth.uid in newList)
+            && newList.size() == oldList.size() - 1
+            && oldList.hasAll(newList))
+        );
+    }
+
+    function validPostLikeUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likedBy'])
+        && request.resource.data.likedBy is list
+        && request.resource.data.likes == request.resource.data.likedBy.size()
+        && validSelfOnlyArrayToggle(resource.data.likedBy, request.resource.data.likedBy);
+    }
+
+    function validPostBookmarkUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks', 'bookmarkedBy'])
+        && request.resource.data.bookmarkedBy is list
+        && request.resource.data.bookmarks == request.resource.data.bookmarkedBy.size()
+        && validSelfOnlyArrayToggle(resource.data.bookmarkedBy, request.resource.data.bookmarkedBy);
+    }
+
     // Users: public read, self write; limited follower/following writes support beta social graph.
     match /users/{uid} {
       allow read: if true;
@@ -421,7 +451,8 @@ service cloud.firestore {
     match /posts/{postId} {
       allow read: if true;
       allow create: if validPostProjectionCreate(postId);
-      allow update, delete: if false;
+      allow update: if validPostLikeUpdate() || validPostBookmarkUpdate();
+      allow delete: if false;
 
       // Comments: public read, authenticated self create
       match /comments/{commentId} {

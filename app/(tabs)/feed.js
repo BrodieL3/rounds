@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Image,
   Pressable,
@@ -12,13 +13,20 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
-  collection, limit, onSnapshot, query, where,
+  collection, doc, limit, onSnapshot, query, updateDoc, where,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 
 const { buildFeedItemDisplay, formatElapsedTime } = require('../../lib/feed-display');
+const {
+  buildPostBookmarkUpdate,
+  buildPostLikeUpdate,
+  buildReviewShareParams,
+  isPostBookmarkedBy,
+  isPostLikedBy,
+} = require('../../lib/feed-engagement');
 const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
 const { getVenueNeighborhood } = require('../../lib/venue-display');
 const venueSeed = require('../../assets/venues.json');
@@ -43,26 +51,87 @@ function getAvatarUri(item) {
     || (item.userId ? `https://i.pravatar.cc/160?u=${encodeURIComponent(item.userId)}` : PLACEHOLDER_AVATAR);
 }
 
-function IconRow() {
+function ActionIcon({ name, activeName, active, color, onPress, disabled, accessibilityLabel }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={(event) => {
+        event.stopPropagation?.();
+        onPress?.();
+      }}
+      disabled={disabled}
+      hitSlop={8}
+      style={disabled ? styles.actionDisabled : null}
+    >
+      <Ionicons
+        name={active ? activeName : name}
+        size={24}
+        color={active ? color : COLORS.textPrimary}
+      />
+    </Pressable>
+  );
+}
+
+function IconRow({
+  liked,
+  bookmarked,
+  onLikePress,
+  onCommentPress,
+  onSharePress,
+  onBookmarkPress,
+  disabledAction,
+}) {
+  const disabled = Boolean(disabledAction);
   return (
     <View style={styles.actionsRow}>
       <View style={styles.actionsLeft}>
-        <Ionicons name="heart-outline" size={24} color={COLORS.textPrimary} />
-        <Ionicons name="chatbubble-outline" size={23} color={COLORS.textPrimary} />
-        <Ionicons name="paper-plane-outline" size={23} color={COLORS.textPrimary} />
+        <ActionIcon
+          name="heart-outline"
+          activeName="heart"
+          active={liked}
+          color={COLORS.danger}
+          onPress={onLikePress}
+          disabled={disabled}
+          accessibilityLabel={liked ? 'Unlike review' : 'Like review'}
+        />
+        <ActionIcon
+          name="chatbubble-outline"
+          activeName="chatbubble"
+          onPress={onCommentPress}
+          disabled={disabled}
+          accessibilityLabel="Comment on review"
+        />
+        <ActionIcon
+          name="paper-plane-outline"
+          activeName="paper-plane"
+          onPress={onSharePress}
+          disabled={disabled}
+          accessibilityLabel="Share review"
+        />
       </View>
       <View style={styles.actionsRight}>
-        <Ionicons name="add-circle-outline" size={25} color={COLORS.textPrimary} />
-        <Ionicons name="bookmark-outline" size={23} color={COLORS.textPrimary} />
+        <ActionIcon
+          name="bookmark-outline"
+          activeName="bookmark"
+          active={bookmarked}
+          color={COLORS.accent}
+          onPress={onBookmarkPress}
+          disabled={disabled}
+          accessibilityLabel={bookmarked ? 'Unsave review' : 'Save review'}
+        />
       </View>
     </View>
   );
 }
 
-export function FeedItem({ item, city }) {
+export function FeedItem({ item, city, currentUserId }) {
   const display = buildFeedItemDisplay(item, city);
   const mediaRefs = getMediaReferences(item);
   const [media, setMedia] = useState([]);
+  const [pendingAction, setPendingAction] = useState(null);
+  const liked = isPostLikedBy(item, currentUserId);
+  const bookmarked = isPostBookmarkedBy(item, currentUserId);
 
   useEffect(() => {
     let canceled = false;
@@ -78,8 +147,29 @@ export function FeedItem({ item, city }) {
     };
   }, [JSON.stringify(mediaRefs)]);
 
+  const updateEngagement = async (action, buildUpdate) => {
+    if (!currentUserId || pendingAction) return;
+    setPendingAction(action);
+    try {
+      await updateDoc(doc(db, 'posts', item.id), buildUpdate(item, currentUserId));
+    } catch (err) {
+      Alert.alert('Action failed', err.message);
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const openPost = () => router.push(`/post/${item.id}`);
+
+  const sharePost = () => {
+    router.push({
+      pathname: '/conversation/share-review',
+      params: buildReviewShareParams(item),
+    });
+  };
+
   return (
-    <Pressable style={styles.feedItem} onPress={() => router.push(`/post/${item.id}`)}>
+    <Pressable style={styles.feedItem} onPress={openPost}>
       <View style={styles.headerRow}>
         <Image source={{ uri: getAvatarUri(item) }} style={styles.avatar} />
 
@@ -124,7 +214,15 @@ export function FeedItem({ item, city }) {
         <Text style={styles.metricText}>{display.engagement.bookmarks}</Text>
       </View>
 
-      <IconRow />
+      <IconRow
+        liked={liked}
+        bookmarked={bookmarked}
+        onLikePress={() => updateEngagement('like', buildPostLikeUpdate)}
+        onCommentPress={openPost}
+        onSharePress={sharePost}
+        onBookmarkPress={() => updateEngagement('bookmark', buildPostBookmarkUpdate)}
+        disabledAction={pendingAction}
+      />
     </Pressable>
   );
 }
@@ -180,7 +278,7 @@ export default function FeedScreen() {
       <Text style={styles.title}>Feed</Text>
       <FlatList
         data={posts}
-        renderItem={({ item }) => <FeedItem item={item} city={profile?.city} />}
+        renderItem={({ item }) => <FeedItem item={item} city={profile?.city} currentUserId={user?.uid} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={(
@@ -278,6 +376,7 @@ const styles = StyleSheet.create({
   },
   actionsLeft: { flexDirection: 'row', gap: 18, alignItems: 'center' },
   actionsRight: { flexDirection: 'row', gap: 18, alignItems: 'center' },
+  actionDisabled: { opacity: 0.5 },
   empty: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: 20 },
   emptyText: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '700' },
   emptySub: { color: COLORS.textMuted, fontSize: 14, marginTop: 8, textAlign: 'center' },

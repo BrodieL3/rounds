@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 8d. Unlisted private Rating shares. Next likely slice: 9. Feed/List/Profile polish.
+Current slice in development: none. Last completed slice: 9. Feed/List/Profile polish. Next likely slice: 10. Safety slice.
 
 Verification audit 2026-06-02:
 - Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
@@ -145,7 +145,7 @@ Verification audit 2026-06-02:
 - Dirty worktree was clean after verification, but local `main` was ahead of `origin/main` by 3 commits despite the session handoff saying those commits were pushed.
 - Firebase emulator client wiring was added after this audit: `firebase.json` declares Auth/Firestore/Functions/Storage emulator ports; set `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1` plus optional host/port overrides, restart Expo, and the app connects Auth, Firestore, Functions, and Storage clients to local emulators for manual UI QA.
 
-Slice 9 readiness note: code is ready to start Feed/List/Profile polish. Use emulator wiring for live manual UI QA against emulated Firebase services before/while validating slice 9 feed engagement flows.
+Slice 9 completion note: Feed row like/comment/share/saved-review actions are wired; non-functional Feed plus icon was removed intentionally; Post engagement rules are narrowed to self-only like/bookmark toggles with derived counts; Profile/List personal ranking remains cohort-scoped and excludes discovery rows. Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`. Manual emulator UI QA is still recommended before broad beta testing.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -351,6 +351,12 @@ Recommended agent task sequence:
 9. Feed/List/Profile polish slice
    - Real Feed actions.
    - Feed Post like/comment/share/bookmark engagement, excluding venue want-to-try bookmarks already handled in slice 7.
+   - Feed saved-review bookmarks use `posts/{ratingId}.bookmarkedBy/bookmarks`; venue want-to-try remains `users/{uid}/venueBookmarks/{venueId}`.
+   - Saved reviews can be retrieved at beta scale with `posts` where `bookmarkedBy array-contains uid`.
+   - Feed comment action opens `/post/[id]`; post detail owns comment input and comment counts are deferred off feed rows.
+   - Feed share action opens `/conversation/share-review` with canonical `ratingId`.
+   - Remove the non-functional Feed plus icon in this polish slice; this is intentional cleanup of a cosmetic/dead control, not screenshot-baseline regression.
+   - Firestore rules allow only narrow self-like or self-saved-review toggle updates on public Post projections; one engagement pair per update and count must match array size.
    - Confirm Profile personal list excludes discovery rows.
    - Cohort isolation regression tests.
 10. Safety slice
