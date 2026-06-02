@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView, FlatList, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
   collection, query, where, getDocs, getDoc, doc, updateDoc, arrayUnion, arrayRemove, limit,
@@ -212,9 +213,33 @@ export default function UserProfileScreen() {
 
   const renderReview = ({ item }) => (
     <View style={styles.reviewCard}>
-      <Text style={styles.reviewVenue}>{item.venueName || item.venueId}</Text>
+      <View style={styles.reviewHeader}>
+        <Text style={styles.reviewVenue}>{item.venueName || item.venueId}</Text>
+        {isSelf && (
+          <Pressable
+            style={styles.reviewShareBtn}
+            onPress={() => router.push({
+              pathname: '/conversation/share-review',
+              params: {
+                ratingId: item.id,
+                venueId: item.venueId,
+                venueName: item.venueName,
+                venueCohort: item.cohort,
+                sentiment: item.sentiment,
+                authorDisplayName: item.displayName,
+                authorUsername: item.username,
+                notes: item.notes || item.description || '',
+                visibility: item.visibility,
+              },
+            })}
+          >
+            <Ionicons name="paper-plane-outline" size={16} color={COLORS.accent} />
+          </Pressable>
+        )}
+      </View>
       <Text style={styles.reviewMeta}>
         {item.sentiment === 'loved' ? 'Loved it' : item.sentiment === 'fine' ? 'It was fine' : "Didn't like it"}
+        {item.visibility && item.visibility !== 'public' ? ` · ${item.visibility}` : ''}
       </Text>
       {(item.notes || item.description) ? (
         <Text style={styles.reviewDesc}>{item.notes || item.description}</Text>
@@ -348,7 +373,19 @@ const styles = StyleSheet.create({
   reviewCard: {
     backgroundColor: COLORS.bgElevated, padding: 16, borderRadius: 16, marginBottom: 8,
   },
-  reviewVenue: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700' },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reviewVenue: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700', flex: 1 },
+  reviewShareBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   reviewMeta: { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
   reviewDesc: { color: COLORS.textSecondary, fontSize: 14, marginTop: 6 },
   emptyCard: {

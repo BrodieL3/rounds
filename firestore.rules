@@ -118,13 +118,15 @@ service cloud.firestore {
         && data.authorUsername is string
         && data.authorUsername.size() <= 160
         && data.notes is string
-        && data.notes.size() <= 1000;
+        && data.notes.size() <= 1000
+        && (!data.keys().hasAny(['visibility'])
+          || data.visibility in ['public', 'unlisted', 'private']);
     }
 
     function validReviewLinkMessageShape(data) {
       return data.keys().hasOnly([
           'senderUid', 'type', 'ratingId', 'venueId', 'venueName', 'venueCohort',
-          'sentiment', 'authorDisplayName', 'authorUsername', 'notes',
+          'sentiment', 'authorDisplayName', 'authorUsername', 'notes', 'visibility',
           'createdAt', 'deletedForEveryoneAt'
         ])
         && data.senderUid == request.auth.uid
@@ -163,7 +165,7 @@ service cloud.firestore {
     function validLastReviewLinkMessage(data) {
       return data.keys().hasOnly([
           'id', 'senderUid', 'type', 'ratingId', 'venueId', 'venueName', 'venueCohort',
-          'sentiment', 'authorDisplayName', 'authorUsername', 'notes', 'createdAt'
+          'sentiment', 'authorDisplayName', 'authorUsername', 'notes', 'visibility', 'createdAt'
         ])
         && data.id is string
         && data.senderUid == request.auth.uid
@@ -272,9 +274,16 @@ service cloud.firestore {
         && request.resource.data.visibility in ['public', 'unlisted', 'private'];
     }
 
+    function hasActiveShare(uid, ratingId) {
+      let sharePath = /databases/$(database)/documents/users/$(uid)/sharedRatings/$(ratingId);
+      return exists(sharePath)
+        && get(sharePath).data.revokedAt == null;
+    }
+
     function canReadRating() {
       return resource.data.visibility == 'public'
-        || isSignedInAs(resource.data.userId);
+        || isSignedInAs(resource.data.userId)
+        || hasActiveShare(request.auth.uid, resource.id);
     }
 
     function publicRatingExistsAfter(ratingId) {
@@ -443,6 +452,20 @@ service cloud.firestore {
     // Venue bookmarks: private owner-only read/write.
     match /users/{uid}/venueBookmarks/{venueId} {
       allow read, write, delete: if isSignedInAs(uid);
+    }
+
+    // Shared ratings: owner-only read. Written by trusted Cloud Functions.
+    match /users/{uid}/sharedRatings/{ratingId} {
+      allow read: if isSignedInAs(uid);
+      allow create, update, delete: if false;
+    }
+
+    // Rating shares: readable by conversation members. Written by trusted Cloud Functions.
+    match /ratings/{ratingId}/shares/{conversationId} {
+      allow read: if signedIn()
+        && exists(/databases/$(database)/documents/conversations/$(conversationId))
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids;
+      allow create, update, delete: if false;
     }
 
     // Leaderboard entries: public read, backend write

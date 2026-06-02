@@ -13,8 +13,14 @@ const {
   sendGroupReviewLinkMessage,
 } = require('../../lib/friends/review-link-service');
 
+const { httpsCallable } = require('firebase/functions');
+const { functions } = require('../../lib/firebase');
+
 export default function ShareReviewScreen() {
-  const { ratingId, venueId, venueName, venueCohort, sentiment, authorDisplayName, authorUsername, notes } = useLocalSearchParams();
+  const {
+    ratingId, venueId, venueName, venueCohort, sentiment,
+    authorDisplayName, authorUsername, notes, visibility,
+  } = useLocalSearchParams();
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [sendingConversationId, setSendingConversationId] = useState(null);
@@ -28,6 +34,7 @@ export default function ShareReviewScreen() {
     const normalizedVenueCohort = Array.isArray(venueCohort) ? venueCohort[0] : venueCohort;
     const normalizedRatingId = Array.isArray(ratingId) ? ratingId[0] : ratingId;
     const normalizedVenueId = Array.isArray(venueId) ? venueId[0] : venueId;
+    const normalizedVisibility = Array.isArray(visibility) ? visibility[0] : visibility;
 
     return {
       ratingId: normalizedRatingId,
@@ -38,8 +45,9 @@ export default function ShareReviewScreen() {
       authorDisplayName: normalizedAuthorDisplayName,
       authorUsername: normalizedAuthorUsername,
       notes: normalizedNotes,
+      visibility: normalizedVisibility || 'public',
     };
-  }, [ratingId, venueId, venueName, venueCohort, sentiment, authorDisplayName, authorUsername, notes]);
+  }, [ratingId, venueId, venueName, venueCohort, sentiment, authorDisplayName, authorUsername, notes, visibility]);
 
   const visual = review.venueId ? getVenueVisualFallback({ id: review.venueId, cohort: review.venueCohort }) : null;
 
@@ -57,6 +65,12 @@ export default function ShareReviewScreen() {
     if (!user || !review.ratingId || sendingConversationId) return;
     setSendingConversationId(conversation.id);
     try {
+      // For private/unlisted ratings, grant share access first
+      if (review.visibility !== 'public') {
+        const shareFn = httpsCallable(functions, 'sharePrivateRating');
+        await shareFn({ ratingId: review.ratingId, conversationId: conversation.id });
+      }
+
       if (conversation.type === 'group') {
         await sendGroupReviewLinkMessage({ db, conversation, senderUid: user.uid, review });
       } else {

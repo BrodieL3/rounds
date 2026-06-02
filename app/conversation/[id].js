@@ -213,7 +213,12 @@ export default function ConversationScreen() {
                 <Ionicons name={visual.iconName} size={20} color="#ffffff" />
               </View>
               <View style={styles.reviewLinkCopy}>
-                <Text style={styles.reviewLinkLabel}>Review</Text>
+                <View style={styles.reviewLinkHeader}>
+                  <Text style={styles.reviewLinkLabel}>Review</Text>
+                  {item.visibility && item.visibility !== 'public' && (
+                    <Text style={styles.unlistedTag}>Unlisted</Text>
+                  )}
+                </View>
                 <Text style={styles.reviewLinkVenue} numberOfLines={1}>{item.venueName}</Text>
                 <Text style={[styles.reviewLinkSentiment, { color: sentimentColor }]}>
                   {item.sentiment === 'loved' ? '❤️ Loved it' : item.sentiment === 'fine' ? '👍 It was fine' : "👎 Didn't like it"}
@@ -410,7 +415,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   reviewLinkCopy: { flex: 1, minWidth: 0 },
+  reviewLinkHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   reviewLinkLabel: { color: COLORS.accent, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  unlistedTag: {
+    color: COLORS.danger,
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    backgroundColor: 'rgba(239,68,68,0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
   reviewLinkVenue: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800', marginTop: 2 },
   reviewLinkSentiment: { fontSize: 12, fontWeight: '700', marginTop: 2 },
   reviewLinkAuthor: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },

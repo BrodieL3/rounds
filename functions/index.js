@@ -6,6 +6,7 @@ const {
   leaveGroupCallable,
   removeGroupMemberCallable,
 } = require('./group-lifecycle');
+const { sharePrivateRatingCallable } = require('./unlisted-share');
 
 admin.initializeApp();
 
@@ -21,3 +22,4 @@ exports.createGroupConversation = onCall(async (request) => createGroupConversat
 exports.inviteToGroup = onCall(async (request) => inviteToGroupCallable(request, callableDeps()));
 exports.removeGroupMember = onCall(async (request) => removeGroupMemberCallable(request, callableDeps()));
 exports.leaveGroup = onCall(async (request) => leaveGroupCallable(request, callableDeps()));
+exports.sharePrivateRating = onCall(async (request) => sharePrivateRatingCallable(request, callableDeps()));

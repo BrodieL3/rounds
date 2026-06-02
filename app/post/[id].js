@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
-  doc, onSnapshot, collection, query, addDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp,
+  doc, onSnapshot, collection, query, addDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDoc,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,15 +25,50 @@ export default function PostDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
-    const unsub = onSnapshot(doc(db, 'posts', id), (snap) => {
+    let canceled = false;
+
+    const unsubPost = onSnapshot(doc(db, 'posts', id), (snap) => {
+      if (canceled) return;
       if (snap.exists()) {
         setPost({ id: snap.id, ...snap.data() });
+        setLoading(false);
       } else {
-        setPost(null);
+        // Fallback to ratings for unlisted/private shared reviews
+        getDoc(doc(db, 'ratings', id)).then((ratingSnap) => {
+          if (canceled) return;
+          if (ratingSnap.exists()) {
+            setPost({ id: ratingSnap.id, ...ratingSnap.data() });
+          } else {
+            setPost(null);
+          }
+          setLoading(false);
+        }).catch(() => {
+          if (canceled) return;
+          setPost(null);
+          setLoading(false);
+        });
       }
-      setLoading(false);
+    }, () => {
+      // On error, try ratings directly
+      getDoc(doc(db, 'ratings', id)).then((ratingSnap) => {
+        if (canceled) return;
+        if (ratingSnap.exists()) {
+          setPost({ id: ratingSnap.id, ...ratingSnap.data() });
+        } else {
+          setPost(null);
+        }
+        setLoading(false);
+      }).catch(() => {
+        if (canceled) return;
+        setPost(null);
+        setLoading(false);
+      });
     });
-    return unsub;
+
+    return () => {
+      canceled = true;
+      unsubPost();
+    };
   }, [id]);
 
   useEffect(() => {

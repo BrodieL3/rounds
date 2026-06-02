@@ -5,10 +5,18 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/ratings/$(ratingId));
     }
 
+    function hasActiveShareForMedia(uid, ratingId) {
+      let sharePath = /databases/$(database)/documents/users/$(uid)/sharedRatings/$(ratingId);
+      return request.auth != null
+        && exists(sharePath)
+        && get(sharePath).data.revokedAt == null;
+    }
+
     function canReadRatingMedia(ratingId) {
       let rating = ratingDoc(ratingId);
       return rating.data.visibility == 'public'
-        || (request.auth != null && rating.data.userId == request.auth.uid);
+        || (request.auth != null && rating.data.userId == request.auth.uid)
+        || hasActiveShareForMedia(request.auth.uid, ratingId);
     }
 
     match /users/{userId}/profile_pic.jpg {
