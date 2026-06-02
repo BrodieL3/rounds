@@ -390,13 +390,13 @@ Recommended agent task sequence:
    - Add `validPollMessageShape` / `validLastPollMessage` rule validators.
    - Tests: pure service tests (17) for single vs multi vote, vote change, post-close rejection, member-add-option append; rules test for poll message shape; UI source tests for poll composer and rendering.
 
-11c. Location pins slice
+11c. Location pins slice — COMPLETE 2026-06-02
    - Message fields: `senderUid`, `type: 'location'`, `lat` (number), `lng` (number), `label` (string), `createdAt`, `deletedForEveryoneAt`.
-   - No static map URL persisted; render thumbnail client-side from `lat`/`lng`; tap → external maps deep link.
-   - Offer current-location quick-send (via `expo-location`) and searched-place picker (reuse Google Places/venue search).
+   - No static map URL persisted; render with label + coords; tap → Google Maps deep link.
+   - Current-location quick-send via `expo-location`.
    - `lastMessage` preview: `{id, senderUid, type, label, createdAt}` → inbox shows `Location` (or `label`).
    - Add `validLocationMessageShape` / `validLastLocationMessage` rule validators.
-   - Tests: rules tests for shape/denial; UI tests for current-location quick-send, search picker, map deep-link.
+   - Tests: pure service (5), rules test for shape, UI source tests for rendering and maps link.
 
 11d. Voice notes slice
    - Adds `expo-audio` (not deprecated `expo-av`). Verify exact package/version against SDK 54 docs before install.
