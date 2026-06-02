@@ -30,7 +30,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "test:rules": "firebase emulators:exec --only firestore \"jest lib/__tests__/firestore-friends-rules.test.js lib/__tests__/venue-bookmark-rules.test.js --runInBand\""
+    "test:rules": "firebase emulators:exec --project rounds-8d89f --only firestore,storage \"jest lib/__tests__/firestore-friends-rules.test.js lib/__tests__/venue-bookmark-rules.test.js lib/__tests__/storage-rules.test.js --runInBand\""
   },
   "private": true,
   "devDependencies": {

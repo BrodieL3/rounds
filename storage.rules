@@ -8,8 +8,8 @@ service firebase.storage {
     function hasActiveShareForMedia(uid, ratingId) {
       let sharePath = /databases/(default)/documents/users/$(uid)/sharedRatings/$(ratingId);
       return request.auth != null
-        && exists(sharePath)
-        && get(sharePath).data.revokedAt == null;
+        && firestore.exists(sharePath)
+        && firestore.get(sharePath).data.revokedAt == null;
     }
 
     function canReadRatingMedia(ratingId) {
