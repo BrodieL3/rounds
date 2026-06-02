@@ -39,6 +39,11 @@ const {
   sendDirectPhotoMessage,
   sendGroupPhotoMessage,
 } = require('../../lib/friends/photo-service');
+const {
+  castPollVote,
+  sendDirectPollMessage,
+  sendGroupPollMessage,
+} = require('../../lib/friends/poll-service');
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
@@ -54,6 +59,11 @@ export default function ConversationScreen() {
   const [sending, setSending] = useState(false);
   const [sendingPhotos, setSendingPhotos] = useState(false);
   const [photoUrls, setPhotoUrls] = useState({});
+  const [pollComposerOpen, setPollComposerOpen] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollAllowMultiple, setPollAllowMultiple] = useState(false);
+  const [sendingPoll, setSendingPoll] = useState(false);
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
@@ -225,18 +235,61 @@ export default function ConversationScreen() {
     }
   }, [conversation, isGroup, recipientUid, sendingPhotos, user]);
 
-  const showAttachmentMenu = useCallback(() => {
-    if (Platform.OS === 'ios') {
-      Alert.alert('Attach', undefined, [
-        { text: 'Photo', onPress: sendPhotos },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    } else {
-      Alert.alert('Attach', undefined, [
-        { text: 'Photo', onPress: sendPhotos },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
+  const sendPoll = useCallback(async () => {
+    if (!user || sendingPoll) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
+
+    const question = pollQuestion.trim();
+    const options = pollOptions.map((o) => o.trim()).filter(Boolean);
+    if (!question) {
+      Alert.alert('Poll not sent', 'Question is required');
+      return;
     }
+    if (options.length < 2) {
+      Alert.alert('Poll not sent', 'At least 2 options are required');
+      return;
+    }
+
+    setSendingPoll(true);
+    try {
+      if (conversation?.type === 'group') {
+        await sendGroupPollMessage({
+          db,
+          conversation,
+          senderUid: user.uid,
+          question,
+          options: options.map((text) => ({ text })),
+          allowMultiple: pollAllowMultiple,
+        });
+      } else {
+        await sendDirectPollMessage({
+          db,
+          senderUid: user.uid,
+          recipientUid,
+          question,
+          options: options.map((text) => ({ text })),
+          allowMultiple: pollAllowMultiple,
+        });
+        setConversationReloadKey((key) => key + 1);
+      }
+      setPollComposerOpen(false);
+      setPollQuestion('');
+      setPollOptions(['', '']);
+      setPollAllowMultiple(false);
+    } catch (err) {
+      Alert.alert('Poll send failed', err.message);
+    } finally {
+      setSendingPoll(false);
+    }
+  }, [conversation, isGroup, recipientUid, pollAllowMultiple, pollOptions, pollQuestion, sendingPoll, user]);
+
+  const showAttachmentMenu = useCallback(() => {
+    Alert.alert('Attach', undefined, [
+      { text: 'Photo', onPress: sendPhotos },
+      { text: 'Poll', onPress: () => setPollComposerOpen(true) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   }, [sendPhotos]);
 
   const hideMessage = useCallback(async (message) => {
@@ -298,6 +351,7 @@ export default function ConversationScreen() {
     const isVenueLink = item.type === 'venue_link';
     const isReviewLink = item.type === 'review_link';
     const isPhoto = item.type === 'photo';
+    const isPoll = item.type === 'poll';
     const visual = (isVenueLink || isReviewLink) ? getVenueVisualFallback({
       id: item.venueId,
       name: item.venueName,
@@ -350,6 +404,32 @@ export default function ConversationScreen() {
                   ))}
                 </View>
               )}
+            </View>
+          ) : isPoll ? (
+            <View style={[styles.pollCard, isMine ? styles.pollCardMine : styles.pollCardTheirs]}>
+              <Text style={styles.pollQuestion}>{item.question}</Text>
+              {(item.options || []).map((option) => (
+                <Pressable
+                  key={option.id}
+                  style={styles.pollOption}
+                  onPress={async () => {
+                    if (!user || !conversationId) return;
+                    try {
+                      await castPollVote({
+                        db,
+                        conversationId,
+                        messageId: item.id,
+                        uid: user.uid,
+                        optionIds: [option.id],
+                      });
+                    } catch (err) {
+                      Alert.alert('Vote failed', err.message);
+                    }
+                  }}
+                >
+                  <Text style={styles.pollOptionText}>{option.text}</Text>
+                </Pressable>
+              ))}
             </View>
           ) : isVenueLink ? (
             <Pressable
@@ -475,27 +555,70 @@ export default function ConversationScreen() {
         )}
       />
 
-      <View style={styles.composer}>
-        <Pressable onPress={showAttachmentMenu} style={styles.attachButton}>
-          <Ionicons name="attach" size={22} color={COLORS.textMuted} />
-        </Pressable>
-        <TextInput
-          style={styles.input}
-          placeholder="Message..."
-          placeholderTextColor={COLORS.textPlaceholder}
-          value={text}
-          onChangeText={setText}
-          multiline
-          maxLength={2000}
-        />
-        <Pressable
-          style={[styles.sendButton, (!text.trim() || sending || sendingPhotos) && styles.sendButtonDisabled]}
-          onPress={send}
-          disabled={!text.trim() || sending || sendingPhotos}
-        >
-          <Text style={styles.sendText}>Send</Text>
-        </Pressable>
-      </View>
+      {pollComposerOpen ? (
+        <View style={styles.pollComposer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Ask a question..."
+            placeholderTextColor={COLORS.textPlaceholder}
+            value={pollQuestion}
+            onChangeText={setPollQuestion}
+            maxLength={500}
+          />
+          {pollOptions.map((option, index) => (
+            <TextInput
+              key={index}
+              style={styles.pollOptionInput}
+              placeholder={`Option ${index + 1}`}
+              placeholderTextColor={COLORS.textPlaceholder}
+              value={option}
+              onChangeText={(text) => {
+                const next = [...pollOptions];
+                next[index] = text;
+                setPollOptions(next);
+              }}
+              maxLength={200}
+            />
+          ))}
+          <Pressable onPress={() => setPollOptions([...pollOptions, ''])}>
+            <Text style={styles.pollAddOption}>+ Add option</Text>
+          </Pressable>
+          <View style={styles.pollActions}>
+            <Pressable onPress={() => setPollComposerOpen(false)}>
+              <Text style={styles.pollActionText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.sendButton, (!pollQuestion.trim() || pollOptions.filter(Boolean).length < 2 || sendingPoll) && styles.sendButtonDisabled]}
+              onPress={sendPoll}
+              disabled={!pollQuestion.trim() || pollOptions.filter(Boolean).length < 2 || sendingPoll}
+            >
+              <Text style={styles.sendText}>Send poll</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.composer}>
+          <Pressable onPress={showAttachmentMenu} style={styles.attachButton}>
+            <Ionicons name="attach" size={22} color={COLORS.textMuted} />
+          </Pressable>
+          <TextInput
+            style={styles.input}
+            placeholder="Message..."
+            placeholderTextColor={COLORS.textPlaceholder}
+            value={text}
+            onChangeText={setText}
+            multiline
+            maxLength={2000}
+          />
+          <Pressable
+            style={[styles.sendButton, (!text.trim() || sending || sendingPhotos) && styles.sendButtonDisabled]}
+            onPress={send}
+            disabled={!text.trim() || sending || sendingPhotos}
+          >
+            <Text style={styles.sendText}>Send</Text>
+          </Pressable>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -694,4 +817,68 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: { opacity: 0.5 },
   sendText: { color: '#ffffff', fontWeight: '800' },
+  pollComposer: {
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.bgCard,
+    backgroundColor: COLORS.bg,
+    gap: 10,
+  },
+  pollOptionInput: {
+    borderRadius: 12,
+    backgroundColor: COLORS.bgElevated,
+    color: COLORS.textPrimary,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  pollAddOption: {
+    color: COLORS.accent,
+    fontSize: 14,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+  },
+  pollActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  pollActionText: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  pollCard: {
+    width: 260,
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+  },
+  pollCardMine: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.accent,
+  },
+  pollCardTheirs: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.bgCard,
+  },
+  pollQuestion: {
+    color: COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  pollOption: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: COLORS.bg,
+    marginBottom: 6,
+  },
+  pollOptionText: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });
