@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,8 +13,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { getDownloadURL, ref } from 'firebase/storage';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
-import { db, functions as cloudFunctions } from '../../lib/firebase';
+import { db, functions as cloudFunctions, storage } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getVenueVisualFallback } from '../../lib/venue-visuals';
 
@@ -32,6 +34,11 @@ const {
   hideMessageForSelf,
   reportTarget,
 } = require('../../lib/friends/safety-service');
+const {
+  pickChatPhotosAsync,
+  sendDirectPhotoMessage,
+  sendGroupPhotoMessage,
+} = require('../../lib/friends/photo-service');
 
 export default function ConversationScreen() {
   const { id, otherUid } = useLocalSearchParams();
@@ -45,6 +52,8 @@ export default function ConversationScreen() {
   const [senderProfiles, setSenderProfiles] = useState({});
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendingPhotos, setSendingPhotos] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState({});
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
@@ -119,6 +128,26 @@ export default function ConversationScreen() {
       .catch((err) => console.error('Group sender profile load error:', err));
   }, [isGroup, messages, senderProfiles, user]);
 
+  useEffect(() => {
+    const photoMessages = messages.filter((m) => m.type === 'photo' && m.mediaPaths?.length > 0);
+    const missing = photoMessages.filter((m) => !photoUrls[m.id]);
+    if (missing.length === 0) return;
+
+    Promise.all(missing.map(async (message) => {
+      try {
+        const urls = await Promise.all(
+          message.mediaPaths.map((path) => getDownloadURL(ref(storage, path))),
+        );
+        return [message.id, urls];
+      } catch (err) {
+        console.error('Photo URL resolve error:', err);
+        return [message.id, []];
+      }
+    })).then((entries) => {
+      setPhotoUrls((current) => ({ ...current, ...Object.fromEntries(entries) }));
+    });
+  }, [messages, photoUrls]);
+
   const emptyTitle = useMemo(() => (
     isGroup ? `Start planning in ${title}.` : `Start planning with ${title}.`
   ), [isGroup, title]);
@@ -162,6 +191,53 @@ export default function ConversationScreen() {
       setSending(false);
     }
   }, [conversation, isGroup, recipientUid, sending, text, user]);
+
+  const sendPhotos = useCallback(async () => {
+    if (!user || sendingPhotos) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
+
+    const picked = await pickChatPhotosAsync();
+    if (!picked.success) {
+      if (!picked.canceled && picked.error) {
+        Alert.alert('Photo picker failed', picked.error);
+      }
+      return;
+    }
+
+    const photos = picked.uris.map((uri, index) => ({
+      uri,
+      aspectRatio: picked.aspectRatios[index] || 1,
+    }));
+
+    setSendingPhotos(true);
+    try {
+      if (conversation?.type === 'group') {
+        await sendGroupPhotoMessage({ db, storage, conversation, senderUid: user.uid, photos });
+      } else {
+        await sendDirectPhotoMessage({ db, storage, senderUid: user.uid, recipientUid, photos });
+        setConversationReloadKey((key) => key + 1);
+      }
+    } catch (err) {
+      Alert.alert('Photo send failed', err.message);
+    } finally {
+      setSendingPhotos(false);
+    }
+  }, [conversation, isGroup, recipientUid, sendingPhotos, user]);
+
+  const showAttachmentMenu = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      Alert.alert('Attach', undefined, [
+        { text: 'Photo', onPress: sendPhotos },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      Alert.alert('Attach', undefined, [
+        { text: 'Photo', onPress: sendPhotos },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  }, [sendPhotos]);
 
   const hideMessage = useCallback(async (message) => {
     if (!user || !conversationId) return;
@@ -221,6 +297,7 @@ export default function ConversationScreen() {
       : null;
     const isVenueLink = item.type === 'venue_link';
     const isReviewLink = item.type === 'review_link';
+    const isPhoto = item.type === 'photo';
     const visual = (isVenueLink || isReviewLink) ? getVenueVisualFallback({
       id: item.venueId,
       name: item.venueName,
@@ -231,6 +308,7 @@ export default function ConversationScreen() {
       : null;
     const canDeleteForEveryone = isMine && !item.deletedForEveryoneAt;
     const canReport = !isMine && !item.deletedForEveryoneAt;
+    const messagePhotoUrls = photoUrls[item.id] || [];
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
@@ -241,6 +319,37 @@ export default function ConversationScreen() {
               <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
                 Message deleted.
               </Text>
+            </View>
+          ) : isPhoto ? (
+            <View style={[styles.photoBubble, isMine ? styles.photoBubbleMine : styles.photoBubbleTheirs]}>
+              {messagePhotoUrls.length === 0 ? (
+                <View style={styles.photoPlaceholder}>
+                  <Ionicons name="image" size={24} color={COLORS.textMuted} />
+                </View>
+              ) : item.mediaPaths.length === 1 ? (
+                <Image
+                  source={{ uri: messagePhotoUrls[0] }}
+                  style={[
+                    styles.photoImage,
+                    { aspectRatio: item.aspectRatios?.[0] || 1 },
+                  ]}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.photoGrid}>
+                  {messagePhotoUrls.map((url, index) => (
+                    <Image
+                      key={item.mediaPaths[index] || index}
+                      source={{ uri: url }}
+                      style={[
+                        styles.photoGridItem,
+                        { aspectRatio: item.aspectRatios?.[index] || 1 },
+                      ]}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </View>
+              )}
             </View>
           ) : isVenueLink ? (
             <Pressable
@@ -367,6 +476,9 @@ export default function ConversationScreen() {
       />
 
       <View style={styles.composer}>
+        <Pressable onPress={showAttachmentMenu} style={styles.attachButton}>
+          <Ionicons name="attach" size={22} color={COLORS.textMuted} />
+        </Pressable>
         <TextInput
           style={styles.input}
           placeholder="Message..."
@@ -377,9 +489,9 @@ export default function ConversationScreen() {
           maxLength={2000}
         />
         <Pressable
-          style={[styles.sendButton, (!text.trim() || sending) && styles.sendButtonDisabled]}
+          style={[styles.sendButton, (!text.trim() || sending || sendingPhotos) && styles.sendButtonDisabled]}
           onPress={send}
-          disabled={!text.trim() || sending}
+          disabled={!text.trim() || sending || sendingPhotos}
         >
           <Text style={styles.sendText}>Send</Text>
         </Pressable>
@@ -518,6 +630,48 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.bgCard,
     backgroundColor: COLORS.bg,
+  },
+  attachButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.bgElevated,
+  },
+  photoBubble: {
+    maxWidth: 240,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  photoBubbleMine: {
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  photoBubbleTheirs: {
+    borderWidth: 1,
+    borderColor: COLORS.bgCard,
+  },
+  photoPlaceholder: {
+    width: 120,
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.bgElevated,
+  },
+  photoImage: {
+    width: 240,
+    borderRadius: 14,
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    width: 240,
+  },
+  photoGridItem: {
+    width: 118,
+    borderRadius: 10,
   },
   input: {
     flex: 1,
