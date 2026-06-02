@@ -12,9 +12,10 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../lib/constants';
+import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { getVenueVisualFallback } from '../../lib/venue-visuals';
 
 const {
   loadConversation,
@@ -161,16 +162,50 @@ export default function ConversationScreen() {
     const senderLabel = isGroup && !isMine
       ? (sender?.displayName || sender?.username || item.senderUid)
       : null;
+    const isVenueLink = item.type === 'venue_link';
+    const visual = isVenueLink ? getVenueVisualFallback({
+      id: item.venueId,
+      name: item.venueName,
+      cohort: item.venueCohort,
+    }) : null;
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
         <View style={[styles.messageStack, isMine ? styles.messageStackMine : styles.messageStackTheirs]}>
           {senderLabel ? <Text style={styles.senderLabel}>{senderLabel}</Text> : null}
-          <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
-            <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
-              {item.deletedForEveryoneAt ? 'Message deleted.' : item.text}
-            </Text>
-          </View>
+          {item.deletedForEveryoneAt ? (
+            <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+              <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
+                Message deleted.
+              </Text>
+            </View>
+          ) : isVenueLink ? (
+            <Pressable
+              accessibilityRole="button"
+              style={[styles.venueLinkCard, isMine ? styles.venueLinkCardMine : styles.venueLinkCardTheirs]}
+              onPress={() => router.push({ pathname: '/venue/[id]', params: { id: item.venueId } })}
+            >
+              <View style={[styles.venueLinkThumb, { backgroundColor: visual.colors[0] }]}>
+                <Ionicons name={visual.iconName} size={20} color="#ffffff" />
+              </View>
+              <View style={styles.venueLinkCopy}>
+                <Text style={styles.venueLinkLabel}>Venue</Text>
+                <Text style={styles.venueLinkName} numberOfLines={1}>{item.venueName}</Text>
+                <Text style={styles.venueLinkMeta} numberOfLines={1}>
+                  {COHORT_LABELS[item.venueCohort] || item.venueCohort}
+                </Text>
+                {item.venueAddress ? (
+                  <Text style={styles.venueLinkAddress} numberOfLines={1}>{item.venueAddress}</Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ) : (
+            <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+              <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
+                {item.text}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -296,6 +331,34 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15, lineHeight: 20 },
   messageTextMine: { color: '#ffffff' },
   messageTextTheirs: { color: COLORS.textPrimary },
+  venueLinkCard: {
+    width: 260,
+    borderRadius: 18,
+    padding: 10,
+    flexDirection: 'row',
+    gap: 10,
+    borderWidth: 1,
+  },
+  venueLinkCardMine: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.accent,
+  },
+  venueLinkCardTheirs: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.bgCard,
+  },
+  venueLinkThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  venueLinkCopy: { flex: 1, minWidth: 0 },
+  venueLinkLabel: { color: COLORS.accent, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  venueLinkName: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800', marginTop: 2 },
+  venueLinkMeta: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 2 },
+  venueLinkAddress: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
   composer: {
     flexDirection: 'row',
     gap: 10,

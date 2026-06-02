@@ -71,6 +71,38 @@ service cloud.firestore {
         && data.deletedForEveryoneAt == null;
     }
 
+    function validVenueLinkFields(data) {
+      return data.venueId is string
+        && data.venueId.size() > 0
+        && data.venueId.size() <= 200
+        && data.venueName is string
+        && data.venueName.size() > 0
+        && data.venueName.size() <= 160
+        && data.venueCohort is string
+        && data.venueCohort.size() > 0
+        && data.venueCohort.size() <= 80
+        && data.venueCity is string
+        && data.venueCity.size() > 0
+        && data.venueCity.size() <= 80
+        && data.venueAddress is string
+        && data.venueAddress.size() <= 240;
+    }
+
+    function validVenueLinkMessageShape(data) {
+      return data.keys().hasOnly([
+          'senderUid', 'type', 'venueId', 'venueName', 'venueCohort',
+          'venueCity', 'venueAddress', 'createdAt', 'deletedForEveryoneAt'
+        ])
+        && data.senderUid == request.auth.uid
+        && data.type == 'venue_link'
+        && validVenueLinkFields(data)
+        && data.deletedForEveryoneAt == null;
+    }
+
+    function validMessageShape(data) {
+      return validTextMessageShape(data) || validVenueLinkMessageShape(data);
+    }
+
     function validLastTextMessage(data) {
       return data.keys().hasOnly(['id', 'senderUid', 'type', 'text', 'createdAt'])
         && data.id is string
@@ -79,6 +111,21 @@ service cloud.firestore {
         && data.text is string
         && data.text.size() > 0
         && data.text.size() <= 2000;
+    }
+
+    function validLastVenueLinkMessage(data) {
+      return data.keys().hasOnly([
+          'id', 'senderUid', 'type', 'venueId', 'venueName', 'venueCohort',
+          'venueCity', 'venueAddress', 'createdAt'
+        ])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'venue_link'
+        && validVenueLinkFields(data);
+    }
+
+    function validLastMessage(data) {
+      return validLastTextMessage(data) || validLastVenueLinkMessage(data);
     }
 
     function friendshipExistsForDmCreate() {
@@ -95,7 +142,7 @@ service cloud.firestore {
         && request.resource.data.createdByUid == request.auth.uid
         && conversationId == 'dm_' + request.resource.data.memberUids[0] + '_' + request.resource.data.memberUids[1]
         && friendshipExistsForDmCreate()
-        && validLastTextMessage(request.resource.data.lastMessage);
+        && validLastMessage(request.resource.data.lastMessage);
     }
 
     function isConversationMember(conversationId) {
@@ -120,13 +167,13 @@ service cloud.firestore {
       return existsAfter(memberPath) && getAfter(memberPath).data.leftAt == null;
     }
 
-    function validConversationTextUpdate(conversationId) {
+    function validConversationMessageUpdate(conversationId) {
       return signedIn()
         && request.auth.uid in resource.data.memberUids
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageAt', 'lastMessage'])
         && request.resource.data.memberUids == resource.data.memberUids
         && request.resource.data.type == resource.data.type
-        && validLastTextMessage(request.resource.data.lastMessage)
+        && validLastMessage(request.resource.data.lastMessage)
         && (resource.data.type == 'dm' || activeMemberDocExists(conversationId, request.auth.uid));
     }
 
@@ -268,7 +315,7 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       allow get, list: if signedIn() && request.auth.uid in resource.data.memberUids;
       allow create: if validDmConversationCreate(conversationId);
-      allow update: if validConversationTextUpdate(conversationId);
+      allow update: if validConversationMessageUpdate(conversationId);
       allow delete: if false;
 
       match /members/{memberUid} {
@@ -280,7 +327,7 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isConversationMember(conversationId);
         allow create: if isConversationMemberAfter(conversationId)
-          && validTextMessageShape(request.resource.data)
+          && validMessageShape(request.resource.data)
           && (getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.type == 'dm'
             || activeMemberDocExistsAfter(conversationId, request.auth.uid));
         allow update, delete: if false;

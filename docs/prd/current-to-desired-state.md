@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 7. Venue enrichment. Next likely slice: 8. Venue link messages (Friends attachments).
+Current slice in development: none. Last completed slice: 8. Venue link messages. Next likely slice: 8b. Review link messages by `ratingId`.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -315,8 +315,26 @@ Recommended agent task sequence:
    - Defer to post-messaging slices: interactive map, Places Photo API, deep links to external apps, friend rank aggregation.
    - Tests: pure helpers for visual fallback, open status, bookmark payload; service/rules tests for bookmark owner access; UI assertions for detail hero/bookmark/popular posts, list row thumbnail/colors, rate preview.
    - Run `npm test -- --runInBand`, `npm run test:rules`, `npx expo export --platform web` before handoff.
-8. Review/social planning slices, split before implementation
-   - Venue link messages.
+8. Venue link messages in Friends chat
+   - Goal: let users share a venue into an existing DM or group chat now that venue detail pages have credible context.
+   - Add `venue_link` message support behind a pure/service seam before UI wiring. Do not add review links, polls, generic attachments, reactions, replies, or unlisted Rating shares in this slice.
+   - Canonical message payload fields: `senderUid`, `type: venue_link`, `venueId`, `venueName`, `venueCohort`, `venueCity`, `venueAddress`, `createdAt`, and `deletedForEveryoneAt: null`.
+   - Conversation `lastMessage` for venue links includes `id`, `senderUid`, `type: venue_link`, the venue fields above, and `createdAt`.
+   - A venue link references the static venue catalog by `venueId`; it does not copy venue ratings, bookmarks, photos, map links, or mutable venue stats into the message.
+   - Venue link sends use the same client-owned batch pattern as text messages for this beta slice: update `conversations/{conversationId}.lastMessage*`, create `messages/{messageId}`, update sender conversation state, and create normal direct/group message notifications.
+   - Direct venue links may create the canonical DM on first send if the sender and recipient are Friends, using the same `dm_{minUid}_{maxUid}` identity as text DMs.
+   - Group venue links can be sent only by active group members; direct client group creation remains denied.
+   - Firestore rules must validate `venue_link` shape for both message docs and `lastMessage`, while preserving existing text-message rules.
+   - Inbox preview uses existing copy: `Venue: [venueName]`, with group sender prefix unchanged.
+   - Conversation UI renders venue links as tappable cards showing venue name, cohort, address/area, and deterministic thumbnail/fallback; tapping opens `/venue/[venueId]`.
+   - Venue detail adds a Share action that opens a conversation picker for existing DMs/groups and sends the venue link into the selected conversation.
+   - The conversation picker reads current user's inbox conversations only; if none exist, show an empty state that points users back to Friends to create a chat.
+   - Do not add a global venue picker or start-new-DM friend picker in this slice; sharing starts from venue detail into existing conversations.
+   - Add pure Jest tests for venue link payload normalization, direct/group write builders, and inbox preview labels.
+   - Add rules tests for DM first-send venue links, group venue links, invalid venue-link shapes, and non-member/non-friend denial.
+   - Add UI/source assertions for venue detail Share, conversation picker send paths, and conversation venue-link cards.
+   - Run `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web` before handoff.
+8b. Review/social planning follow-up slices, split before implementation
    - Review link messages by `ratingId`.
    - Review companion tagging.
    - Unlisted private Rating shares.

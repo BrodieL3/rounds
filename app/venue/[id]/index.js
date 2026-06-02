@@ -138,6 +138,10 @@ export default function VenueDetailScreen() {
     }
   };
 
+  const shareVenue = () => {
+    router.push({ pathname: '/conversation/share-venue', params: { venueId: venue.id } });
+  };
+
   const submitReport = async () => {
     if (!reportText.trim()) return;
     try {
@@ -212,6 +216,10 @@ export default function VenueDetailScreen() {
         <Pressable style={styles.actionBtn} onPress={() => openMap(venue.name, latitude, longitude)}>
           <Ionicons name="navigate-outline" size={18} color={COLORS.accent} />
           <Text style={styles.actionBtnText}>Directions</Text>
+        </Pressable>
+        <Pressable style={styles.actionBtn} onPress={shareVenue}>
+          <Ionicons name="paper-plane-outline" size={18} color={COLORS.accent} />
+          <Text style={styles.actionBtnText}>Share</Text>
         </Pressable>
       </View>
 
