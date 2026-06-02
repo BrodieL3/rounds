@@ -162,10 +162,73 @@ service cloud.firestore {
         && data.deletedForEveryoneAt == null;
     }
 
+    function validPhotoMessageShape(data) {
+      return data.keys().hasOnly([
+          'senderUid', 'type', 'mediaPaths', 'aspectRatios', 'createdAt', 'deletedForEveryoneAt'
+        ])
+        && data.senderUid == request.auth.uid
+        && data.type == 'photo'
+        && data.mediaPaths is list
+        && data.mediaPaths.size() >= 1
+        && data.mediaPaths.size() <= 10
+        && data.aspectRatios is list
+        && data.aspectRatios.size() == data.mediaPaths.size()
+        && data.deletedForEveryoneAt == null;
+    }
+
+    function validVoiceMessageShape(data) {
+      return data.keys().hasOnly([
+          'senderUid', 'type', 'storagePath', 'durationMs', 'format', 'savedBy', 'expiresAt', 'createdAt', 'deletedForEveryoneAt'
+        ])
+        && data.senderUid == request.auth.uid
+        && data.type == 'voice'
+        && data.storagePath is string
+        && data.durationMs is int
+        && data.durationMs > 0
+        && data.durationMs <= 60000
+        && data.format == 'm4a'
+        && data.savedBy is list
+        && data.deletedForEveryoneAt == null;
+    }
+
+    function validPollMessageShape(data) {
+      return data.keys().hasOnly([
+          'senderUid', 'type', 'question', 'options', 'allowMultiple', 'allowMemberOptions', 'closesAt', 'closedAt', 'createdAt', 'deletedForEveryoneAt'
+        ])
+        && data.senderUid == request.auth.uid
+        && data.type == 'poll'
+        && data.question is string
+        && data.question.size() > 0
+        && data.question.size() <= 500
+        && data.options is list
+        && data.options.size() >= 2
+        && data.options.size() <= 20
+        && data.allowMultiple is bool
+        && data.allowMemberOptions is bool
+        && data.deletedForEveryoneAt == null;
+    }
+
+    function validLocationMessageShape(data) {
+      return data.keys().hasOnly([
+          'senderUid', 'type', 'lat', 'lng', 'label', 'createdAt', 'deletedForEveryoneAt'
+        ])
+        && data.senderUid == request.auth.uid
+        && data.type == 'location'
+        && data.lat is number
+        && data.lng is number
+        && data.label is string
+        && data.label.size() <= 240
+        && data.deletedForEveryoneAt == null;
+    }
+
     function validMessageShape(data) {
       return validTextMessageShape(data)
         || validVenueLinkMessageShape(data)
-        || validReviewLinkMessageShape(data);
+        || validReviewLinkMessageShape(data)
+        || validPhotoMessageShape(data)
+        || validVoiceMessageShape(data)
+        || validPollMessageShape(data)
+        || validLocationMessageShape(data);
     }
 
     function validLastTextMessage(data) {
@@ -200,10 +263,50 @@ service cloud.firestore {
         && validReviewLinkFields(data);
     }
 
+    function validLastPhotoMessage(data) {
+      return data.keys().hasOnly(['id', 'senderUid', 'type', 'photoCount', 'createdAt'])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'photo'
+        && data.photoCount is int
+        && data.photoCount >= 1
+        && data.photoCount <= 10;
+    }
+
+    function validLastVoiceMessage(data) {
+      return data.keys().hasOnly(['id', 'senderUid', 'type', 'createdAt'])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'voice';
+    }
+
+    function validLastPollMessage(data) {
+      return data.keys().hasOnly(['id', 'senderUid', 'type', 'question', 'createdAt'])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'poll'
+        && data.question is string
+        && data.question.size() > 0
+        && data.question.size() <= 500;
+    }
+
+    function validLastLocationMessage(data) {
+      return data.keys().hasOnly(['id', 'senderUid', 'type', 'label', 'createdAt'])
+        && data.id is string
+        && data.senderUid == request.auth.uid
+        && data.type == 'location'
+        && data.label is string
+        && data.label.size() <= 240;
+    }
+
     function validLastMessage(data) {
       return validLastTextMessage(data)
         || validLastVenueLinkMessage(data)
-        || validLastReviewLinkMessage(data);
+        || validLastReviewLinkMessage(data)
+        || validLastPhotoMessage(data)
+        || validLastVoiceMessage(data)
+        || validLastPollMessage(data)
+        || validLastLocationMessage(data);
     }
 
     function friendshipExistsForDmCreate() {
@@ -489,6 +592,22 @@ service cloud.firestore {
           && (getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.type == 'dm'
             || activeMemberDocExistsAfter(conversationId, request.auth.uid));
         allow update, delete: if false;
+
+        match /votes/{uid} {
+          allow read: if isConversationMember(conversationId);
+          allow create: if signedIn()
+            && request.auth.uid == uid
+            && request.resource.data.keys().hasOnly(['uid', 'optionIds', 'createdAt', 'updatedAt'])
+            && request.resource.data.uid == uid
+            && request.resource.data.optionIds is list
+            && request.resource.data.optionIds.size() >= 1;
+          allow update: if signedIn()
+            && request.auth.uid == uid
+            && request.resource.data.keys().hasOnly(['optionIds', 'updatedAt'])
+            && request.resource.data.optionIds is list
+            && request.resource.data.optionIds.size() >= 1;
+          allow delete: if false;
+        }
       }
     }
 

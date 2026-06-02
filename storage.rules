@@ -43,5 +43,27 @@ service firebase.storage {
         && request.resource.size <= 500 * 1024
         && request.resource.contentType.matches('image/.*');
     }
+
+    function isActiveConversationMember(conversationId) {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/conversations/$(conversationId)/members/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/conversations/$(conversationId)/members/$(request.auth.uid)).data.leftAt == null;
+    }
+
+    match /conversations/{conversationId}/photos/{fileName} {
+      allow read: if isActiveConversationMember(conversationId);
+      allow write: if isActiveConversationMember(conversationId)
+        && fileName.matches('photo_[0-9]+_[0-9]+\\.jpg')
+        && request.resource.size <= 500 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /conversations/{conversationId}/voice/{fileName} {
+      allow read: if isActiveConversationMember(conversationId);
+      allow write: if isActiveConversationMember(conversationId)
+        && fileName.matches('voice_[0-9]+\\.m4a')
+        && request.resource.size <= 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+    }
   }
 }

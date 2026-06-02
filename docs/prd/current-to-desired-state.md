@@ -366,11 +366,56 @@ Recommended agent task sequence:
    - Report.
    - Delete/hide messages.
    - Notification privacy basics.
-11. Rich attachment slices
-   - Polls.
-   - Photos.
-   - Voice notes.
-   - One-time location pins.
+11a. Photo attachments slice
+   - Establish reusable chat-media seam: Storage paths, member-gated rules, upload-then-batch, cleanup.
+   - Message fields: `senderUid`, `type: 'photo'`, `mediaPaths` (list, 1–10), `aspectRatios` (list of numbers), `createdAt`, `deletedForEveryoneAt`. No caption in MVP.
+   - Storage paths: `conversations/{conversationId}/photos/photo_{timestamp}_{index}.jpg`.
+   - Storage rules: conversation-member-gated read/write via single Firestore `conversations/{cid}` membership lookup (fix `$(database)` → literal `(default)`).
+   - Photo limits: 500KB cap, `expo-image-manipulator` compression, `image/*` content-type.
+   - Client upload-then-batch: upload photos → Firestore batch of message doc + `lastMessage` / `lastMessageAt` update + notifications. On failure, best-effort Storage delete, tolerate orphans.
+   - Single photo = inline bubble; multiple = grid card; tap → full-screen viewer.
+   - `lastMessage` preview: `{id, senderUid, type, photoCount, createdAt}` → inbox shows `Photo` / `N photos`.
+   - Add `validPhotoMessageShape` / `validLastPhotoMessage` rule validators; OR into `validMessageShape` / `validLastMessage`.
+   - Tests: rules tests for valid/invalid photo messages, non-member denial, sender spoofing; service tests for upload-then-batch builder; UI tests for picker, grid, full-screen viewer.
+
+11b. Polls slice
+   - Pure Firestore + vote logic; no Storage, no new deps.
+   - Message fields: `senderUid`, `type: 'poll'`, `question`, `options` (list of `{id, text, addedByUid?}`), `allowMultiple` (bool), `allowMemberOptions` (bool), `closesAt` (ts|null), `closedAt` (ts|null), `createdAt`, `deletedForEveryoneAt`.
+   - Votes subcollection: `messages/{messageId}/votes/{uid}` with `{uid, optionIds (list), createdAt, updatedAt}`.
+   - Vote rules: self-only create/update (`uid == auth.uid`); allowed only while `closedAt == null` and (`closesAt == null` or `closesAt > request.time`).
+   - Poll doc update rules: `allowMemberOptions` append-only option growth (narrow update); if this complicates the slice, ship as a fast-follow within 11b rather than blocking.
+   - Poll close: derive from `closesAt` vs `request.time` in rules; no Cloud Function needed.
+   - Vote inline in chat bubble with live tallies; closed results are immutable.
+   - `lastMessage` preview: `{id, senderUid, type, question, createdAt}` → inbox shows `Poll: [question]`.
+   - Add `validPollMessageShape` / `validLastPollMessage` rule validators.
+   - Tests: pure service tests for single vs multi vote, vote change, post-close rejection, member-add-option append; rules tests for vote self-only, close enforcement; UI tests for poll vote/results states.
+
+11c. Location pins slice
+   - Message fields: `senderUid`, `type: 'location'`, `lat` (number), `lng` (number), `label` (string), `createdAt`, `deletedForEveryoneAt`.
+   - No static map URL persisted; render thumbnail client-side from `lat`/`lng`; tap → external maps deep link.
+   - Offer current-location quick-send (via `expo-location`) and searched-place picker (reuse Google Places/venue search).
+   - `lastMessage` preview: `{id, senderUid, type, label, createdAt}` → inbox shows `Location` (or `label`).
+   - Add `validLocationMessageShape` / `validLastLocationMessage` rule validators.
+   - Tests: rules tests for shape/denial; UI tests for current-location quick-send, search picker, map deep-link.
+
+11d. Voice notes slice
+   - Adds `expo-audio` (not deprecated `expo-av`). Verify exact package/version against SDK 54 docs before install.
+   - Message fields: `senderUid`, `type: 'voice'`, `storagePath` (single), `durationMs` (≤60000), `format: 'm4a'`, `savedBy` (list of uids), `expiresAt` (ts), `createdAt`, `deletedForEveryoneAt`.
+   - Storage paths: `conversations/{conversationId}/voice/voice_{timestamp}.m4a`.
+   - Storage rules: member-gated read/write, `audio/*` content-type, ~1MB cap.
+   - Max length: 60s. Record with countdown UI; playback bubble with play/pause, scrubber, duration badge, temporary/saved indicator.
+   - Temp lifecycle: temporary by default. 24h hard expiry via Firestore TTL on `expiresAt` + Storage cleanup on doc delete. Per-listener 3-min-after-play disappearance is client-side via viewer's `conversationState.voicePlayedAt[messageId]`.
+   - Sender can save voice note (adds self to `savedBy`, clears `expiresAt`).
+   - `lastMessage` preview: `{id, senderUid, type, createdAt}` → inbox shows `Voice note`.
+   - Add `validVoiceMessageShape` / `validLastVoiceMessage` rule validators.
+   - Tests: rules tests for shape/denial; pure service tests for expiry computation, savedBy logic; UI tests for record, playback, save action, temp indicator.
+
+12. Message interactions slice (reactions + reply quotes)
+   - Defer to after all message types exist; reactions and reply quotes apply to every type.
+   - Reactions: emoji set `👍 ❤️ 😂 😮 😢 🔥` on any message. Stored as `messages/{messageId}/reactions/{uid}` with `{uid, emoji, createdAt}`.
+   - Reply quotes: stored on message doc as `replyToMessageId` + `replyToPreview` (sender + type-derived snippet). If original deleted, show `Original message deleted.`
+   - `lastMessage` unaffected by reactions/replies.
+   - Implement once, after 11a–11d, rather than retrofitting each attachment slice.
 
 Execution rule: one agent owns one slice, writes/updates tests, runs relevant suite, then leaves a handoff. Merge or reconcile each slice before starting the next dependent slice. Parallel work should wait until DM/group foundations and shared Firestore contracts are stable.
 
