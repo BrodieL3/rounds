@@ -12,7 +12,7 @@ Users need Rounds to move from a good-looking venue/rating prototype into a usab
 Ship a beta-ready friends-first MVP that preserves the current visual direction shown in the screenshots while adding the product behavior defined in the context files:
 
 - Friends becomes the functional hero surface: friend requests, private Friendships, DMs, group chats, inbox previews, and chat creation.
-- Feed remains city/followed activity: ratings create posts, posts support likes/comments/shares/bookmarks, and followed users are promoted.
+- Feed remains city/followed activity: public Ratings project into feed/public review surfaces, those projections support likes/comments/shares/bookmarks, and followed users are promoted.
 - Add remains the fast review entry point: search a visited venue, rate it, add media, optionally tag companions, and publish/share appropriately.
 - List remains venue discovery and ranking context: city search, cohort filters, venue detail, and personal ranking signals stay cohort-consistent.
 - Profile shows public identity plus private personal list: followers/following remain public; friend list/count remains private; personal list only shows ranked venues from comparisons.
@@ -65,7 +65,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 24. As a user, I want to like and comment from posts, so that social activity is interactive.
 25. As a user, I want bookmark/want-to-try actions, so that places can be saved without being ranked.
 26. As a user, I want Add to quickly find a venue I visited, so that recording a Rating is low-friction.
-27. As a user, I want Ratings to create public Posts by default, so that my activity can appear in Feed.
+27. As a user, I want new Ratings to be public by default and appear in Feed, so that my activity can be discovered without duplicating the opinion object.
 28. As a user, I want to tag review companions, so that nights out connect to people I went with.
 29. As a tagged user, I want to remove myself and block future tags from an author, so that tags stay consent-respectful.
 30. As a user, I want List to search/filter venues by city and Cohort, so that comparisons stay peer-cohort isolated.
@@ -100,9 +100,9 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 9. Keep Feed as public/followed activity, not planning. Planning belongs in Friends.
 10. Keep List as venue discovery plus personal ranking context. Profile `Your list` must filter out unranked discovery venues.
 11. Keep Cohort as the isolation key across Ratings, Comparisons, List filtering, and Personal Ranking.
-12. Rating creation continues to create both a private Rating and public Post, then expands to companion tags and unlisted sharing.
-13. Review companion tags store user tags, not group chat identity; group chat selection is only a shortcut.
-14. Unlisted private rating access is granted per conversation and revoked when access is removed.
+12. Rating is the canonical opinion object; public feed/review surfaces are derived projections keyed by `ratingId`, not parallel opinion records.
+13. Review companion tags store user tags on the Rating, not group chat identity; group chat selection is only a shortcut.
+14. Unlisted private Rating access is granted per conversation and revoked when access is removed.
 15. Move sensitive mutations toward trusted backend boundaries: friend accept, group membership, message send, delete-for-everyone, private share grant/revoke, block, and report.
 16. Add canonical collections for friend requests, friendships, blocks, conversations, conversation members/messages, per-user conversation states, notifications, and rating shares.
 17. Harden existing public reads: comparisons and private planning state should not be globally readable in beta.
@@ -116,7 +116,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 4. Add rule/function tests for private data: non-member cannot read conversations/messages; unlisted ratings require active conversation membership; blocked users cannot request/message/invite/tag/comment.
 5. Extend feed tests for sorting followed activity above city activity, preview counts, and display formatting.
 6. Extend ranking/list/profile tests for Cohort isolation, `too-tough` handling, and profile personal-list exclusion of unranked venues.
-7. Add review tests for Rating/Post dual write payload shape, companion tags, unlisted share grants, and tag-removal constraints.
+7. Add review tests for canonical Rating payload shape, public projection behavior, companion tags, unlisted share grants, and tag-removal constraints.
 8. Keep UI tests focused on stable visible copy and navigation affordances matching screenshot baseline.
 
 ## Out of Scope
@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: 4b. Group lifecycle/admin.
+Current slice in development: 6. Rating canonicalization and public projection cleanup.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
@@ -260,22 +260,66 @@ Recommended agent task sequence:
    - Last leaver's member doc gets `leftAt`.
    - Keep exactly one active admin for non-archived groups with active members.
    - Tests: pure/service tests for invite payload validation, remaining slot limits, admin leave outcome, and group info action visibility for admin vs non-admin; callable Function tests for invite rejects non-admin/non-friend/active member/cap and succeeds add/re-add docs/state/notifications, remove rejects non-admin/self/admin target/non-member and succeeds `memberUids` removal plus `leftAt`, leave rejects non-member/admin missing next admin/invalid next admin and succeeds non-admin leave, admin leave transfer, and last-member archive; UI/view-model tests for group header opening info, active-member-only list, member list/add picker loading and empty states, name fallback to `displayName || username || uid`, admin badge, admin-only Add/Remove controls, non-admin Leave-only controls, Remove hidden for self/admin target, mutation disabled states, add picker excluding active members/current user through search filtering, add button disabled for no selection/cap overflow, remove confirmation copy, leave confirmation copy, admin next-admin picker with sole remaining member preselected, admin next-admin confirmation copy, function error alerts, post-leave navigation to Friends, and removed/no-access fallback; rules tests keep/regress former member cannot read/send.
-6. Review/social planning slice
-   - Venue links.
-   - Review links.
+6. Rating canonicalization and public projection cleanup
+   - Make `ratings/{ratingId}` the only canonical opinion document written by review creation.
+   - Add `visibility: public|unlisted|private` to Rating contract; do not add visibility UI in this slice; new Ratings default to `public`.
+   - Stop all new writes to `reviews`; `reviews` becomes legacy read/migration concern only.
+   - Preserve legacy `reviews` Firestore reads; revoke `reviews` create/update/delete in slice 6 so stale code cannot fork the canonical opinion object.
+   - Do not migrate existing `reviews`, random-ID `ratings`, or random-ID `posts` in this slice; support legacy reads only where cheap and keep data migration/backend cleanup as a later task.
+   - Add a Rating service seam before rewiring UI: pure `lib/ratings/*` helpers build canonical Rating payloads, decide whether a public projection is warranted, and map denormalized Post projection fields with no Firebase imports.
+   - Add a thin Firebase adapter for Rating creation that owns Firestore `ratingId` minting, but makes ID/doc-ref creation injectable for tests; pure helpers receive `ratingId` as input and `app/venue/[id]/rate.js` never mints IDs directly.
+   - Rewrite `lib/media-upload.js` review helpers for Rating media: the adapter mints `ratingId` with `doc(collection(db, 'ratings'))`, uploads photos under `ratings/{ratingId}/...`, and writes no `reviews` doc.
+   - Upload photos before the Firestore batch because Rating/Post docs denormalize media references; if any upload fails, abort before writing Rating/Post docs.
+   - Store Rating media Storage paths as the canonical persisted representation; do not persist Firebase download URLs in new Rating/Post docs because tokenized URLs can bypass later visibility changes.
+   - If uploads succeed but the Firestore batch fails, best-effort delete uploaded files and tolerate orphaned Storage objects if cleanup fails; orphaned media is preferable to visible docs with broken media references.
+   - Update `storage.rules` in this slice to allow the new `ratings/{ratingId}/photo_[timestamp]_[index].jpg` path; do not leave media uploads broken behind legacy `reviews/{reviewId}/...` rules.
+   - Rating media Storage writes happen before the Rating doc exists, so Storage write rules authorize by signed-in user, path shape, image content type, and size cap only; do not add Firestore ownership lookup to this upload write rule in slice 6.
+   - Rating media Storage reads must be rule-gated against the Rating doc in slice 6: allow if `ratings/{ratingId}.visibility == 'public'` or `ratings/{ratingId}.userId == request.auth.uid`; defer active-share read access until the unlisted share slice.
+   - Factor the Storage rule Rating lookup into a helper to avoid duplicate structural reads, and allow transient in-memory URL caching in UI adapters; do not persist resolved download URLs.
+   - Preserve the legacy `reviews/{reviewId}/...` Storage path for existing media until a later migration/cleanup slice; slice 6 only adds the canonical Rating media path.
+   - Demote `posts` to the interim public projection keyed by Rating ID: write public projections to `posts/{ratingId}` with `setDoc(doc(db, 'posts', ratingId), ...)`, not random `postId` documents.
+   - Create `posts/{ratingId}` only when `ratings/{ratingId}.visibility == 'public'`; private/unlisted Ratings have no public Post projection and are reached through owner/share-gated Rating reads.
+   - For public Ratings, write `ratings/{ratingId}` and `posts/{ratingId}` in one `writeBatch` so a public review cannot half-commit with Rating present and Post missing.
+   - Firestore rules must allow `posts/{ratingId}` create only when matching `ratings/{ratingId}` exists after the request using `existsAfter/getAfter`, belongs to `request.auth.uid`, has `visibility == 'public'`, and the Post projection has `ratingId == ratingId` plus `userId == request.auth.uid`; orphan public projections are denied.
+   - Do not replace the `existsAfter/getAfter` projection gate with `exists/get`; `get()` cannot see same-batch pending Rating creates, while `getAfter()` validates the post-batch state.
+   - Use `userId` as the owner field on both `ratings/{ratingId}` and `posts/{ratingId}`; do not introduce `authorUid` in slice 6.
+   - Do not implement Post re-projection/update behavior in slice 6; `posts/{ratingId}` create-only is enough for the current Rating creation flow.
+   - Firestore update rules for `posts/{ratingId}` should default-deny in slice 6; owner display re-projection and non-owner engagement writes belong to later edit/feed-action slices.
+   - Defer non-owner engagement write rules for likes/bookmarks to the Feed/List/Profile polish slice; slice 6 only establishes projection create shape and keeps future engagement fields off Rating.
+   - Keep engagement state (`likes`, `likedBy`, comments, bookmarks) and the existing comments subcollection on `posts/{ratingId}`, not on the private Rating.
+   - Initialize public projection engagement fields for compatibility: `likes: 0`, `likedBy: []`, `bookmarks: 0`, and `bookmarkedBy: []`.
+   - Use `notes` as the canonical Rating text field; do not write new `description` fields. Legacy reads may fall back from `notes` to `description`.
+   - Use `mediaPaths` as the canonical Rating photo field; do not write new `mediaUrls` or `photoURLs` fields. Legacy reads may fall back from `mediaPaths` to `mediaUrls` to `photoURLs`.
+   - UI/display adapters may resolve authorized `mediaPaths` to temporary image URLs at render time, but those URLs are transient view data and must not be written back to Firestore.
+   - Denormalize feed display fields (`venue`, `sentiment`, `notes`, `mediaPaths`, author display) into `posts/{ratingId}` for current Feed/Post screens, while `ratings/{ratingId}` remains source of truth.
+   - Treat the `ratings/{ratingId}` document ID as the canonical Rating identity; new Rating payloads do not write a self-`ratingId` field, and read adapters should derive Rating identity from the snapshot/document ID.
+   - Include `ratingId` in `posts/{ratingId}` even though it duplicates the document ID, and require `posts/{ratingId}.ratingId == ratingId` in rules so feed rows, review links, debug, and future projection migration have an explicit canonical pointer.
+   - New Rating/Post payloads must not write `reviewId`; tolerate legacy `reviewId` only as a read-time fallback where needed.
+   - Defer `feedItems` until a backend projection worker exists; current rules make `feedItems` backend-only, so client review creation must not target it.
+   - Keep Pairwise Comparisons and Personal Ranking driven by Ratings.
+   - Harden Rating reads before unlisted sharing: owner can read own Ratings; anyone can read `visibility == 'public'`; `unlisted`/`private` are not public-readable yet; share-gated reads wait until the unlisted share slice.
+   - Rating create rules must require `userId == request.auth.uid`, valid `visibility: public|unlisted|private`, required canonical fields, no self-`ratingId` field, and no public engagement fields (`likes`, `likedBy`, `comments`, `bookmarks`, `bookmarkedBy`, `commentsCount`) on the Rating.
+   - Do not implement Rating edit or visibility-transition behavior in slice 6; current PRD has no edit-my-Rating user story, and visibility changes require projection create/delete cascades that belong with a later privacy/share slice.
+   - Visibility transitions are deferred to the later privacy/share slice; public→private/unlisted must delete or disable `posts/{ratingId}`, and private/unlisted→public must create `posts/{ratingId}` because Firestore rules cannot cascade projection changes.
+   - Rating update rules should default-deny in slice 6. If a defensive update scaffold is kept, it must keep `userId`, `createdAt`, and `visibility` immutable, deny engagement fields on Rating, and must not open updates for `notes`, `mediaPaths`, or `sentiment`.
+   - Add pure Jest tests for canonical Rating payloads, no Firebase import in builder helpers, public-only projection decisions, canonical `mediaPaths` with no new persisted download URLs, and projection pointer/display shape.
+   - Add adapter/emulator tests for no new `reviews` writes, no new `reviewId` alias fields, Rating media paths/storage write/read rules, deterministic `posts/{ratingId}` public projection creates with no random Post fork, `existsAfter/getAfter` public projection gating, public Rating batch atomicity, legacy `reviewId`/`postId` avoidance in new link contracts, Rating/Post update denial, and Rating/Post visibility/read/write rules.
+7. Review/social planning slices, split before implementation
+   - Venue link messages.
+   - Review link messages by `ratingId`.
    - Review companion tagging.
-   - Unlisted private rating shares.
-7. Feed/List/Profile polish slice
+   - Unlisted private Rating shares.
+8. Feed/List/Profile polish slice
    - Real Feed actions.
    - Bookmark / want-to-try behavior.
    - Confirm Profile personal list excludes discovery rows.
    - Cohort isolation regression tests.
-8. Safety slice
+9. Safety slice
    - Block.
    - Report.
    - Delete/hide messages.
    - Notification privacy basics.
-9. Rich attachment slices
+10. Rich attachment slices
    - Polls.
    - Photos.
    - Voice notes.

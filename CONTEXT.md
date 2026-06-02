@@ -49,11 +49,15 @@ The venue comparison category. Cohort is the peer-cohort isolation key and must 
 
 ### Rating
 
-A user's visit-level reaction to a venue. Current sentiment values: `loved`, `fine`, `disliked`. Rating can include notes and uploaded photos. Creating a Rating also creates a Post.
+A user's canonical visit-level opinion about a Venue. Current sentiment values: `loved`, `fine`, `disliked`. Rating can include notes, uploaded photos, companion tags, and visibility.
+
+### Review
+
+User-facing word for a Rating. Review is not a separate canonical domain object from Rating.
 
 ### Post
 
-Public feed item derived from a Rating. Contains author info, venue, cohort, sentiment, notes, photos, likes, city, and comments subcollection.
+Derived public feed projection of a public Rating. Post is not the canonical shareable opinion identity. Public engagement such as likes, comments, and bookmarks belongs to the public projection.
 
 ### Comparison
 
@@ -101,7 +105,7 @@ A user-authored poll inside a Conversation. Polls are general-purpose decision t
 
 ### Review Link
 
-A Chat Attachment that points to an in-app review/post. Review links can point to public posts or to unlisted private ratings shared by their author.
+A Chat Attachment that points to a Rating by `ratingId`. Review links can resolve to public Ratings or to unlisted private Ratings shared by their author.
 
 ### Review Companion
 

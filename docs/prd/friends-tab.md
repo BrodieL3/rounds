@@ -185,15 +185,16 @@ Voice note behavior:
 - Ranked-choice polls are out of scope for MVP.
 
 ## Review link behavior
-- Any public Post/Review can be shared into chat.
+- Review links reference `ratingId`, never `postId`.
+- Any public Rating can be shared into chat.
 - A Private Rating can be shared only by the user who created it.
 - Shared Private Ratings are shown with an `Unlisted` tag.
 - Review link preview shows venue, author, sentiment, notes snippet, and first photo when available.
-- Tapping a public review link opens existing post detail.
-- Tapping an unlisted private rating opens a private-rating detail view available only through that shared link.
-- Unlisted private rating access is limited to members of the conversation where it was shared.
-- Forwarded unlisted links do not grant access unless the author explicitly shares the rating into the new conversation.
-- If a member leaves a group, they lose access to unlisted private ratings shared in that group.
+- Tapping a public review link opens the public Rating review surface.
+- Tapping an unlisted private Rating opens a private-rating detail view available only through that shared link.
+- Unlisted private Rating access is limited to members of the conversation where it was shared.
+- Forwarded unlisted links do not grant access unless the author explicitly shares the Rating into the new conversation.
+- If a member leaves a group, they lose access to unlisted private Ratings shared in that group.
 - Author can revoke unlisted access.
 
 ## Review companion selection behavior
@@ -202,9 +203,9 @@ Voice note behavior:
 - Review form quick-picks Friends and recent group chats.
 - Review form lets author select a group chat as a shortcut.
 - Selecting a group chat adds the current group members as individual companion tags.
-- Review does not store or display the group chat name.
-- On public posts, companion tags are visible to everyone who can see the post.
-- On private/unlisted ratings, companion tags are visible only to users with access.
+- Rating companion tags do not store or display the group chat name.
+- On public Ratings, companion tags are visible to everyone who can see the public review surface.
+- On private/unlisted Ratings, companion tags are visible only to users with access.
 - Tagged users receive a notification.
 - Tagged users can remove themselves from the review.
 - Once a tagged user removes themselves, the tag disappears everywhere and the same author cannot re-tag that user on the same review.
@@ -276,6 +277,7 @@ Architecture direction:
 - Existing `leaderboardEntries` rules can be cleaned up later in a separate tech-debt pass; avoid rules churn during Friends build.
 - Cloud Functions should handle denormalized inbox updates and notifications.
 - Chat and Friends logic must live behind service seams such as `lib/friends/*`, not inside route screens.
+- Until a backend feed projection worker exists, public review/feed projection stays in `posts/{ratingId}`; review links still reference `ratingId`, never `postId`.
 - Production should move sensitive mutations behind Cloud Functions, including friend accept, group invite/remove, unlisted access grants/revokes, and delete-for-everyone.
 
 Canonical Firestore shape:
@@ -287,6 +289,9 @@ Canonical Firestore shape:
 - `conversations/{conversationId}/members/{uid}`
 - `users/{uid}/conversationStates/{conversationId}` for hidden/read/lastSeen state.
 - `users/{uid}/notifications/{notificationId}`
+- `ratings/{ratingId}` as the canonical opinion/review object
+- `posts/{ratingId}` as the interim public projection for public Ratings only
+- Rating photos in Firebase Storage under `ratings/{ratingId}/...`; Rating/Post docs store `mediaPaths`, not persisted download URLs
 - `ratings/{ratingId}/shares/{conversationId}` for unlisted access.
 
 Identity constraints:

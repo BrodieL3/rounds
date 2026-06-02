@@ -24,6 +24,7 @@ Current guide for agent context loading. Read this before choosing which project
 - `docs/adr/002-eventbrite-alternative-assessment.md` — event API alternatives and Eventbrite limitations.
 - `docs/adr/003-friends-first-navigation.md` — accepted Friends-first tab/navigation direction.
 - `docs/adr/004-trusted-group-creation-boundary.md` — trusted Cloud Function boundary for group membership grants.
+- `docs/adr/005-rating-canonical-opinion-and-public-projection.md` — Rating as canonical opinion identity, Posts as public projections, and media paths over persisted download URLs.
 
 ## Secondary reference
 
