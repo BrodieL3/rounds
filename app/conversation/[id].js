@@ -163,11 +163,15 @@ export default function ConversationScreen() {
       ? (sender?.displayName || sender?.username || item.senderUid)
       : null;
     const isVenueLink = item.type === 'venue_link';
-    const visual = isVenueLink ? getVenueVisualFallback({
+    const isReviewLink = item.type === 'review_link';
+    const visual = (isVenueLink || isReviewLink) ? getVenueVisualFallback({
       id: item.venueId,
       name: item.venueName,
       cohort: item.venueCohort,
     }) : null;
+    const sentimentColor = isReviewLink
+      ? (item.sentiment === 'loved' ? COLORS.success : item.sentiment === 'fine' ? COLORS.accent : COLORS.danger)
+      : null;
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
@@ -196,6 +200,29 @@ export default function ConversationScreen() {
                 </Text>
                 {item.venueAddress ? (
                   <Text style={styles.venueLinkAddress} numberOfLines={1}>{item.venueAddress}</Text>
+                ) : null}
+              </View>
+            </Pressable>
+          ) : isReviewLink ? (
+            <Pressable
+              accessibilityRole="button"
+              style={[styles.reviewLinkCard, isMine ? styles.reviewLinkCardMine : styles.reviewLinkCardTheirs]}
+              onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.ratingId } })}
+            >
+              <View style={[styles.reviewLinkThumb, { backgroundColor: visual.colors[0] }]}>
+                <Ionicons name={visual.iconName} size={20} color="#ffffff" />
+              </View>
+              <View style={styles.reviewLinkCopy}>
+                <Text style={styles.reviewLinkLabel}>Review</Text>
+                <Text style={styles.reviewLinkVenue} numberOfLines={1}>{item.venueName}</Text>
+                <Text style={[styles.reviewLinkSentiment, { color: sentimentColor }]}>
+                  {item.sentiment === 'loved' ? '❤️ Loved it' : item.sentiment === 'fine' ? '👍 It was fine' : "👎 Didn't like it"}
+                </Text>
+                <Text style={styles.reviewLinkAuthor} numberOfLines={1}>
+                  {item.authorDisplayName || item.authorUsername || 'Anonymous'}
+                </Text>
+                {item.notes ? (
+                  <Text style={styles.reviewLinkNotes} numberOfLines={2}>{item.notes}</Text>
                 ) : null}
               </View>
             </Pressable>
@@ -359,6 +386,35 @@ const styles = StyleSheet.create({
   venueLinkName: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800', marginTop: 2 },
   venueLinkMeta: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 2 },
   venueLinkAddress: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
+  reviewLinkCard: {
+    width: 260,
+    borderRadius: 18,
+    padding: 10,
+    flexDirection: 'row',
+    gap: 10,
+    borderWidth: 1,
+  },
+  reviewLinkCardMine: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.accent,
+  },
+  reviewLinkCardTheirs: {
+    backgroundColor: COLORS.bgElevated,
+    borderColor: COLORS.bgCard,
+  },
+  reviewLinkThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewLinkCopy: { flex: 1, minWidth: 0 },
+  reviewLinkLabel: { color: COLORS.accent, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  reviewLinkVenue: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800', marginTop: 2 },
+  reviewLinkSentiment: { fontSize: 12, fontWeight: '700', marginTop: 2 },
+  reviewLinkAuthor: { color: COLORS.textMuted, fontSize: 11, marginTop: 2 },
+  reviewLinkNotes: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2, lineHeight: 14 },
   composer: {
     flexDirection: 'row',
     gap: 10,

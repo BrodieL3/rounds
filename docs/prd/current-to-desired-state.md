@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 8. Venue link messages. Next likely slice: 8b. Review link messages by `ratingId`.
+Current slice in development: none. Last completed slice: 8b. Review link messages by `ratingId`. Next likely slice: 8c. Review companion tagging, or 8d. Unlisted private Rating shares.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 

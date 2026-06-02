@@ -273,21 +273,42 @@ export default function VenueDetailScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Popular posts</Text>
           {recentRatings.slice(0, 3).map((r) => (
-            <Pressable
-              key={r.id}
-              style={styles.ratingRow}
-              onPress={() => router.push(`/post/${r.id}`)}
-            >
-              <View style={styles.ratingHeader}>
-                <Text style={styles.ratingUser}>{r.displayName || r.username || 'Anonymous'}</Text>
-                <Text style={[styles.ratingSentiment, r.sentiment === 'loved' && styles.loved]}>
-                  {r.sentiment === 'loved' ? '❤️' : r.sentiment === 'fine' ? '👍' : '👎'}
-                </Text>
-              </View>
-              {r.notes ? (
-                <Text style={styles.ratingNotes} numberOfLines={2}>{r.notes}</Text>
-              ) : null}
-            </Pressable>
+            <View key={r.id} style={styles.ratingRow}>
+              <Pressable
+                style={{ flex: 1 }}
+                onPress={() => router.push(`/post/${r.id}`)}
+              >
+                <View style={styles.ratingHeader}>
+                  <Text style={styles.ratingUser}>{r.displayName || r.username || 'Anonymous'}</Text>
+                  <Text style={[styles.ratingSentiment, r.sentiment === 'loved' && styles.loved]}>
+                    {r.sentiment === 'loved' ? '❤️' : r.sentiment === 'fine' ? '👍' : '👎'}
+                  </Text>
+                </View>
+                {r.notes ? (
+                  <Text style={styles.ratingNotes} numberOfLines={2}>{r.notes}</Text>
+                ) : null}
+              </Pressable>
+              {user && (
+                <Pressable
+                  style={styles.ratingShareBtn}
+                  onPress={() => router.push({
+                    pathname: '/conversation/share-review',
+                    params: {
+                      ratingId: r.id,
+                      venueId: r.venueId,
+                      venueName: r.venueName,
+                      venueCohort: r.cohort,
+                      sentiment: r.sentiment,
+                      authorDisplayName: r.displayName,
+                      authorUsername: r.username,
+                      notes: r.notes || '',
+                    },
+                  })}
+                >
+                  <Ionicons name="paper-plane-outline" size={16} color={COLORS.accent} />
+                </Pressable>
+              )}
+            </View>
           ))}
         </View>
       )}
@@ -416,9 +437,19 @@ const styles = StyleSheet.create({
   },
   tagText: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600' },
   ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.bgCard,
     paddingVertical: 10,
+    gap: 8,
+  },
+  ratingShareBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ratingHeader: {
     flexDirection: 'row',

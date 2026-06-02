@@ -3,6 +3,7 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable, TextInput, Image, Alert,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
   doc, onSnapshot, collection, query, addDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp,
@@ -180,11 +181,34 @@ export default function PostDetailScreen() {
           </View>
         )}
 
-        <Pressable style={styles.likeRow} onPress={toggleLike}>
-          <Text style={[styles.likeText, isLiked && styles.likeTextActive]}>
-            {isLiked ? '❤️' : '🤍'} {post.likes || 0}
-          </Text>
-        </Pressable>
+        <View style={styles.actionRow}>
+          <Pressable style={styles.likeRow} onPress={toggleLike}>
+            <Text style={[styles.likeText, isLiked && styles.likeTextActive]}>
+              {isLiked ? '❤️' : '🤍'} {post.likes || 0}
+            </Text>
+          </Pressable>
+          {user && (
+            <Pressable
+              style={styles.shareBtn}
+              onPress={() => router.push({
+                pathname: '/conversation/share-review',
+                params: {
+                  ratingId: post.id,
+                  venueId: post.venueId,
+                  venueName: post.venueName,
+                  venueCohort: post.cohort,
+                  sentiment: post.sentiment,
+                  authorDisplayName: post.displayName,
+                  authorUsername: post.username,
+                  notes: post.notes || post.description || '',
+                },
+              })}
+            >
+              <Ionicons name="paper-plane-outline" size={18} color={COLORS.accent} />
+              <Text style={styles.shareBtnText}>Share</Text>
+            </Pressable>
+          )}
+        </View>
 
         <View style={styles.divider} />
 
@@ -239,9 +263,20 @@ const styles = StyleSheet.create({
   },
   photosWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   photo: { width: '100%', height: 240, borderRadius: 12 },
-  likeRow: { marginTop: 16, alignSelf: 'flex-start' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 16 },
+  likeRow: { alignSelf: 'flex-start' },
   likeText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '600' },
   likeTextActive: { color: COLORS.danger },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.bgElevated,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  shareBtnText: { color: COLORS.accent, fontSize: 14, fontWeight: '700' },
   divider: {
     height: 1, backgroundColor: COLORS.bgCard,
     marginVertical: 20,
