@@ -137,6 +137,16 @@ Implement as serial vertical slices, not one monolithic agent task. The feature 
 
 Current slice in development: none. Last completed slice: 8d. Unlisted private Rating shares. Next likely slice: 9. Feed/List/Profile polish.
 
+Verification audit 2026-06-02:
+- Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
+- `npm test -- --runInBand` passed: 43 suites passed, 2 skipped; 189 tests passed, 36 skipped.
+- `npm run test:rules` passed against the Firestore emulator: 2 rules suites, 36 tests.
+- `npx expo export --platform web` passed, and the existing Expo dev server on `localhost:8081` responded with `packager-status:running`.
+- Dirty worktree was clean after verification, but local `main` was ahead of `origin/main` by 3 commits despite the session handoff saying those commits were pushed.
+- Live Expo UI QA against local Firebase emulators is not yet fully supported by app config: `lib/firebase.js` initializes production Firebase services and has no `connect*Emulator` toggle. Treat current UI verification as Jest source assertions plus web export/rules coverage, not a manual emulator-backed UI smoke test.
+
+Slice 9 readiness note: local code is ready to start Feed/List/Profile polish after reconciling the unpushed commits or intentionally stacking on them. Add explicit Firebase emulator client wiring before requiring live manual UI QA against emulated services.
+
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
 Recommended agent task sequence:
