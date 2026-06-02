@@ -143,9 +143,9 @@ Verification audit 2026-06-02:
 - `npm run test:rules` passed against the Firestore emulator: 2 rules suites, 36 tests.
 - `npx expo export --platform web` passed, and the existing Expo dev server on `localhost:8081` responded with `packager-status:running`.
 - Dirty worktree was clean after verification, but local `main` was ahead of `origin/main` by 3 commits despite the session handoff saying those commits were pushed.
-- Live Expo UI QA against local Firebase emulators is not yet fully supported by app config: `lib/firebase.js` initializes production Firebase services and has no `connect*Emulator` toggle. Treat current UI verification as Jest source assertions plus web export/rules coverage, not a manual emulator-backed UI smoke test.
+- Firebase emulator client wiring was added after this audit: `firebase.json` declares Auth/Firestore/Functions/Storage emulator ports; set `EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1` plus optional host/port overrides, restart Expo, and the app connects Auth, Firestore, Functions, and Storage clients to local emulators for manual UI QA.
 
-Slice 9 readiness note: local code is ready to start Feed/List/Profile polish after reconciling the unpushed commits or intentionally stacking on them. Add explicit Firebase emulator client wiring before requiring live manual UI QA against emulated services.
+Slice 9 readiness note: code is ready to start Feed/List/Profile polish. Use emulator wiring for live manual UI QA against emulated Firebase services before/while validating slice 9 feed engagement flows.
 
 Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
 
