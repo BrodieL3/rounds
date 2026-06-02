@@ -252,7 +252,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           'userId', 'username', 'displayName', 'userPhotoURL',
           'venueId', 'venueName', 'cohort', 'sentiment', 'notes',
-          'mediaPaths', 'city', 'visibility', 'createdAt'
+          'mediaPaths', 'companionUids', 'city', 'visibility', 'createdAt'
         ])
         && request.resource.data.keys().hasAll([
           'userId', 'venueId', 'venueName', 'cohort', 'sentiment',
@@ -265,6 +265,9 @@ service cloud.firestore {
         && request.resource.data.sentiment in ['loved', 'fine', 'disliked']
         && request.resource.data.notes is string
         && request.resource.data.mediaPaths is list
+        && (!request.resource.data.keys().hasAny(['companionUids'])
+          || (request.resource.data.companionUids is list
+            && request.resource.data.companionUids.size() <= 25))
         && request.resource.data.city is string
         && request.resource.data.visibility in ['public', 'unlisted', 'private'];
     }
@@ -286,7 +289,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           'ratingId', 'userId', 'username', 'displayName', 'userPhotoURL',
           'venueId', 'venueName', 'cohort', 'sentiment', 'notes',
-          'mediaPaths', 'city', 'visibility', 'likes', 'likedBy',
+          'mediaPaths', 'companionUids', 'city', 'visibility', 'likes', 'likedBy',
           'bookmarks', 'bookmarkedBy', 'createdAt'
         ])
         && request.resource.data.keys().hasAll([

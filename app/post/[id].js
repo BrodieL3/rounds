@@ -173,6 +173,17 @@ export default function PostDetailScreen() {
           <Text style={styles.description}>{post.notes || post.description}</Text>
         ) : null}
 
+        {Array.isArray(post.companionUids) && post.companionUids.length > 0 && (
+          <View style={styles.companionsRow}>
+            <Text style={styles.companionsLabel}>With </Text>
+            {post.companionUids.map((uid, i) => (
+              <Text key={uid} style={styles.companionChip}>
+                @{uid}{i < post.companionUids.length - 1 ? ', ' : ''}
+              </Text>
+            ))}
+          </View>
+        )}
+
         {media.length > 0 && (
           <View style={styles.photosWrap}>
             {media.map((url, i) => (
@@ -267,6 +278,22 @@ const styles = StyleSheet.create({
   likeRow: { alignSelf: 'flex-start' },
   likeText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '600' },
   likeTextActive: { color: COLORS.danger },
+  companionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  companionsLabel: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  companionChip: {
+    color: COLORS.accent,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   shareBtn: {
     flexDirection: 'row',
     alignItems: 'center',

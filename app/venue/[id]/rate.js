@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   FlatList,
@@ -16,7 +16,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
-  collection, query, where, getDocs,
+  collection, query, where, getDocs, onSnapshot, doc, getDoc,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { pickReviewImagesAsync } from '../../../lib/media-upload';
@@ -44,7 +44,39 @@ export default function RateScreen() {
   const [sentiment, setSentiment] = useState(null);
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState([]);
+  const [companions, setCompanions] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'friendships'), where('memberUids', 'array-contains', user.uid));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const friendUids = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return data.memberUids.find((uid) => uid !== user.uid);
+      }).filter(Boolean);
+
+      const friendProfiles = await Promise.all(
+        friendUids.map(async (uid) => {
+          const userSnap = await getDoc(doc(db, 'users', uid));
+          const userData = userSnap.exists() ? userSnap.data() : {};
+          return { uid, ...userData };
+        })
+      );
+
+      setFriends(friendProfiles.sort((a, b) =>
+        (a.displayName || a.username || a.uid).localeCompare(b.displayName || b.username || b.uid)
+      ));
+      setFriendsLoading(false);
+    }, (err) => {
+      console.error('Friends load error:', err);
+      setFriendsLoading(false);
+    });
+
+    return unsubscribe;
+  }, [user]);
 
   if (!venue) {
     return (
@@ -71,6 +103,12 @@ export default function RateScreen() {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const toggleCompanion = (uid) => {
+    setCompanions((prev) =>
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+    );
+  };
+
   const submit = useCallback(async () => {
     if (!sentiment) {
       Alert.alert('Pick a rating', 'How was it?');
@@ -87,6 +125,7 @@ export default function RateScreen() {
         sentiment,
         notes,
         localPhotoUris: photos,
+        companionUids: companions.length > 0 ? companions : undefined,
         visibility: 'public',
       });
       if (!result.success) throw new Error(result.error || 'Rating failed');
@@ -182,6 +221,31 @@ export default function RateScreen() {
       <Pressable style={styles.photoBtn} onPress={pickImages}>
         <Text style={styles.photoBtnText}>+ Add photos</Text>
       </Pressable>
+
+      <Text style={styles.sectionTitle}>Who went with you?</Text>
+      {friendsLoading ? (
+        <Text style={styles.emptyText}>Loading friends...</Text>
+      ) : friends.length === 0 ? (
+        <Text style={styles.emptyText}>Add friends to tag companions</Text>
+      ) : (
+        <View style={styles.companionsWrap}>
+          {friends.map((friend) => {
+            const selected = companions.includes(friend.uid);
+            return (
+              <Pressable
+                key={friend.uid}
+                style={[styles.companionChip, selected && styles.companionChipActive]}
+                onPress={() => toggleCompanion(friend.uid)}
+              >
+                <Text style={[styles.companionChipText, selected && styles.companionChipTextActive]}>
+                  {friend.displayName || friend.username || friend.uid}
+                </Text>
+                {selected && <Ionicons name="checkmark" size={14} color="#ffffff" style={{ marginLeft: 4 }} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Notes (optional)</Text>
       <TextInput
@@ -289,6 +353,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 24,
+    marginBottom: 8,
+  },
+  companionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  companionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.bgElevated,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.bgCard,
+  },
+  companionChipActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  companionChipText: {
+    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  companionChipTextActive: {
+    color: '#ffffff',
+  },
+  emptyText: {
+    color: COLORS.textMuted,
+    fontSize: 14,
     marginBottom: 8,
   },
   previewCard: {
