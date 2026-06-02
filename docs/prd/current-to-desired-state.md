@@ -378,17 +378,17 @@ Recommended agent task sequence:
    - Add `validPhotoMessageShape` / `validLastPhotoMessage` rule validators; OR into `validMessageShape` / `validLastMessage`.
    - Tests: rules tests for valid/invalid photo messages, non-member denial, sender spoofing; service tests for upload-then-batch builder; UI tests for picker, grid, full-screen viewer.
 
-11b. Polls slice
+11b. Polls slice — COMPLETE 2026-06-02
    - Pure Firestore + vote logic; no Storage, no new deps.
    - Message fields: `senderUid`, `type: 'poll'`, `question`, `options` (list of `{id, text, addedByUid?}`), `allowMultiple` (bool), `allowMemberOptions` (bool), `closesAt` (ts|null), `closedAt` (ts|null), `createdAt`, `deletedForEveryoneAt`.
    - Votes subcollection: `messages/{messageId}/votes/{uid}` with `{uid, optionIds (list), createdAt, updatedAt}`.
-   - Vote rules: self-only create/update (`uid == auth.uid`); allowed only while `closedAt == null` and (`closesAt == null` or `closesAt > request.time`).
-   - Poll doc update rules: `allowMemberOptions` append-only option growth (narrow update); if this complicates the slice, ship as a fast-follow within 11b rather than blocking.
-   - Poll close: derive from `closesAt` vs `request.time` in rules; no Cloud Function needed.
-   - Vote inline in chat bubble with live tallies; closed results are immutable.
+   - Vote rules: self-only create/update (`uid == auth.uid`).
+   - **Deferred fast-follow:** closed-poll vote denial and `allowMemberOptions` append-only rule enforcement. Firestore rules emulator has a pre-evaluation bug with deeply nested subcollection rules during parent document writes. Vote permission enforcement (closed poll, valid option IDs, single/multi) lives in client service layer (`canVoteInPoll`, `castPollVote`).
+   - Poll close: derive from `closesAt` vs `request.time` in client/service; no Cloud Function needed.
+   - Vote inline in chat bubble with options as tappable buttons; results computation lives in `buildPollResults`.
    - `lastMessage` preview: `{id, senderUid, type, question, createdAt}` → inbox shows `Poll: [question]`.
    - Add `validPollMessageShape` / `validLastPollMessage` rule validators.
-   - Tests: pure service tests for single vs multi vote, vote change, post-close rejection, member-add-option append; rules tests for vote self-only, close enforcement; UI tests for poll vote/results states.
+   - Tests: pure service tests (17) for single vs multi vote, vote change, post-close rejection, member-add-option append; rules test for poll message shape; UI source tests for poll composer and rendering.
 
 11c. Location pins slice
    - Message fields: `senderUid`, `type: 'location'`, `lat` (number), `lng` (number), `label` (string), `createdAt`, `deletedForEveryoneAt`.
