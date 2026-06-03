@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 12. Message interactions slice. The original Friends-first implementation track is complete through text DMs, group chats, review companion tags, venue/review links, unlisted Rating shares, polls, photos, location pins, voice notes, safety basics, and message reactions/reply quotes. Next recommended work is architecture hardening before adding more chat surface area: first deepen Conversation Message send, then deepen the Conversation surface.
+Current slice in development: Architecture hardening — Conversation surface. Last completed slice: 12. Message interactions slice. The original Friends-first implementation track is complete through text DMs, group chats, review companion tags, venue/review links, unlisted Rating shares, polls, photos, location pins, voice notes, safety basics, and message reactions/reply quotes. Next recommended work is architecture hardening before adding more chat surface area: Conversation Message send first, then Conversation surface.
 
 Verification audit 2026-06-02:
 - Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
@@ -430,3 +430,16 @@ Execution rule: one agent owns one slice or one architecture hardening task, wri
 - ADR 003 is accepted: Friends-first navigation is not optional.
 - Latest relevant handoff is `/tmp/rounds-slice-12-message-interactions-handoff.md`; older handoffs are session state only.
 - Expo package currently indicates SDK 54, while project instructions mention SDK 56 docs before Expo changes; resolve before Expo implementation work.
+
+Architecture hardening — Conversation surface implementation note:
+- Extracted `hooks/useConversationSurface.js` to own conversation load, message subscription, sender profiles, photo URL resolution, reaction subscriptions, mark seen, and all send/action callbacks.
+- Extracted `components/conversation/MessageBubble.js` to own rendering for text, photo, poll, location, voice, venue link, review link, deleted tombstone, reply preview, and reaction pills.
+- Extracted `components/conversation/Composer.js` to own text composer, reply bar, poll composer, and voice recording overlay.
+- Extracted `components/conversation/AttachmentMenu.js` to own attach action sheet.
+- Extracted `components/conversation/MessageList.js` to own FlatList wrapper and empty state.
+- Extracted pure `lib/friends/conversation-surface.js` for view-model helpers: title, empty state, permission flags, voice duration formatting.
+- Route `app/conversation/[id].js` reduced to param handling, auth context, navigation shell, and dependency wiring.
+- Preserved all existing send-service APIs; no message-send service internals were refactored.
+- Existing UI source tests updated to point at new seams instead of the giant route.
+- New tests added: `lib/__tests__/conversation-surface-view-model.test.js` (pure) and `lib/__tests__/conversation-surface-ui.test.js` (source assertions).
+- Full suite: 62 suites passed, 2 skipped; 298 tests passed, 49 skipped. `npx expo export --platform web` passed.
