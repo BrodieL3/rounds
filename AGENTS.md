@@ -2,7 +2,7 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| Native UI media adapter | `docs/agents/native-ui-media-adapter.md` | `components/ui/media-image.js`, `lib/media-image-source.js`, core media call sites, package deps | Final avatar/photo tracer ready for review; not pushed. |
+| None | — | — | No active implementation slice. Native UI media adapter completed and pushed. Pick next slice before editing. |
 
 ## Cross-cutting rules
 
