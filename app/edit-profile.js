@@ -1,9 +1,10 @@
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS } from '../lib/constants';
+import MediaImage from '../components/ui/media-image';
 
 const LINK_BLUE = '#155e6d';
 const BORDER = '#eeeeee';
@@ -20,7 +21,7 @@ function ProfileAvatar({ profile, user, size = 128 }) {
   const avatarStyle = { width: size, height: size, borderRadius: size / 2 };
 
   if (profile?.photoURL) {
-    return <Image source={{ uri: profile.photoURL }} style={[styles.avatarImage, avatarStyle]} />;
+    return <MediaImage source={{ uri: profile.photoURL }} style={[styles.avatarImage, avatarStyle]} />;
   }
 
   return (

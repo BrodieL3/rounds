@@ -10,6 +10,7 @@ import {
 import { db, functions as cloudFunctions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
+import MediaImage from '../../components/ui/media-image';
 
 const {
   acceptFriendRequest,
@@ -294,11 +295,15 @@ export default function UserProfileScreen() {
   return (
     <ScrollView contentContainerStyle={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {(profile.displayName || profile.username || '?').charAt(0).toUpperCase()}
-          </Text>
-        </View>
+        {profile?.photoURL ? (
+          <MediaImage source={{ uri: profile.photoURL }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {(profile.displayName || profile.username || '?').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
         <Text style={styles.name}>{profile.displayName || profile.username}</Text>
         <Text style={styles.username}>@{profile.username}</Text>
 
@@ -379,6 +384,11 @@ const styles = StyleSheet.create({
     width: 96, height: 96, borderRadius: 48,
     backgroundColor: COLORS.bgElevated,
     alignItems: 'center', justifyContent: 'center',
+    marginBottom: 16,
+  },
+  avatarImage: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: COLORS.bgElevated,
     marginBottom: 16,
   },
   avatarText: { color: COLORS.accent, fontSize: 40, fontWeight: '800' },

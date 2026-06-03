@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Alert,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import { auth } from '../../lib/firebase';
 import { pickProfileImageAsync, uploadProfilePictureAsync } from '../../lib/media-upload';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import { COLORS } from '../../lib/constants';
+import MediaImage from '../../components/ui/media-image';
 
 export default function PhotoScreen() {
   const { data, update } = useOnboarding();
@@ -61,7 +61,7 @@ export default function PhotoScreen() {
       <Text style={styles.title}>Add a photo</Text>
       <Text style={styles.copy}>Choose a square profile picture. We crop 1:1 and compress before upload.</Text>
 
-      {url ? <Image source={{ uri: url }} style={styles.preview} /> : <View style={styles.previewEmpty} />}
+      {url ? <MediaImage source={{ uri: url }} style={styles.preview} /> : <View style={styles.previewEmpty} />}
 
       <Pressable style={styles.uploadButton} onPress={pickAndUpload} disabled={uploading}>
         <Text style={styles.uploadButtonText}>{uploading ? 'Uploading...' : 'Choose photo'}</Text>
