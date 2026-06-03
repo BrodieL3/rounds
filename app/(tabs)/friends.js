@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
+import ScreenContainer from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
 
 const {
@@ -152,7 +153,8 @@ export default function FriendsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScreenContainer>
+      <ScrollView contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{viewModel.screenTitle}</Text>
@@ -210,7 +212,8 @@ export default function FriendsScreen() {
           {viewModel.conversations.map(renderConversation)}
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </ScreenContainer>
   );
 }
 
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: COLORS.bg,
     paddingHorizontal: 20,
-    paddingTop: 56,
+    paddingTop: 16,
     paddingBottom: 24,
   },
   header: {

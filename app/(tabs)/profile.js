@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
 import VenueRow from '../../components/VenueRow';
+import CopyableText from '../../components/ui/CopyableText';
 
 const VENUE_DATA = require('../../assets/venues.json');
 
@@ -174,6 +175,7 @@ export default function ProfileScreen() {
   const visibleSuggestions = SUGGESTED_USERS.filter((item) => !hiddenSuggestionIds.includes(item.id));
   const followers = (profile?.followers || []).length;
   const following = (profile?.following || []).length;
+  const profileMemberSince = formatMemberSince(profile?.createdAt);
 
   return (
     <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
@@ -191,8 +193,12 @@ export default function ProfileScreen() {
 
       <View style={styles.identityBlock}>
         <ProfileAvatar profile={profile} user={user} />
-        <Text style={styles.username}>@{profile?.username || 'username'}</Text>
-        <Text style={styles.memberSince}>{formatMemberSince(profile?.createdAt)}</Text>
+        <CopyableText accessibilityLabel="Profile username" style={styles.username}>
+          @{profile?.username || 'username'}
+        </CopyableText>
+        <CopyableText accessibilityLabel="Profile member since" style={styles.memberSince}>
+          {profileMemberSince}
+        </CopyableText>
         <Pressable>
           <Text style={styles.addSchool}>+ Add School</Text>
         </Pressable>
@@ -321,7 +327,7 @@ const styles = StyleSheet.create({
   },
   stat: { alignItems: 'center', flex: 1 },
   statValueWrap: { height: 22, alignItems: 'center', justifyContent: 'center' },
-  statNum: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '800' },
+  statNum: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '800', fontVariant: ['tabular-nums'] },
   statLabel: { color: '#9ca3af', fontSize: 13, marginTop: 2, textAlign: 'center' },
   actionRow: {
     flexDirection: 'row',
@@ -424,5 +430,5 @@ const styles = StyleSheet.create({
   activityIcon: { width: 36 },
   activityLabel: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '800' },
   activitySpacer: { flex: 1 },
-  activityCount: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '800', marginRight: 12 },
+  activityCount: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '800', marginRight: 12, fontVariant: ['tabular-nums'] },
 });

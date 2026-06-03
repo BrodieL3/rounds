@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import {
-  StyleSheet, Text, View, ScrollView, Pressable, Alert, TextInput, Linking,
+  StyleSheet, Text, View, ScrollView, Pressable, Alert, TextInput, Linking, Modal,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +14,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback, formatOpenClosedStatus, formatVenueAverageScore } from '../../../lib/venue-visuals';
 import { getBookmarkAsync, setBookmarkAsync, removeBookmarkAsync } from '../../../lib/venue-bookmark-service';
+import CopyableText from '../../../components/ui/CopyableText';
 
 const VENUE_DATA = require('../../../assets/venues.json');
 
@@ -223,10 +224,14 @@ export default function VenueDetailScreen() {
         </Pressable>
       </View>
 
-      <Pressable style={styles.addressRow} onPress={() => openMap(venue.name, latitude, longitude)}>
-        <Text style={styles.address}>{venue.address}</Text>
-        <Text style={styles.mapLink}>Open in Maps →</Text>
-      </Pressable>
+      <View style={styles.addressRow}>
+        <CopyableText accessibilityLabel="Venue address" style={styles.address}>
+          {venue.address}
+        </CopyableText>
+        <Pressable hitSlop={8} onPress={() => openMap(venue.name, latitude, longitude)}>
+          <Text style={styles.mapLink}>Open in Maps →</Text>
+        </Pressable>
+      </View>
 
       {/* Stats */}
       <View style={styles.statsRow}>
@@ -324,30 +329,39 @@ export default function VenueDetailScreen() {
         <Text style={styles.reportBtnText}>Report miscategorized</Text>
       </Pressable>
 
-      {reportModal && (
-        <View style={styles.reportCard}>
-          <Text style={styles.reportTitle}>Report miscategorization</Text>
-          <Text style={styles.reportCopy}>
-            Current: {COHORT_LABELS[venue.cohort] || venue.cohort}
-          </Text>
-          <TextInput
-            style={styles.reportInput}
-            placeholder="What should it be?"
-            placeholderTextColor={COLORS.textPlaceholder}
-            value={reportText}
-            onChangeText={setReportText}
-            autoFocus
-          />
-          <View style={styles.reportActions}>
-            <Pressable style={styles.reportCancel} onPress={() => setReportModal(false)}>
-              <Text style={styles.reportCancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={styles.reportSubmit} onPress={submitReport}>
-              <Text style={styles.reportSubmitText}>Submit</Text>
-            </Pressable>
+      <Modal
+        visible={reportModal}
+        animationType="slide"
+        transparent
+        presentationStyle="pageSheet"
+        onRequestClose={() => setReportModal(false)}
+      >
+        <View style={styles.reportBackdrop}>
+          <View style={styles.reportCard}>
+            <View style={styles.reportGrabber} />
+            <Text style={styles.reportTitle}>Report miscategorization</Text>
+            <Text style={styles.reportCopy}>
+              Current: {COHORT_LABELS[venue.cohort] || venue.cohort}
+            </Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="What should it be?"
+              placeholderTextColor={COLORS.textPlaceholder}
+              value={reportText}
+              onChangeText={setReportText}
+              autoFocus
+            />
+            <View style={styles.reportActions}>
+              <Pressable style={styles.reportCancel} onPress={() => setReportModal(false)}>
+                <Text style={styles.reportCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.reportSubmit} onPress={submitReport}>
+                <Text style={styles.reportSubmitText}>Submit</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      )}
+      </Modal>
     </ScrollView>
   );
 }
@@ -417,7 +431,7 @@ const styles = StyleSheet.create({
     padding: 16, marginBottom: 16,
   },
   stat: { alignItems: 'center', flex: 1 },
-  statNum: { color: COLORS.textPrimary, fontSize: 20, fontWeight: '800' },
+  statNum: { color: COLORS.textPrimary, fontSize: 20, fontWeight: '800', fontVariant: ['tabular-nums'] },
   statLabel: { color: COLORS.textMuted, fontSize: 11, marginTop: 2, textAlign: 'center' },
   card: {
     backgroundColor: COLORS.bgElevated, padding: 16,
@@ -470,9 +484,26 @@ const styles = StyleSheet.create({
     marginTop: 12, padding: 12, alignItems: 'center',
   },
   reportBtnText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  reportBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.24)',
+    padding: 16,
+  },
   reportCard: {
-    backgroundColor: COLORS.bgElevated, padding: 16,
-    borderRadius: 16, marginTop: 16,
+    backgroundColor: COLORS.bg,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.bgCard,
+  },
+  reportGrabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.bgCard,
+    marginBottom: 12,
   },
   reportTitle: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '700' },
   reportCopy: { color: COLORS.textSecondary, fontSize: 14, marginTop: 4 },

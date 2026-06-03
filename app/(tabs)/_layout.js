@@ -1,19 +1,24 @@
 import { Tabs, useRouter } from 'expo-router';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../lib/constants';
+import AppIcon from '../../components/ui/AppIcon';
 
 const {
-  HIDDEN_TAB_ROUTES,
-  PRIMARY_TABS,
+  getAddEntryRoute,
+  getHiddenTabRouteNames,
+  getPrimaryTabDescriptors,
   getTabIconName,
-} = require('../../lib/tab-config');
+} = require('../../lib/navigation-shell');
+
+const PRIMARY_TABS = getPrimaryTabDescriptors();
+const HIDDEN_TAB_ROUTES = getHiddenTabRouteNames();
+const ADD_ENTRY_ROUTE = getAddEntryRoute();
 
 function TabIcon({ focused, name }) {
   const iconName = getTabIconName(name, focused);
   return (
     <View style={styles.tabIcon}>
-      <Ionicons name={iconName} size={22} color={focused ? COLORS.accent : COLORS.textMuted} />
+      <AppIcon name={iconName} size={22} color={focused ? COLORS.accent : COLORS.textMuted} />
     </View>
   );
 }
@@ -21,9 +26,15 @@ function TabIcon({ focused, name }) {
 function AddTabButton() {
   const router = useRouter();
   return (
-    <Pressable style={styles.addTab} onPress={() => router.push('/add')}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Rate a place"
+      hitSlop={8}
+      style={styles.addTab}
+      onPress={() => router.push(ADD_ENTRY_ROUTE)}
+    >
       <View style={styles.addButton}>
-        <Ionicons name="add" size={28} color="#ffffff" />
+        <AppIcon name="add" size={28} color="#ffffff" />
       </View>
     </Pressable>
   );
@@ -36,6 +47,7 @@ function renderPrimaryTab(tab) {
         key={tab.name}
         name={tab.name}
         options={{
+          title: tab.title,
           tabBarButton: () => <AddTabButton />,
           tabBarLabel: tab.label,
         }}
@@ -48,6 +60,7 @@ function renderPrimaryTab(tab) {
       key={tab.name}
       name={tab.name}
       options={{
+        title: tab.title,
         tabBarIcon: ({ focused }) => <TabIcon focused={focused} name={tab.name} />,
         tabBarLabel: tab.label,
       }}
@@ -60,8 +73,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: styles.scene,
         tabBarStyle: styles.tabBar,
         tabBarShowLabel: true,
+        tabBarHideOnKeyboard: true,
         tabBarLabelStyle: styles.tabLabel,
         tabBarItemStyle: styles.tabItem,
         tabBarActiveTintColor: COLORS.accent,
@@ -77,17 +92,18 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  scene: {
+    backgroundColor: COLORS.bg,
+  },
   tabBar: {
     backgroundColor: COLORS.bg,
     borderTopColor: COLORS.bgCard,
-    borderTopWidth: 1,
-    height: 80,
-    paddingBottom: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    overflow: 'visible',
   },
   tabItem: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 4,
   },
   tabIcon: {
     alignItems: 'center',

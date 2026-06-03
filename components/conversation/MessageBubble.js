@@ -81,6 +81,23 @@ export default function MessageBubble({
     onReport(message);
   }, [message, onReport]);
 
+  const showMessageActions = useCallback(() => {
+    const actions = [
+      { text: 'Reply', onPress: handleReply },
+      { text: 'React', onPress: handleReact },
+      { text: 'Hide message', onPress: handleHide },
+      canDelete
+        ? { text: 'Delete for everyone', style: 'destructive', onPress: handleDelete }
+        : null,
+      canReportFlag
+        ? { text: 'Report message', style: 'destructive', onPress: handleReport }
+        : null,
+      { text: 'Cancel', style: 'cancel' },
+    ].filter(Boolean);
+
+    Alert.alert('Message actions', undefined, actions);
+  }, [canDelete, canReportFlag, handleDelete, handleHide, handleReact, handleReply, handleReport]);
+
   const handlePressVenue = useCallback(() => {
     router.push({ pathname: '/venue/[id]', params: { id: message.venueId } });
   }, [message.venueId]);
@@ -96,7 +113,11 @@ export default function MessageBubble({
 
   return (
     <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
-      <View style={[styles.messageStack, isMine ? styles.messageStackMine : styles.messageStackTheirs]}>
+      <Pressable
+        delayLongPress={300}
+        onLongPress={showMessageActions}
+        style={[styles.messageStack, isMine ? styles.messageStackMine : styles.messageStackTheirs]}
+      >
         {isGroup && !isMine && sender ? (
           <Text style={styles.senderLabel}>
             {sender.displayName || sender.username || message.senderUid}
@@ -239,28 +260,6 @@ export default function MessageBubble({
           </View>
         )}
 
-        <View style={[styles.messageActions, isMine ? styles.messageActionsMine : styles.messageActionsTheirs]}>
-          <Pressable onPress={handleHide}>
-            <Text style={styles.messageActionText}>Hide message</Text>
-          </Pressable>
-          {canDelete ? (
-            <Pressable onPress={handleDelete}>
-              <Text style={styles.messageActionDanger}>Delete for everyone</Text>
-            </Pressable>
-          ) : null}
-          {canReportFlag ? (
-            <Pressable onPress={handleReport}>
-              <Text style={styles.messageActionDanger}>Report message</Text>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={handleReact}>
-            <Text style={styles.messageActionText}>React</Text>
-          </Pressable>
-          <Pressable onPress={handleReply}>
-            <Text style={styles.messageActionText}>Reply</Text>
-          </Pressable>
-        </View>
-
         {reactions && reactions.length > 0 ? (
           <View style={[styles.reactionsBar, isMine ? styles.reactionsBarMine : styles.reactionsBarTheirs]}>
             {reactions.map((reaction) => (
@@ -281,7 +280,7 @@ export default function MessageBubble({
             ))}
           </View>
         ) : null}
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -300,11 +299,6 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15, lineHeight: 20 },
   messageTextMine: { color: '#ffffff' },
   messageTextTheirs: { color: COLORS.textPrimary },
-  messageActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4, paddingHorizontal: 6 },
-  messageActionsMine: { justifyContent: 'flex-end' },
-  messageActionsTheirs: { justifyContent: 'flex-start' },
-  messageActionText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '700' },
-  messageActionDanger: { color: COLORS.danger, fontSize: 11, fontWeight: '800' },
   photoBubble: { maxWidth: 240, borderRadius: 18, overflow: 'hidden' },
   photoBubbleMine: { borderWidth: 1, borderColor: COLORS.accent },
   photoBubbleTheirs: { borderWidth: 1, borderColor: COLORS.bgCard },

@@ -8,6 +8,7 @@ import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
 import { getBookmarkAsync, setBookmarkAsync, removeBookmarkAsync } from '../../lib/venue-bookmark-service';
 import VenueRow from '../../components/VenueRow';
+import ScreenContainer from '../../components/ui/ScreenContainer';
 
 const VENUE_DATA = require('../../assets/venues.json');
 
@@ -108,7 +109,7 @@ export default function ListScreen() {
   );
 
   return (
-    <View style={styles.screen}>
+    <ScreenContainer style={styles.screen}>
       <Text style={styles.title}>{cityKey.toUpperCase()}</Text>
 
       <TextInput
@@ -155,7 +156,7 @@ export default function ListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg, padding: 16 },
   title: {
     color: COLORS.textPrimary, fontSize: 28, fontWeight: '800',
-    marginTop: 48, marginBottom: 12,
+    marginTop: 8, marginBottom: 12,
   },
   search: {
     backgroundColor: COLORS.bgElevated, color: COLORS.textPrimary,

@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, FlatList,
+  StyleSheet, Text, TextInput, FlatList,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import VenueRow from '../components/VenueRow';
 import { COLORS } from '../lib/constants';
+import ScreenContainer from '../components/ui/ScreenContainer';
 
 const VENUE_DATA = require('../assets/venues.json');
 
@@ -33,7 +34,7 @@ export default function AddScreen() {
   );
 
   return (
-    <View style={styles.screen}>
+    <ScreenContainer style={styles.screen}>
       <Text style={styles.title}>Rate a place</Text>
       <Text style={styles.copy}>Search the venue you just visited.</Text>
 
@@ -53,7 +54,7 @@ export default function AddScreen() {
         contentContainerStyle={styles.listContent}
         keyboardShouldPersistTaps="handled"
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
@@ -61,7 +62,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg, padding: 16 },
   title: {
     color: COLORS.textPrimary, fontSize: 32, fontWeight: '800',
-    marginTop: 48, marginBottom: 4,
+    marginTop: 8, marginBottom: 4,
   },
   copy: { color: COLORS.textSecondary, fontSize: 16, marginBottom: 16 },
   search: {
