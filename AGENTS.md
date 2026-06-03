@@ -2,7 +2,7 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| Native UI media adapter | `docs/agents/native-ui-media-adapter.md` | `components/ui/media-image.js`, `lib/media-image-source.js`, Feed/Conversation/Profile media call sites, package deps | Profile tracer ready for review; not pushed. |
+| Native UI media adapter | `docs/agents/native-ui-media-adapter.md` | `components/ui/media-image.js`, `lib/media-image-source.js`, Feed/Conversation/Profile/Rating/Post media call sites, package deps | Core media tracer ready for review; not pushed. |
 
 ## Cross-cutting rules
 

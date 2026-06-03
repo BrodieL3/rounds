@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +23,7 @@ import { createRatingWithProjectionAsync } from '../../../lib/ratings/rating-ser
 import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback } from '../../../lib/venue-visuals';
+import MediaImage from '../../../components/ui/media-image';
 
 const VENUE_DATA = require('../../../assets/venues.json');
 
@@ -209,7 +209,7 @@ export default function RateScreen() {
           contentContainerStyle={{ gap: 8, marginBottom: 12 }}
           renderItem={({ item, index }) => (
             <View style={styles.photoWrap}>
-              <Image source={{ uri: item }} style={styles.photoThumb} />
+              <MediaImage source={{ uri: item }} style={styles.photoThumb} />
               <Pressable style={styles.photoRemove} onPress={() => removePhoto(index)}>
                 <Text style={styles.photoRemoveText}>×</Text>
               </Pressable>

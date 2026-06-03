@@ -10,9 +10,9 @@ Tracer bullet for PRD media migration:
 
 1. Add small reusable media image primitive backed by `expo-image`.
 2. Keep media rendering API stable for screens: URI in, native image component out.
-3. Migrate high-value surfaces first: Feed avatars/review media, Conversation photo bubbles, and Profile avatars.
-4. Preserve existing Feed behavior, routes, engagement actions, chat photo behavior, profile copy, and media path resolution.
-5. Leave broader Venue, Rating, Post, edit-profile, and onboarding migration as follow-up.
+3. Migrate high-value surfaces first: Feed avatars/review media, Conversation photo bubbles, Profile avatars, Rating photo thumbnails, and Post detail photos.
+4. Preserve existing Feed behavior, routes, engagement actions, chat photo behavior, profile copy, Rating creation behavior, Post fallback behavior, and media path resolution.
+5. Leave broader Venue detail, edit-profile, user profile, and onboarding migration as follow-up.
 
 ## Done criteria
 
@@ -20,8 +20,9 @@ Tracer bullet for PRD media migration:
 - Tests assert Feed uses the shared media primitive instead of importing React Native `Image`.
 - Tests assert Conversation photo bubbles use the shared media primitive for single and grid photos.
 - Tests assert Profile avatars use the shared media primitive.
+- Tests assert Rating photo thumbnails and Post detail photos use the shared media primitive.
 - Tests assert the media primitive wraps Expo Image and normalizes URI/string source input.
-- Feed avatars/review media, Conversation photo bubbles, and Profile avatars still render from existing URI values.
+- Feed avatars/review media, Conversation photo bubbles, Profile avatars, Rating photo thumbnails, and Post detail photos still render from existing URI values.
 - Normal Jest suite passes.
 - Expo web export passes before handoff.
 
@@ -35,4 +36,4 @@ Tracer bullet for PRD media migration:
 ## Verification
 
 - `npm test -- --runInBand`
-- `npx expo export --platform web --output-dir /tmp/rounds-web-export-native-ui-media-profile`
+- `npx expo export --platform web --output-dir /tmp/rounds-web-export-native-ui-media-rating-post`

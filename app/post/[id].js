@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, ScrollView, Pressable, TextInput, Image, Alert,
+  StyleSheet, Text, View, ScrollView, Pressable, TextInput, Alert,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import {
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
+import MediaImage from '../../components/ui/media-image';
 
 const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
 
@@ -222,7 +223,7 @@ export default function PostDetailScreen() {
         {media.length > 0 && (
           <View style={styles.photosWrap}>
             {media.map((url, i) => (
-              <Image key={`${url}-${i}`} source={{ uri: url }} style={styles.photo} />
+              <MediaImage key={`${url}-${i}`} source={{ uri: url }} style={styles.photo} />
             ))}
           </View>
         )}
