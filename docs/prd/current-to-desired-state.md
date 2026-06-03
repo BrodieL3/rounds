@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 12. Message interactions slice. Next likely slice: review/social planning fast-follows or deferred message-interaction hardening.
+Current slice in development: none. Last completed slice: 12. Message interactions slice. The original Friends-first implementation track is complete through text DMs, group chats, review companion tags, venue/review links, unlisted Rating shares, polls, photos, location pins, voice notes, safety basics, and message reactions/reply quotes. Next recommended work is architecture hardening before adding more chat surface area: first deepen Conversation Message send, then deepen the Conversation surface.
 
 Verification audit 2026-06-02:
 - Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
@@ -149,7 +149,11 @@ Slice 9 completion note: Feed row like/comment/share/saved-review actions are wi
 
 Slice 10 completion note: Block user, report user/message, hide message for self, delete message for everyone, and notification privacy basics are wired behind safety service seams and trusted callables. Block writes remove Friendship/follows, cancel pending requests, hide the blocker DM, and rules deny blocked direct requests/DMs/comments/invites. Report rules require safe reporter-owned payloads while preserving legacy venue miscategorization reports. Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`.
 
-Update this line whenever work starts on a new slice, and update that slice's implementation instructions before coding.
+Slice 12 completion note: Message reactions and reply quotes are wired. Reactions use `messages/{messageId}/reactions/{uid}` with self-owned reaction writes. Reply quote metadata is stored on text message docs while `lastMessage` stays unchanged. Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`. Commit `a8c82a7` is pushed.
+
+Architecture review 2026-06-03: the first hardening focus should be the Conversation Message send module because DM/group write logic is repeated across text/photo/poll/voice/location/venue/review modules. Second focus should be the Conversation surface because `app/conversation/[id].js` owns too many responsibilities. Full report: `/tmp/architecture-review-20260603-1355.html`.
+
+Update the current-slice line whenever work starts on a new slice or architecture hardening task, and update that task's implementation notes before coding.
 
 Recommended agent task sequence:
 
@@ -366,7 +370,7 @@ Recommended agent task sequence:
    - Report.
    - Delete/hide messages.
    - Notification privacy basics.
-11a. Photo attachments slice
+11a. Photo attachments slice — COMPLETE 2026-06-02
    - Establish reusable chat-media seam: Storage paths, member-gated rules, upload-then-batch, cleanup.
    - Message fields: `senderUid`, `type: 'photo'`, `mediaPaths` (list, 1–10), `aspectRatios` (list of numbers), `createdAt`, `deletedForEveryoneAt`. No caption in MVP.
    - Storage paths: `conversations/{conversationId}/photos/photo_{timestamp}_{index}.jpg`.
@@ -377,6 +381,7 @@ Recommended agent task sequence:
    - `lastMessage` preview: `{id, senderUid, type, photoCount, createdAt}` → inbox shows `Photo` / `N photos`.
    - Add `validPhotoMessageShape` / `validLastPhotoMessage` rule validators; OR into `validMessageShape` / `validLastMessage`.
    - Tests: rules tests for valid/invalid photo messages, non-member denial, sender spoofing; service tests for upload-then-batch builder; UI tests for picker, grid, full-screen viewer.
+   - Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web` as part of the 11a–11d rich attachment handoff.
 
 11b. Polls slice — COMPLETE 2026-06-02
    - Pure Firestore + vote logic; no Storage, no new deps.
@@ -417,11 +422,11 @@ Recommended agent task sequence:
    - `lastMessage` remains unaffected by reactions/replies.
    - Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`.
 
-Execution rule: one agent owns one slice, writes/updates tests, runs relevant suite, then leaves a handoff. Merge or reconcile each slice before starting the next dependent slice. Parallel work should wait until DM/group foundations and shared Firestore contracts are stable.
+Execution rule: one agent owns one slice or one architecture hardening task, writes/updates tests, runs relevant suite, then leaves a handoff. Merge or reconcile each task before starting the next dependent task. Parallel work should wait when shared Conversation Message or Conversation surface seams are being changed.
 
 ## Further Notes
 
 - Existing `docs/prd/friends-tab.md` remains source of truth for detailed Friends behavior.
 - ADR 003 is accepted: Friends-first navigation is not optional.
-- Existing `/tmp` handoffs confirm next build path should start with functional Friends slice #1 and preserve current uncommitted work cautiously.
-- Expo package currently indicates SDK 54, while project instructions mention SDK 56 docs before Expo changes; resolve before implementation work.
+- Latest relevant handoff is `/tmp/rounds-slice-12-message-interactions-handoff.md`; older handoffs are session state only.
+- Expo package currently indicates SDK 54, while project instructions mention SDK 56 docs before Expo changes; resolve before Expo implementation work.

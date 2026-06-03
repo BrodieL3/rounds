@@ -5,7 +5,7 @@ Current source of truth for Rounds domain vocabulary and product priorities. Thi
 
 ## Current goal
 
-Rounds is now a working Expo/Firebase mobile prototype shifting from nightlife discovery/ranking toward friend-coordinated nightlife planning. Near-term work should deepen the MVP already in code while making Friends the hero surface: onboarding, city venue lists, venue rating, social feed, profiles, cohort-scoped pairwise comparison, and friend planning.
+Rounds is now a working Expo/Firebase mobile prototype centered on friend-coordinated nightlife planning. Near-term work should harden and deepen the MVP already in code: onboarding, city venue lists, venue rating, social feed, profiles, cohort-scoped pairwise comparison, Friends chat, planning attachments, and safety basics.
 
 Do not treat this repo as a fresh Expo exercise. Treat it as a product prototype whose next goal is to make the current client/Firebase slice coherent, testable, and ready for a backend seam where chat, feed, ranking, and social planning state stops belonging in client screens.
 
@@ -19,8 +19,8 @@ Do not treat this repo as a fresh Expo exercise. Treat it as a product prototype
 - Feed reads city posts from Firestore, promotes followed users above city activity, and supports post detail likes/comments.
 - Profile shows user stats, recent reviews, followers/following counts, and a people search path.
 - Pairwise comparison lives in `/compare`; it chooses venues from one cohort where the user has at least two ratings.
-- Friends is the planned hero surface for coordinating nights out with direct messages, group chats, chat attachments, polls, review links, and review companion selection.
-- Leaderboard/rank screen is deprecated before implementation; ranking exists only as local Elo-like computation over comparisons.
+- Friends is the hero surface for coordinating nights out with Friend Requests, Friendships, direct messages, group chats, venue/review links, review companion selection, polls, photos, location pins, voice notes, reactions, reply quotes, blocking, reporting, and message hide/delete basics.
+- Leaderboard/rank screen is removed from primary navigation; ranking exists only as local Elo-like computation over comparisons.
 
 ## Architecture facts from code
 
@@ -28,10 +28,10 @@ Do not treat this repo as a fresh Expo exercise. Treat it as a product prototype
 - Data store: Firebase Auth, Firestore, Firebase Storage.
 - Route ownership: Expo Router files own navigation; `/compare` owns primary pairwise ranking action.
 - Current venue seed is static JSON, not a Firestore collection.
-- Current screens call Firestore directly. There is no backend worker/module yet for canonical chat, feed, or personal-ranking state.
-- Firestore rules already anticipate backend-owned `feedItems` and deprecated `leaderboardEntries`, but the current app reads/writes `posts`, `ratings`, `comparisons`, `users`, and `reports` directly.
-- Current tab order is Feed, List, Add, Rank, Profile. Planned tab order is Friends, Feed, Add, List, Profile; Leaderboard/Rank is removed.
-- Tests currently cover pure modules: auth routing, auth cache, ranking, and TicketsData client.
+- Current screens still call Firestore directly in several places. There is no backend worker/module yet for canonical feed or personal-ranking state; some trusted Friends mutations use Firebase Functions.
+- Firestore rules already anticipate backend-owned `feedItems` and deprecated `leaderboardEntries`, but the current app reads/writes `posts`, `ratings`, `comparisons`, `users`, `reports`, and conversation state directly where beta rules allow it.
+- Current tab order is Friends, Feed, Add, List, Profile. Leaderboard/Rank is removed from primary navigation.
+- Tests currently cover pure modules, UI source assertions, Firebase Functions callables, Firestore rules, Storage rules, and Expo web export verification.
 
 ## Domain vocabulary
 

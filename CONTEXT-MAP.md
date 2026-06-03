@@ -42,7 +42,7 @@ These files were intentionally removed because they duplicated or conflicted wit
 
 ## Latest handoff pattern
 
-Handoffs live in `/tmp`, not the repo. Keep only the latest relevant handoff, such as `/tmp/rounds-group-lifecycle-slice-4b-handoff.md`.
+Handoffs live in `/tmp`, not the repo. Keep only the latest relevant handoff, such as `/tmp/rounds-slice-12-message-interactions-handoff.md` or an architecture-handoff file for the next hardening task.
 
 Do not treat handoffs as source of truth after their changes are committed. Prefer commit history and current docs.
 
