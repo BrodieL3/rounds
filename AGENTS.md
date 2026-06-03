@@ -2,7 +2,7 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| None | — | — | No active implementation slice. Pick from `docs/prd/backlog.md` before editing. |
+| Native UI media adapter | `docs/agents/native-ui-media-adapter.md` | `components/ui/media-image.js`, `lib/media-image-source.js`, Feed media call sites, package deps | Ready for review; not committed. |
 
 ## Cross-cutting rules
 

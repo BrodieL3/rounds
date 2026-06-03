@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import {
   Alert,
-  Image,
   Linking,
   Pressable,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import VoiceBubble from '../VoiceBubble';
+import MediaImage from '../ui/media-image';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { ALLOWED_REACTIONS } from '../../lib/friends/reactions-service';
 import { getVenueVisualFallback } from '../../lib/venue-visuals';
@@ -153,19 +153,17 @@ export default function MessageBubble({
                 <Ionicons name="image" size={24} color={COLORS.textMuted} />
               </View>
             ) : message.mediaPaths.length === 1 ? (
-              <Image
+              <MediaImage
                 source={{ uri: photoUrls[0] }}
                 style={[styles.photoImage, { aspectRatio: message.aspectRatios?.[0] || 1 }]}
-                resizeMode="cover"
               />
             ) : (
               <View style={styles.photoGrid}>
                 {photoUrls.map((url, index) => (
-                  <Image
+                  <MediaImage
                     key={message.mediaPaths[index] || index}
                     source={{ uri: url }}
                     style={[styles.photoGridItem, { aspectRatio: message.aspectRatios?.[index] || 1 }]}
-                    resizeMode="cover"
                   />
                 ))}
               </View>

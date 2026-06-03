@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -18,6 +17,7 @@ import {
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
+import MediaImage from '../../components/ui/media-image';
 
 const { buildFeedItemDisplay, formatElapsedTime } = require('../../lib/feed-display');
 const {
@@ -171,7 +171,7 @@ export function FeedItem({ item, city, currentUserId }) {
   return (
     <Pressable style={styles.feedItem} onPress={openPost}>
       <View style={styles.headerRow}>
-        <Image source={{ uri: getAvatarUri(item) }} style={styles.avatar} />
+        <MediaImage source={{ uri: getAvatarUri(item) }} style={styles.avatar} />
 
         <View style={styles.headerCopy}>
           <Text style={styles.activitySentence}>
@@ -197,7 +197,7 @@ export function FeedItem({ item, city, currentUserId }) {
           contentContainerStyle={styles.mediaScroller}
         >
           {media.map((url, index) => (
-            <Image key={`${url}-${index}`} source={{ uri: url }} style={styles.mediaImage} />
+            <MediaImage key={`${url}-${index}`} source={{ uri: url }} style={styles.mediaImage} />
           ))}
         </ScrollView>
       ) : null}
