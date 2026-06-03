@@ -1,3 +1,5 @@
+STATUS: ACTIVE — agents must read before touching Ratings, Posts, review links, Rating media, or visibility/share rules.
+
 # ADR 005: Rating Canonical Opinion and Public Projection
 
 ## Status

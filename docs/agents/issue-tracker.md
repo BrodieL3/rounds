@@ -1,24 +1,48 @@
-# Issue tracker: GitHub
+# Issue tracker: local markdown
 
-Issues and PRDs for this repo live as GitHub issues in `brodiel3/rounds`. Use the `gh` CLI for all operations.
+Issues and PRDs live as markdown files in `docs/issues/`.
 
-## Repository
+## File format
 
-Because this repo may not have a git remote configured, pass `-R brodiel3/rounds` to `gh` commands.
+Each issue is one markdown file: `docs/issues/NNNN-short-slug.md`
+
+```markdown
+---
+number: 1
+title: "Issue title"
+labels:
+  - bug
+  - needs-triage
+state: open
+created_at: 2026-06-03
+---
+Issue body (description / PRD / agent brief).
+
+## Comment — 2026-06-03T14:22:00Z
+Comment text here.
+```
+
+- `number`: auto-incrementing integer. Find the next number by scanning existing files.
+- `title`: issue title.
+- `labels`: list of label strings. See `triage-labels.md` for canonical labels.
+- `state`: `open` or `closed`.
+- `created_at`: ISO date string.
+- Body: everything before the first `## Comment` is the issue body.
+- Comments: appended as `## Comment — <ISO timestamp>` sections.
 
 ## Conventions
 
-- **Create an issue**: `gh issue create -R brodiel3/rounds --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> -R brodiel3/rounds --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list -R brodiel3/rounds --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> -R brodiel3/rounds --body "..."`
-- **Apply / remove labels**: `gh issue edit <number> -R brodiel3/rounds --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> -R brodiel3/rounds --comment "..."`
+- **Create an issue**: write a new file to `docs/issues/` with the next available number.
+- **Read an issue**: read the markdown file directly.
+- **List issues**: read all files in `docs/issues/`, parse YAML frontmatter.
+- **Comment on an issue**: append a `## Comment — <timestamp>` section to the file.
+- **Apply / remove labels**: edit the `labels` frontmatter list.
+- **Close**: set `state: closed` in frontmatter. Optionally append a closing comment.
 
 ## When a skill says "publish to the issue tracker"
 
-Create a GitHub issue in `brodiel3/rounds`.
+Create a new markdown file in `docs/issues/`.
 
 ## When a skill says "fetch the relevant ticket"
 
-Run `gh issue view <number> -R brodiel3/rounds --comments`.
+Read the corresponding `docs/issues/NNNN-*.md` file.

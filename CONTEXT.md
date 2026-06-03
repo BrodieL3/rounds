@@ -1,38 +1,5 @@
 # Rounds Context
 
-## Status
-Current source of truth for Rounds domain vocabulary and product priorities. This file is a glossary/context guide, not an implementation spec. See `CONTEXT-MAP.md` for doc loading order and `docs/prd/current-to-desired-state.md` for implementation roadmap.
-
-## Current goal
-
-Rounds is now a working Expo/Firebase mobile prototype centered on friend-coordinated nightlife planning. Near-term work should harden and deepen the MVP already in code: onboarding, city venue lists, venue rating, social feed, profiles, cohort-scoped pairwise comparison, Friends chat, planning attachments, and safety basics.
-
-Do not treat this repo as a fresh Expo exercise. Treat it as a product prototype whose next goal is to make the current client/Firebase slice coherent, testable, and ready for a backend seam where chat, feed, ranking, and social planning state stops belonging in client screens.
-
-## Current product slice
-
-- User can sign up or log in with Firebase Auth.
-- Onboarding collects phone, email/password, display name, username, photo URL, city, cohort preferences, and optional Spotify genre data.
-- Venue discovery uses static seeded venue data from `assets/venues.json` for NYC, Boston, Chicago, and San Francisco.
-- Venue detail shows Google Places-derived metadata: address, price, rating, review count, tags, hours, and map link.
-- Rating a venue creates both a private `ratings` record and a public `posts` record.
-- Feed reads city posts from Firestore, promotes followed users above city activity, and supports post detail likes/comments.
-- Profile shows user stats, recent reviews, followers/following counts, and a people search path.
-- Pairwise comparison lives in `/compare`; it chooses venues from one cohort where the user has at least two ratings.
-- Friends is the hero surface for coordinating nights out with Friend Requests, Friendships, direct messages, group chats, venue/review links, review companion selection, polls, photos, location pins, voice notes, reactions, reply quotes, blocking, reporting, and message hide/delete basics.
-- Leaderboard/rank screen is removed from primary navigation; ranking exists only as local Elo-like computation over comparisons.
-
-## Architecture facts from code
-
-- Mobile app: Expo SDK 54, Expo Router, React Native.
-- Data store: Firebase Auth, Firestore, Firebase Storage.
-- Route ownership: Expo Router files own navigation; `/compare` owns primary pairwise ranking action.
-- Current venue seed is static JSON, not a Firestore collection.
-- Current screens still call Firestore directly in several places. There is no backend worker/module yet for canonical feed or personal-ranking state; some trusted Friends mutations use Firebase Functions.
-- Firestore rules already anticipate backend-owned `feedItems` and deprecated `leaderboardEntries`, but the current app reads/writes `posts`, `ratings`, `comparisons`, `users`, `reports`, and conversation state directly where beta rules allow it.
-- Current tab order is Friends, Feed, Add, List, Profile. Leaderboard/Rank is removed from primary navigation.
-- Tests currently cover pure modules, UI source assertions, Firebase Functions callables, Firestore rules, Storage rules, and Expo web export verification.
-
 ## Domain vocabulary
 
 ### Venue
@@ -138,21 +105,3 @@ Future discovery result from matching Spotify Genre Vector against event/lineup 
 ### Crowd Report
 
 Future live utility signal for queue/crowd/cover data. Firestore has `reports`, but current UI only submits venue miscategorization reports, not geofenced crowd reports.
-
-## Present product priorities
-
-1. Make Friends the hero product surface for planning nights out with direct messages, group chats, attachments, polls, review links, and review companion selection.
-2. Stabilize current MVP flows: onboarding, auth routing, venue list/detail, rating/posting, feed, profile, and comparison.
-3. Make cohort isolation reliable everywhere ratings and comparisons interact.
-4. Move chat/feed/personal-ranking logic toward deeper modules with small interfaces before adding new surface area.
-5. Decide which product state is canonical client state versus backend-owned projection.
-6. Keep Spotify genre onboarding, BestTime, TicketsData, and event scraping as validated capability modules until core MVP flows are solid.
-
-## Out of scope for near-term code unless explicitly selected
-
-- Production-grade booking flow.
-- Geofenced live crowd reporting.
-- Server-side recommendation engine.
-- Native module authoring.
-- Rebuilding the deprecated leaderboard/rank tab before Friends exists.
-- Reworking ADR conclusions about Eventbrite or free event APIs without new evidence.

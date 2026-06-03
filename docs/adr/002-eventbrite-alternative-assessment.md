@@ -1,3 +1,5 @@
+STATUS: ACTIVE — agents must read before touching event discovery APIs or scraper strategy.
+
 # ADR 002: Eventbrite + Alternative Event API Assessment
 
 ## Goal

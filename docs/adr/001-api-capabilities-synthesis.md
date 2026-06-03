@@ -1,3 +1,5 @@
+STATUS: ACTIVE — agents must read before touching venue/event/API sourcing or recommendation data.
+
 # ADR 001: API Capabilities Synthesis — Layer 1-3 Prototype Findings
 
 ## Context

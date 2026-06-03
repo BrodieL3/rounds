@@ -1,3 +1,5 @@
+STATUS: ACTIVE — agents must read before touching group creation, group membership grants, or lifecycle mutations.
+
 # ADR 004: Trusted Boundary for Group Chat Creation
 
 ## Status

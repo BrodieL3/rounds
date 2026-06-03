@@ -1,3 +1,5 @@
+STATUS: ACTIVE — agents must read before touching tab navigation, Friends, Feed, List, Profile, or ranking surfaces.
+
 # ADR 003: Friends-First Navigation and Social Planning
 
 ## Status
