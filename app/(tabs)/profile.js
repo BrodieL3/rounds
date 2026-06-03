@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Alert, Image, Share, StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { Alert, Share, StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
@@ -9,6 +9,7 @@ import { COLORS } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
 import VenueRow from '../../components/VenueRow';
 import CopyableText from '../../components/ui/CopyableText';
+import MediaImage from '../../components/ui/media-image';
 
 const VENUE_DATA = require('../../assets/venues.json');
 
@@ -46,7 +47,7 @@ function ProfileAvatar({ profile, user, size = 88 }) {
   const avatarStyle = { width: size, height: size, borderRadius: size / 2 };
 
   if (profile?.photoURL) {
-    return <Image source={{ uri: profile.photoURL }} style={[styles.avatarImage, avatarStyle]} />;
+    return <MediaImage source={{ uri: profile.photoURL }} style={[styles.avatarImage, avatarStyle]} />;
   }
 
   return (
@@ -77,7 +78,7 @@ function SuggestedUserCard({ item, onDismiss }) {
       <Pressable style={styles.dismissBtn} onPress={() => onDismiss(item.id)}>
         <Ionicons name="close" size={18} color="#9ca3af" />
       </Pressable>
-      <Image source={{ uri: item.avatarUrl }} style={styles.suggestionAvatar} />
+      <MediaImage source={{ uri: item.avatarUrl }} style={styles.suggestionAvatar} />
       <Text style={styles.suggestionName} numberOfLines={1}>{item.fullName}</Text>
       <Text style={styles.suggestionLabel}>Suggested for you</Text>
       <Pressable style={styles.followBtn}>
