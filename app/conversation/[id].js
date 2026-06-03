@@ -15,8 +15,10 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { collection, deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import VoiceBubble from '../../components/VoiceBubble';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
+import { ALLOWED_REACTIONS, buildReactionPayload } from '../../lib/friends/reactions-service';
 import { db, functions as cloudFunctions, storage } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getVenueVisualFallback } from '../../lib/venue-visuals';
@@ -30,6 +32,7 @@ const {
   subscribeConversationMessages,
 } = require('../../lib/friends/dm-service');
 const { sendGroupTextMessage } = require('../../lib/friends/group-service');
+const { buildReplyPreview } = require('../../lib/friends/reply-service');
 const {
   buildReportPayload,
   deleteMessageForEveryone,
@@ -90,6 +93,8 @@ export default function ConversationScreen() {
   const [voiceRecording, setVoiceRecording] = useState(null);
   const [voiceRecordElapsed, setVoiceRecordElapsed] = useState(0);
   const [voiceRecordingTimer, setVoiceRecordingTimer] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [messageReactions, setMessageReactions] = useState({});
 
   const conversationId = Array.isArray(id) ? id[0] : id;
   const recipientUid = Array.isArray(otherUid) ? otherUid[0] : otherUid;
@@ -184,6 +189,26 @@ export default function ConversationScreen() {
     });
   }, [messages, photoUrls]);
 
+  useEffect(() => {
+    if (!conversationId || messages.length === 0) {
+      setMessageReactions({});
+      return undefined;
+    }
+
+    const unsubscribes = messages.map((message) => onSnapshot(
+      collection(db, 'conversations', conversationId, 'messages', message.id, 'reactions'),
+      (snapshot) => {
+        const reactions = snapshot.docs
+          .map((reactionDoc) => ({ id: reactionDoc.id, ...reactionDoc.data() }))
+          .sort((a, b) => a.uid.localeCompare(b.uid));
+        setMessageReactions((current) => ({ ...current, [message.id]: reactions }));
+      },
+      (err) => console.error('Message reactions snapshot error:', err),
+    ));
+
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe?.());
+  }, [conversationId, messages]);
+
   const emptyTitle = useMemo(() => (
     isGroup ? `Start planning in ${title}.` : `Start planning with ${title}.`
   ), [isGroup, title]);
@@ -209,24 +234,28 @@ export default function ConversationScreen() {
 
     setSending(true);
     try {
+      const replyMeta = replyingTo ? buildReplyPreview(replyingTo) : {};
+
       if (conversation?.type === 'group') {
-        await sendGroupTextMessage({ db, conversation, senderUid: user.uid, text: normalized });
+        await sendGroupTextMessage({ db, conversation, senderUid: user.uid, text: normalized, ...replyMeta });
       } else {
         await sendDirectTextMessage({
           db,
           senderUid: user.uid,
           recipientUid,
           text: normalized,
+          ...replyMeta,
         });
         setConversationReloadKey((key) => key + 1);
       }
       setText('');
+      setReplyingTo(null);
     } catch (err) {
       Alert.alert('Message failed', err.message);
     } finally {
       setSending(false);
     }
-  }, [conversation, isGroup, recipientUid, sending, text, user]);
+  }, [conversation, isGroup, recipientUid, replyingTo, sending, text, user]);
 
   const sendPhotos = useCallback(async () => {
     if (!user || sendingPhotos) return;
@@ -394,6 +423,21 @@ export default function ConversationScreen() {
     }
   }, [conversation, conversationId, recipientUid, user, voiceRecording, voiceRecordingTimer]);
 
+  const toggleMessageReaction = useCallback(async (message, emoji) => {
+    if (!user || !conversationId) return;
+    try {
+      const reactionRef = doc(db, 'conversations', conversationId, 'messages', message.id, 'reactions', user.uid);
+      const existingSnap = await getDoc(reactionRef);
+      if (existingSnap.exists() && existingSnap.data().emoji === emoji) {
+        await deleteDoc(reactionRef);
+      } else {
+        await setDoc(reactionRef, buildReactionPayload({ uid: user.uid, emoji, createdAt: serverTimestamp() }));
+      }
+    } catch (err) {
+      Alert.alert('Reaction failed', err.message);
+    }
+  }, [conversationId, user]);
+
   const showAttachmentMenu = useCallback(() => {
     Alert.alert('Attach', undefined, [
       { text: 'Photo', onPress: sendPhotos },
@@ -509,11 +553,25 @@ export default function ConversationScreen() {
     const canDeleteForEveryone = isMine && !item.deletedForEveryoneAt;
     const canReport = !isMine && !item.deletedForEveryoneAt;
     const messagePhotoUrls = photoUrls[item.id] || [];
+    const reactions = messageReactions[item.id] || [];
 
     return (
       <View style={[styles.messageRow, isMine ? styles.messageRowMine : styles.messageRowTheirs]}>
         <View style={[styles.messageStack, isMine ? styles.messageStackMine : styles.messageStackTheirs]}>
           {senderLabel ? <Text style={styles.senderLabel}>{senderLabel}</Text> : null}
+          {item.replyToMessageId && item.replyToPreview ? (
+            <View style={[styles.replyPreview, isMine ? styles.replyPreviewMine : styles.replyPreviewTheirs]}>
+              <View style={styles.replyPreviewLine} />
+              <View style={styles.replyPreviewContent}>
+                <Text style={styles.replyPreviewSender} numberOfLines={1}>
+                  {senderProfiles[item.replyToPreview.senderUid]?.displayName || senderProfiles[item.replyToPreview.senderUid]?.username || item.replyToPreview.senderUid}
+                </Text>
+                <Text style={styles.replyPreviewSnippet} numberOfLines={1}>
+                  {item.replyToPreview.snippet}
+                </Text>
+              </View>
+            </View>
+          ) : null}
           {item.deletedForEveryoneAt ? (
             <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
               <Text style={[styles.messageText, isMine ? styles.messageTextMine : styles.messageTextTheirs]}>
@@ -669,7 +727,41 @@ export default function ConversationScreen() {
                 <Text style={styles.messageActionDanger}>Report message</Text>
               </Pressable>
             ) : null}
+            <Pressable onPress={() => {
+              Alert.alert('React', undefined, [
+                ...ALLOWED_REACTIONS.map((emoji) => ({
+                  text: emoji,
+                  onPress: () => toggleMessageReaction(item, emoji),
+                })),
+                { text: 'Cancel', style: 'cancel' },
+              ]);
+            }}>
+              <Text style={styles.messageActionText}>React</Text>
+            </Pressable>
+            <Pressable onPress={() => setReplyingTo(item)}>
+              <Text style={styles.messageActionText}>Reply</Text>
+            </Pressable>
           </View>
+          {reactions.length > 0 ? (
+            <View style={[styles.reactionsBar, isMine ? styles.reactionsBarMine : styles.reactionsBarTheirs]}>
+              {reactions.map((reaction) => (
+                <Pressable
+                  key={reaction.uid}
+                  style={[
+                    styles.reactionPill,
+                    reaction.uid === user?.uid && styles.reactionPillSelf,
+                  ]}
+                  onPress={() => {
+                    if (reaction.uid === user?.uid) {
+                      toggleMessageReaction(item, reaction.emoji);
+                    }
+                  }}
+                >
+                  <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       </View>
     );
@@ -778,10 +870,23 @@ export default function ConversationScreen() {
           </View>
         </View>
       ) : (
-        <View style={styles.composer}>
-          <Pressable onPress={showAttachmentMenu} style={styles.attachButton}>
-            <Ionicons name="attach" size={22} color={COLORS.textMuted} />
-          </Pressable>
+        <>
+          {replyingTo ? (
+            <View style={styles.replyComposerBar}>
+              <View style={styles.replyComposerLine} />
+              <View style={styles.replyComposerContent}>
+                <Text style={styles.replyComposerLabel}>Replying to {senderProfiles[replyingTo.senderUid]?.displayName || senderProfiles[replyingTo.senderUid]?.username || 'message'}</Text>
+                <Text style={styles.replyComposerSnippet} numberOfLines={1}>{replyingTo.text || replyingTo.question || 'Attachment'}</Text>
+              </View>
+              <Pressable onPress={() => setReplyingTo(null)}>
+                <Ionicons name="close" size={20} color={COLORS.textMuted} />
+              </Pressable>
+            </View>
+          ) : null}
+          <View style={styles.composer}>
+            <Pressable onPress={showAttachmentMenu} style={styles.attachButton}>
+              <Ionicons name="attach" size={22} color={COLORS.textMuted} />
+            </Pressable>
           <TextInput
             style={styles.input}
             placeholder="Message..."
@@ -799,6 +904,7 @@ export default function ConversationScreen() {
             <Text style={styles.sendText}>Send</Text>
           </Pressable>
         </View>
+      </>
       )}
     </KeyboardAvoidingView>
   );
@@ -1122,5 +1228,72 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  replyPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 4,
+    maxWidth: '78%',
+  },
+  replyPreviewMine: {
+    backgroundColor: 'rgba(0,0,0,0.08)',
+  },
+  replyPreviewTheirs: {
+    backgroundColor: COLORS.bgCard,
+  },
+  replyPreviewLine: {
+    width: 3,
+    height: 28,
+    borderRadius: 2,
+    backgroundColor: COLORS.accent,
+  },
+  replyPreviewContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  replyPreviewSender: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  replyPreviewSnippet: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  reactionsBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+    paddingHorizontal: 6,
+  },
+  reactionsBarMine: {
+    justifyContent: 'flex-end',
+  },
+  reactionsBarTheirs: {
+    justifyContent: 'flex-start',
+  },
+  reactionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.bgCard,
+  },
+  reactionPillSelf: {
+    borderColor: COLORS.accent,
+    backgroundColor: 'rgba(59,130,246,0.1)',
+  },
+  reactionEmoji: {
+    fontSize: 16,
   },
 });

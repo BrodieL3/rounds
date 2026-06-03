@@ -135,7 +135,7 @@ Ship a beta-ready friends-first MVP that preserves the current visual direction 
 
 Implement as serial vertical slices, not one monolithic agent task. The feature crosses chat, Firestore rules, feed, profile, ranking, review sharing, safety, and auth-adjacent social state; a monolith is too risky and hard to review.
 
-Current slice in development: none. Last completed slice: 10. Safety slice. Next likely slice: 11. Rich attachment slices.
+Current slice in development: none. Last completed slice: 12. Message interactions slice. Next likely slice: review/social planning fast-follows or deferred message-interaction hardening.
 
 Verification audit 2026-06-02:
 - Local handoff implementation for slices 7, 8, 8b, 8c, and 8d is present in commits `74fbb39`, `62627a1`, `842695c`, `f6f0178`, and `8356ad6`.
@@ -410,12 +410,12 @@ Recommended agent task sequence:
    - Add `validVoiceMessageShape` / `validLastVoiceMessage` rule validators.
    - Tests: pure service (7), rules test for shape, UI source tests (3) for record overlay and VoiceBubble.
 
-12. Message interactions slice (reactions + reply quotes)
-   - Defer to after all message types exist; reactions and reply quotes apply to every type.
-   - Reactions: emoji set `👍 ❤️ 😂 😮 😢 🔥` on any message. Stored as `messages/{messageId}/reactions/{uid}` with `{uid, emoji, createdAt}`.
-   - Reply quotes: stored on message doc as `replyToMessageId` + `replyToPreview` (sender + type-derived snippet). If original deleted, show `Original message deleted.`
-   - `lastMessage` unaffected by reactions/replies.
-   - Implement once, after 11a–11d, rather than retrofitting each attachment slice.
+12. Message interactions slice (reactions + reply quotes) — COMPLETE 2026-06-03
+   - Reactions apply to every message type. Emoji set is `👍 ❤️ 😂 😮 😢 🔥`.
+   - Reactions are stored as `messages/{messageId}/reactions/{uid}` with `{uid, emoji, createdAt}`; members can read reactions and each member can create/update/delete only their own reaction.
+   - Reply quotes are stored on text message docs as `replyToMessageId` + `replyToPreview` (sender + type-derived snippet). If original deleted, preview shows `Original message deleted.`
+   - `lastMessage` remains unaffected by reactions/replies.
+   - Verified with `npm test -- --runInBand`, `npm run test:rules`, and `npx expo export --platform web`.
 
 Execution rule: one agent owns one slice, writes/updates tests, runs relevant suite, then leaves a handoff. Merge or reconcile each slice before starting the next dependent slice. Parallel work should wait until DM/group foundations and shared Firestore contracts are stable.
 
