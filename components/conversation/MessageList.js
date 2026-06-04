@@ -4,6 +4,7 @@ import { COLORS } from '../../lib/constants';
 export default function MessageList({ messages, renderItem, emptyTitle, emptyBody }) {
   return (
     <FlatList
+      contentInsetAdjustmentBehavior="automatic"
       data={messages}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}

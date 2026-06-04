@@ -2,7 +2,7 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| None | — | — | No active implementation slice. Native UI media adapter completed and pushed. Pick next slice before editing. |
+| None | — | — | No active implementation slice. Native UI safe-area/header cleanup completed; pick next slice before editing. |
 
 ## Cross-cutting rules
 

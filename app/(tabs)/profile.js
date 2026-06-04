@@ -179,7 +179,11 @@ export default function ProfileScreen() {
   const profileMemberSince = formatMemberSince(profile?.createdAt);
 
   return (
-    <ScrollView contentContainerStyle={styles.screen} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={styles.screen}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.topBar}>
         <Text style={styles.topName}>{profile?.displayName || 'User'}</Text>
         <View style={styles.topActions}>
@@ -294,7 +298,6 @@ const styles = StyleSheet.create({
   screen: {
     flexGrow: 1,
     backgroundColor: COLORS.bg,
-    paddingTop: 48,
     paddingBottom: 28,
   },
   topBar: {

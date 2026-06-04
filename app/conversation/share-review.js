@@ -99,7 +99,7 @@ export default function ShareReviewScreen() {
   const sentimentColor = review.sentiment === 'loved' ? COLORS.success : review.sentiment === 'fine' ? COLORS.accent : COLORS.danger;
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: COLORS.bg,
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 20,
     paddingBottom: 28,
   },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },

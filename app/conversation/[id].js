@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../lib/constants';
 import { db, storage } from '../../lib/firebase';
@@ -77,23 +78,25 @@ export default function ConversationScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.screen}
     >
-      <View style={styles.header}>
-        <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
-        <Pressable
-          style={styles.headerTitleArea}
-          onPress={openGroupInfo}
-          disabled={!isGroup}
-          accessibilityRole={isGroup ? 'button' : undefined}
-        >
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{surface.title.charAt(0).toUpperCase()}</Text>
-          </View>
-          <Text style={styles.title}>{surface.title}</Text>
-          {isGroup ? <Ionicons name="information-circle-outline" size={22} color={COLORS.textMuted} /> : null}
-        </Pressable>
-      </View>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerSafeArea}>
+        <View style={styles.header}>
+          <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          </Pressable>
+          <Pressable
+            style={styles.headerTitleArea}
+            onPress={openGroupInfo}
+            disabled={!isGroup}
+            accessibilityRole={isGroup ? 'button' : undefined}
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{surface.title.charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text style={styles.title}>{surface.title}</Text>
+            {isGroup ? <Ionicons name="information-circle-outline" size={22} color={COLORS.textMuted} /> : null}
+          </Pressable>
+        </View>
+      </SafeAreaView>
 
       <MessageList
         messages={surface.messages}
@@ -152,15 +155,17 @@ export default function ConversationScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
+  headerSafeArea: {
+    backgroundColor: COLORS.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.bgCard,
+  },
   header: {
-    paddingTop: 54,
     paddingHorizontal: 16,
     paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.bgCard,
   },
   backButton: { padding: 4 },
   headerTitleArea: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },

@@ -132,6 +132,7 @@ export default function NewConversationScreen() {
       <Text style={styles.helper}>{selectedUids.length}/24 selected · pick at least 2</Text>
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={filteredFriends}
         renderItem={renderFriend}
         keyExtractor={(item) => item.uid}
@@ -148,7 +149,7 @@ export default function NewConversationScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg, paddingHorizontal: 20, paddingTop: 54 },
+  screen: { flex: 1, backgroundColor: COLORS.bg, paddingHorizontal: 20, paddingTop: 20 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22 },
   backButton: { padding: 4 },
   title: { flex: 1, color: COLORS.textPrimary, fontSize: 24, fontWeight: '800' },

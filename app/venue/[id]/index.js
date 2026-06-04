@@ -177,7 +177,7 @@ export default function VenueDetailScreen() {
   const openStatus = formatOpenClosedStatus(venue.hours);
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       {/* Hero */}
       <View style={[styles.hero, { backgroundColor: visual.colors[0] }]}>
         <View style={styles.heroOverlay}>

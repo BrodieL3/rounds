@@ -168,3 +168,6 @@ Implemented first native UI/navigation hardening pass: centralized navigation sh
 
 ## Comment — 2026-06-03T16:44:00Z
 Started media adapter fast-follow: added SDK-compatible `expo-image` dependency, created `components/ui/media-image.js` with shared Expo Image defaults, added `lib/media-image-source.js` URI normalization helper, and migrated Feed avatars/review media, Conversation single/grid photo bubbles, Profile avatars, Rating photo thumbnails, Post detail photos, Edit Profile avatar, Onboarding photo preview, and User Profile stored avatar to the adapter. Verified with `npm test -- --runInBand` and `npx expo export --platform web --output-dir /tmp/rounds-web-export-native-ui-media-avatars-final`.
+
+## Comment — 2026-06-03T18:05:00Z
+Completed safe-area/header cleanup slice: added source assertions for automatic scroll/list insets and manual fake-header padding removal; updated Feed, Profile, Conversation, Conversation companion routes, Venue detail, and Rating route layouts. Recorded exact Expo SDK 56 docs access tool call in `RESOURCES.md`. Verified with `npm test -- --runInBand` and `npx expo export --platform web --output-dir /tmp/rounds-web-export-native-ui-safe-area`.

@@ -275,12 +275,13 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Feed</Text>
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={posts}
         renderItem={({ item }) => <FeedItem item={item} city={profile?.city} currentUserId={user?.uid} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={<Text style={styles.title}>Feed</Text>}
         refreshControl={(
           <RefreshControl
             refreshing={refreshing}
@@ -305,7 +306,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 28,
     fontWeight: '800',
-    marginTop: 48,
     marginBottom: 8,
     paddingHorizontal: 20,
   },

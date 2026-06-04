@@ -179,6 +179,7 @@ export default function RateScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 84 : 0}
     >
       <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.screen}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
@@ -203,6 +204,7 @@ export default function RateScreen() {
       <Text style={styles.sectionTitle}>Photos</Text>
       {photos.length > 0 && (
         <FlatList
+          contentInsetAdjustmentBehavior="automatic"
           data={photos}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -306,7 +308,7 @@ export default function RateScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: COLORS.bg },
   screen: { flexGrow: 1, backgroundColor: COLORS.bg, padding: 24, paddingBottom: 48 },
-  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 48 },
+  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800' },
   meta: { color: COLORS.textMuted, fontSize: 14, marginTop: 4 },
   sectionTitle: {
     color: COLORS.textSecondary, fontSize: 16, fontWeight: '700',

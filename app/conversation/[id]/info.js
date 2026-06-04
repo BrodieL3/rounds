@@ -225,7 +225,7 @@ export default function GroupInfoScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
@@ -236,6 +236,7 @@ export default function GroupInfoScreen() {
       <Text style={styles.sectionTitle}>Members</Text>
       {loading ? <Text style={styles.mutedText}>Loading members...</Text> : null}
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={viewModel.members}
         renderItem={renderMember}
         keyExtractor={(item) => item.uid}
@@ -260,6 +261,7 @@ export default function GroupInfoScreen() {
               />
               <Text style={styles.mutedText}>{selectedMemberUids.length}/{remainingSlots} selected</Text>
               <FlatList
+                contentInsetAdjustmentBehavior="automatic"
                 data={addableFriends}
                 renderItem={renderFriend}
                 keyExtractor={(item) => item.uid}
@@ -302,7 +304,7 @@ export default function GroupInfoScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flexGrow: 1, backgroundColor: COLORS.bg, paddingHorizontal: 20, paddingTop: 54, paddingBottom: 32 },
+  screen: { flexGrow: 1, backgroundColor: COLORS.bg, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 },
   backButton: { padding: 4 },
   title: { color: COLORS.textPrimary, fontSize: 24, fontWeight: '800', flex: 1 },

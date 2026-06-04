@@ -3,7 +3,7 @@
 ## Knowledge
 
 - [Expo SDK 56 docs](https://docs.expo.dev/versions/v56.0.0/)
-  Version-specific API reference for this repo's installed Expo SDK. Use for: exact package APIs and compatibility.
+  Version-specific API reference requested by project instructions. Use for: exact package APIs and compatibility. Agent harness note: `functions.bash({"command":"cd /home/brodie/Code/Rounds && curl -L -A 'Mozilla/5.0' -sS https://docs.expo.dev/versions/v56.0.0/ | head -40","timeout":30})` succeeds; plain Python `urllib.request.urlopen` returns HTTP 403.
 - [Expo workflow overview](https://docs.expo.dev/workflow/overview/)
   Explains Expo development workflow and how projects move from local development to builds. Use for: mental model.
 - [Development builds](https://docs.expo.dev/develop/development-builds/introduction/)
