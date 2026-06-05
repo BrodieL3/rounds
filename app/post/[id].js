@@ -191,7 +191,7 @@ export default function PostDetailScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.flex}
     >
-      <ScrollView contentContainerStyle={styles.screen}>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
         <View style={styles.header}>
           <Text style={styles.author}>@{post.username || 'user'}</Text>
           <Text style={styles.time}>{timeSince(post.createdAt?.toDate?.() || post.createdAt)}</Text>
@@ -293,13 +293,13 @@ export default function PostDetailScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: COLORS.bg },
   screen: { padding: 24, paddingBottom: 100 },
-  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 48 },
+  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 16 },
   backBtn: {
     marginTop: 16, backgroundColor: COLORS.bgElevated,
     padding: 16, borderRadius: 12, alignItems: 'center',
   },
   backBtnText: { color: COLORS.accent, fontWeight: '700', fontSize: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 48, marginBottom: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, marginBottom: 8 },
   author: { color: COLORS.accent, fontSize: 14, fontWeight: '700' },
   time: { color: COLORS.textMuted, fontSize: 13 },
   venueName: { color: COLORS.textPrimary, fontSize: 22, fontWeight: '800' },

@@ -169,7 +169,7 @@ export default function SpotifyOnboardingScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <Text style={styles.title}>Connect Spotify</Text>
       <Text style={styles.copy}>
         Link your Spotify so we can recommend events based on your music taste.

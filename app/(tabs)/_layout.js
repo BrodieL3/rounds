@@ -2,23 +2,22 @@ import { Tabs, useRouter } from 'expo-router';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { COLORS } from '../../lib/constants';
 import AppIcon from '../../components/ui/AppIcon';
+import { selectionHaptic } from '../../lib/platform-service';
 
 const {
   getAddEntryRoute,
   getHiddenTabRouteNames,
   getPrimaryTabDescriptors,
-  getTabIconName,
 } = require('../../lib/navigation-shell');
 
 const PRIMARY_TABS = getPrimaryTabDescriptors();
 const HIDDEN_TAB_ROUTES = getHiddenTabRouteNames();
 const ADD_ENTRY_ROUTE = getAddEntryRoute();
 
-function TabIcon({ focused, name }) {
-  const iconName = getTabIconName(name, focused);
+function TabIcon({ focused, tab }) {
   return (
     <View style={styles.tabIcon}>
-      <AppIcon name={iconName} size={22} color={focused ? COLORS.accent : COLORS.textMuted} />
+      <AppIcon name={tab.icon?.semantic} focused={focused} size={22} color={focused ? COLORS.accent : COLORS.textMuted} />
     </View>
   );
 }
@@ -31,10 +30,13 @@ function AddTabButton() {
       accessibilityLabel="Rate a place"
       hitSlop={8}
       style={styles.addTab}
-      onPress={() => router.push(ADD_ENTRY_ROUTE)}
+      onPress={() => {
+        selectionHaptic();
+        router.push(ADD_ENTRY_ROUTE);
+      }}
     >
       <View style={styles.addButton}>
-        <AppIcon name="add" size={28} color="#ffffff" />
+        <AppIcon name="action.add" size={28} color="#ffffff" />
       </View>
     </Pressable>
   );
@@ -61,7 +63,7 @@ function renderPrimaryTab(tab) {
       name={tab.name}
       options={{
         title: tab.title,
-        tabBarIcon: ({ focused }) => <TabIcon focused={focused} name={tab.name} />,
+        tabBarIcon: ({ focused }) => <TabIcon focused={focused} tab={tab} />,
         tabBarLabel: tab.label,
       }}
     />

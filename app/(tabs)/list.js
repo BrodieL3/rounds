@@ -151,6 +151,7 @@ export default function ListScreen() {
       </View>
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={rankedVenues}
         renderItem={renderVenue}
         keyExtractor={(item) => item.id}

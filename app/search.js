@@ -82,6 +82,7 @@ export default function SearchScreen() {
       </View>
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={results}
         renderItem={renderUser}
         keyExtractor={(item) => item.uid}
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg, padding: 16 },
   title: {
     color: COLORS.textPrimary, fontSize: 28, fontWeight: '800',
-    marginTop: 48, marginBottom: 16,
+    marginTop: 16, marginBottom: 16,
   },
   searchRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   searchInput: {

@@ -154,7 +154,7 @@ export default function FriendsScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.screen}>
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{viewModel.screenTitle}</Text>

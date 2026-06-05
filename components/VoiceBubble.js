@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { COLORS } from '../lib/constants';
 import { isVoicePlayableForViewer } from '../lib/friends/voice-service';
+import { createVoicePlaybackAsync } from '../lib/audio/audio-adapter';
 
 function formatDurationMs(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -26,7 +26,7 @@ export default function VoiceBubble({ message, isMine, db, storage, user }) {
   const loadAndPlay = useCallback(async () => {
     if (expired) return;
     if (sound) {
-      await sound.playAsync();
+      await sound.play();
       setIsPlaying(true);
       return;
     }
@@ -36,21 +36,16 @@ export default function VoiceBubble({ message, isMine, db, storage, user }) {
       const url = audioUrl || await getDownloadURL(ref(storage, message.storagePath));
       setAudioUrl(url);
 
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: url },
-        { shouldPlay: true },
-        (status) => {
-          if (status.isLoaded) {
-            setPlaybackPosition(status.positionMillis);
-            if (status.didJustFinish) {
-              setIsPlaying(false);
-              setPlaybackPosition(0);
-            }
-          }
-        },
-      );
+      const newSound = await createVoicePlaybackAsync(url, (status) => {
+        setPlaybackPosition(status.positionMillis || 0);
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          setPlaybackPosition(0);
+        }
+      });
 
       setSound(newSound);
+      await newSound.play();
       setIsPlaying(true);
     } catch (err) {
       console.error('Voice playback error:', err);
@@ -61,7 +56,7 @@ export default function VoiceBubble({ message, isMine, db, storage, user }) {
 
   const pause = useCallback(async () => {
     if (sound) {
-      await sound.pauseAsync();
+      await sound.pause();
       setIsPlaying(false);
     }
   }, [sound]);
@@ -73,6 +68,10 @@ export default function VoiceBubble({ message, isMine, db, storage, user }) {
       loadAndPlay();
     }
   }, [isPlaying, loadAndPlay, pause]);
+
+  useEffect(() => () => {
+    sound?.unload();
+  }, [sound]);
 
   return (
     <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>

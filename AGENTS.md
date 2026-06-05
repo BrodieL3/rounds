@@ -2,7 +2,7 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| None | — | — | No active implementation slice. Native UI safe-area/header cleanup completed; pick next slice before editing. |
+| None | — | — | Expo standard compliance slices completed through Feed view-model extraction; choose next slice (Friends/conversation VM extraction recommended) before editing. |
 
 ## Cross-cutting rules
 

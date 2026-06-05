@@ -293,7 +293,7 @@ export default function UserProfileScreen() {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         {profile?.photoURL ? (
           <MediaImage source={{ uri: profile.photoURL }} style={styles.avatarImage} />
@@ -378,7 +378,7 @@ export default function UserProfileScreen() {
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, backgroundColor: COLORS.bg, padding: 24 },
-  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 48 },
+  title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 16 },
   header: { alignItems: 'center', marginTop: 24, marginBottom: 24 },
   avatar: {
     width: 96, height: 96, borderRadius: 48,

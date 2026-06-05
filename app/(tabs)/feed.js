@@ -19,7 +19,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 import MediaImage from '../../components/ui/media-image';
 
-const { buildFeedItemDisplay, formatElapsedTime } = require('../../lib/feed-display');
+const { buildFeedItemDisplay } = require('../../lib/feed-display');
 const {
   buildPostBookmarkUpdate,
   buildPostLikeUpdate,
@@ -28,19 +28,12 @@ const {
   isPostLikedBy,
 } = require('../../lib/feed-engagement');
 const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
-const { getVenueNeighborhood } = require('../../lib/venue-display');
+const { buildFeedViewItems, createSeedVenueLookup } = require('../../lib/feed-view-model');
 const venueSeed = require('../../assets/venues.json');
 
 const AVATAR_SIZE = 44;
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces';
-const VENUES_BY_CITY = Object.entries(venueSeed.cities || {}).reduce((cities, [cityKey, city]) => {
-  cities[cityKey] = new Map((city.venues || []).map((venue) => [venue.id, venue]));
-  return cities;
-}, {});
-
-function getSeedVenue(item, cityKey) {
-  return VENUES_BY_CITY[cityKey]?.get(item.venueId) || null;
-}
+const VENUES_BY_CITY = createSeedVenueLookup(venueSeed);
 
 function getAvatarUri(item) {
   return item.photoURL
@@ -243,27 +236,12 @@ export default function FeedScreen() {
 
     const unsub = onSnapshot(cityQ, (snap) => {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      const following = new Set(profile?.following || []);
-      const enriched = items.map((p) => {
-        const seedVenue = getSeedVenue(p, p.city || profile.city);
-
-        return {
-          ...p,
-          venueName: p.venueName || seedVenue?.name,
-          neighborhood: p.neighborhood || (seedVenue ? getVenueNeighborhood(seedVenue, p.city || profile.city) : null),
-          source: following.has(p.userId) ? 'friend' : 'city',
-          timeAgo: formatElapsedTime(p.createdAt?.toDate?.() || p.createdAt),
-        };
-      });
-
-      enriched.sort((a, b) => {
-        if (a.source !== b.source) return a.source === 'friend' ? -1 : 1;
-        const aTime = a.createdAt?.toDate?.() || a.createdAt || 0;
-        const bTime = b.createdAt?.toDate?.() || b.createdAt || 0;
-        return new Date(bTime) - new Date(aTime);
-      });
-
-      setPosts(enriched);
+      setPosts(buildFeedViewItems({
+        posts: items,
+        city: profile.city,
+        following: profile?.following || [],
+        venueLookup: VENUES_BY_CITY,
+      }));
       setRefreshing(false);
     }, (err) => {
       console.error('Feed snapshot error:', err);

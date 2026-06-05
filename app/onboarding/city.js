@@ -39,6 +39,7 @@ export default function CityScreen() {
       <Text style={styles.copy}>This sets your default venue list.</Text>
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={CITIES}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}

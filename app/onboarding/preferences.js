@@ -51,6 +51,7 @@ export default function PreferencesScreen() {
       <Text style={styles.copy}>Select all that apply. Tap to toggle.</Text>
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={COHORTS}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}

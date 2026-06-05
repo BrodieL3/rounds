@@ -48,6 +48,7 @@ export default function AddScreen() {
       />
 
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={filtered}
         renderItem={renderVenue}
         keyExtractor={(item) => item.id}

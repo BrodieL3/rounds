@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
-import { resolveRoute } from '../lib/auth-routing';
-import { COLORS } from '../lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import { resolveRoute } from '@/lib/auth-routing';
+import { COLORS } from '@/lib/constants';
 
 export default function Index() {
   const { user, loading, isOnboarded } = useAuth();
