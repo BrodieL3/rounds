@@ -2,12 +2,12 @@
 
 | Active slice | Slice doc | Files in scope | Status |
 |---|---|---|---|
-| None | — | — | Expo standard compliance slices completed through Feed view-model extraction; choose next slice (Friends/conversation VM extraction recommended) before editing. |
+| Figma UI overhaul | docs/agents/figma-ui-overhaul.md | Figma UI docs/config first; frontend purge/rebuild next | Owner decisions captured in ADR 006; implement with TDD from slice doc. |
 
 ## Cross-cutting rules
 
 - Use TDD: write/update tests first, confirm red, implement minimal green, refactor after green.
-- Read Expo SDK 56 docs before Expo code: https://docs.expo.dev/versions/v56.0.0/
+- Read Expo SDK 54 docs before Expo code: https://docs.expo.dev/versions/v54.0.0/
 - Keep business logic out of route screens; use pure/service seams under `lib/**`, adapters at edges.
 - Firestore/Storage access stays behind service seams; sensitive social mutations use trusted Functions where ADRs require.
 - Canonical opinions are `ratings/{ratingId}`; public projections are `posts/{ratingId}`; review links use `ratingId`.

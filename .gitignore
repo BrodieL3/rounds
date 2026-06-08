@@ -41,3 +41,8 @@ yarn-error.*
 /ios
 /android
 firestore-debug.log
+
+# local agent/MCP workspace
+mcp.json
+.claude/worktrees/
+scripts/friends-seed.js

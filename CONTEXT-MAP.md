@@ -29,6 +29,7 @@ Minimal bootstrap pointer for agent context loading. `AGENTS.md` is the dispatch
 - `docs/adr/003-friends-first-navigation.md` — Friends-first tab/navigation direction.
 - `docs/adr/004-trusted-group-creation-boundary.md` — trusted Cloud Function boundary for group membership grants.
 - `docs/adr/005-rating-canonical-opinion-and-public-projection.md` — Rating identity, Post projection, and media-path rules.
+- `docs/adr/006-figma-discover-ui-overhaul.md` — Figma UI overhaul, Discover replacing Feed product language, Plus menu actions, SDK 54/Expo Go target.
 
 ## Trust rules
 

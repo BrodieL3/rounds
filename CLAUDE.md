@@ -37,7 +37,7 @@ user + not onboarded → /onboarding/phone
 user + onboarded → /(tabs)/friends
 ```
 
-Tab order (defined in `lib/tab-config.js`): **Friends → Feed → Add (placeholder) → List → Profile**. `leaderboard` exists as a file but is hidden in `HIDDEN_TAB_ROUTES`; do not rebuild Rank/Leaderboard unless the PRD explicitly selects it.
+Current legacy tab route order (defined in `lib/tab-config.js`): **Friends → Discover (legacy `feed` route during migration) → Add/Plus → List → Profile**. `leaderboard` exists as a file but is hidden in `HIDDEN_TAB_ROUTES`; do not rebuild Rank/Leaderboard unless a future PRD explicitly selects it. Figma UI overhaul source of truth lives in `docs/agents/figma-ui-overhaul.md` and ADR 006.
 
 ### Route ownership rules
 
@@ -45,6 +45,10 @@ Tab order (defined in `lib/tab-config.js`): **Friends → Feed → Add (placehol
 - `/venue/[id]` owns place metadata and report entry
 - `/venue/[id]/rate` owns Rating creation and interim public projection creation
 - `/conversation/[id]`, `/conversation/new`, and `/conversation/[id]/info` own DM/group chat UI flows; membership grants use service/function seams
+
+### Figma UI overhaul note
+
+Active target: rebuild frontend from Figma file `8CcbpAdt4AMYS9hulRy15n` using SDK 54/Expo Go-first. Discover replaces Feed in user-facing UI. Old auth/onboarding frontend can be removed for this UI pass; future auth plans are separate. Preserve Firebase/domain seams in `lib/**`, `functions/**`, and rules.
 
 ### Data model
 
@@ -85,7 +89,7 @@ Pure/domain logic should live in `/lib` and be tested before screen wiring.
 | `tab-config.js` | Tab order, icon helpers, hidden routes |
 | `ranking.js` | Elo-like ranking over comparisons |
 | `personal-rankings.js` | Cohort-scoped ranking with `getMyTopSpots` |
-| `feed-display.js` | Feed query/sort/display helpers |
+| `feed-display.js` | Legacy Feed / new Discover query/sort/display helpers |
 | `venue-display.js` | Venue metadata display helpers |
 | `media-upload.js` | Firebase Storage upload helpers |
 | `friends/*` | Friend request, DM, group, inbox, and permission seams |

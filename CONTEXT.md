@@ -78,9 +78,13 @@ A Chat Attachment that points to a Rating by `ratingId`. Review links can resolv
 
 A user tagged on a review as someone the author went out with. The review form can use a Group Chat as a shortcut to add the group's current members, but the review stores user tags rather than the group chat identity.
 
+### Discover
+
+User-facing replacement for the prior Feed tab. Discover is the public/city discovery surface in the Figma UI. During the UI overhaul it can reuse current Feed/Post projection data as placeholder backing data until deeper Discover behavior is specified.
+
 ### Feed
 
-City-scoped activity stream with followed users promoted above other city posts. Current implementation queries `posts` directly and sorts client-side. Feed remains a product surface but is no longer the hero tab.
+Legacy implementation word for the city-scoped public activity stream backed by `posts`. New user-facing UI should say Discover unless referring to existing code modules or Firestore projection behavior.
 
 ### Follow Graph
 
