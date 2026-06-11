@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS } from '../lib/constants';
@@ -8,77 +8,101 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const submit = async () => {
-    if (!email.includes('@') || password.length < 6) {
-      Alert.alert('Invalid input', 'Please enter a valid email and password (6+ chars)');
-      return;
-    }
+  async function handleSignIn() {
+    if (!email || !password) return;
+    setError('');
     setLoading(true);
     try {
-      await signIn(email, password);
-      router.replace('/(tabs)/list');
-    } catch (err) {
-      Alert.alert('Login failed', err.message);
+      await signIn(email.trim(), password);
+      router.replace('/(tabs)/friends');
+    } catch (e) {
+      setError('Invalid email or password.');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.screen}>
-      <Text style={styles.title}>Log In</Text>
-      <Text style={styles.copy}>Welcome back to Rounds.</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor={COLORS.textPlaceholder}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        autoFocus
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor={COLORS.textPlaceholder}
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <Pressable style={styles.button} onPress={submit} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Log In'}</Text>
-      </Pressable>
-
-      <Pressable onPress={() => router.push('/onboarding/phone')} style={styles.link}>
-        <Text style={styles.linkText}>Don't have an account? Get Started</Text>
-      </Pressable>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.inner}>
+        <Text style={styles.title}>Rounds</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor={COLORS.textSecondary}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor={COLORS.textSecondary}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          onSubmitEditing={handleSignIn}
+        />
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <Pressable style={styles.button} onPress={handleSignIn} disabled={loading}>
+          {loading
+            ? <ActivityIndicator color={COLORS.bg} />
+            : <Text style={styles.buttonText}>Sign in</Text>
+          }
+        </Pressable>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg, padding: 24, justifyContent: 'center' },
-  title: { color: COLORS.textPrimary, fontSize: 32, fontWeight: '800' },
-  copy: { color: COLORS.textSecondary, fontSize: 16, marginTop: 8, marginBottom: 24 },
-  input: {
-    backgroundColor: COLORS.bgElevated,
-    color: COLORS.textPrimary,
-    fontSize: 18,
-    padding: 16,
-    borderRadius: 12,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.bg,
+  },
+  inner: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 14,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: COLORS.accent,
+    textAlign: 'center',
     marginBottom: 16,
   },
-  button: {
-    backgroundColor: COLORS.hero,
-    padding: 16,
+  input: {
+    backgroundColor: COLORS.bgCard,
     borderRadius: 12,
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: COLORS.textPrimary,
   },
-  buttonText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  link: { marginTop: 20, alignItems: 'center' },
-  linkText: { color: COLORS.accent, fontWeight: '700', fontSize: 14 },
+  button: {
+    backgroundColor: COLORS.accent,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  buttonText: {
+    color: COLORS.bg,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  error: {
+    color: '#C0392B',
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });

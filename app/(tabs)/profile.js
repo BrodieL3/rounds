@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Alert, Share, StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,7 +62,7 @@ function StatBlock({ value, label, locked }) {
     <View style={styles.stat}>
       <View style={styles.statValueWrap}>
         {locked ? (
-          <Ionicons name="lock-closed" size={16} color={COLORS.textPrimary} />
+          <AppIcon name="lock-closed" size={16} color={COLORS.textPrimary} />
         ) : (
           <Text style={styles.statNum}>{value}</Text>
         )}
@@ -76,7 +76,7 @@ function SuggestedUserCard({ item, onDismiss }) {
   return (
     <View style={styles.suggestionCard}>
       <Pressable style={styles.dismissBtn} onPress={() => onDismiss(item.id)}>
-        <Ionicons name="close" size={18} color="#9ca3af" />
+        <AppIcon name="close" size={18} color="#9ca3af" />
       </Pressable>
       <MediaImage source={{ uri: item.avatarUrl }} style={styles.suggestionAvatar} />
       <Text style={styles.suggestionName} numberOfLines={1}>{item.fullName}</Text>
@@ -91,15 +91,15 @@ function SuggestedUserCard({ item, onDismiss }) {
 function ProfileActivityRow({ icon, label, count, locked, onPress }) {
   return (
     <Pressable style={styles.activityRow} onPress={onPress}>
-      <Ionicons name={icon} size={22} color={COLORS.textPrimary} style={styles.activityIcon} />
+      <AppIcon name={icon} size={22} color={COLORS.textPrimary} style={styles.activityIcon} />
       <Text style={styles.activityLabel}>{label}</Text>
       <View style={styles.activitySpacer} />
       {locked ? (
-        <Ionicons name="lock-closed" size={18} color="#cfcfcf" style={styles.activityCount} />
+        <AppIcon name="lock-closed" size={18} color="#cfcfcf" style={styles.activityCount} />
       ) : (
         <Text style={styles.activityCount}>{count}</Text>
       )}
-      <Ionicons name="chevron-forward" size={20} color="#c7c7c7" />
+      <AppIcon name="chevron-forward" size={20} color="#c7c7c7" />
     </Pressable>
   );
 }
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await signOut();
-          router.replace('/onboarding/phone');
+          router.replace('/login');
         },
       },
     ]);
@@ -188,10 +188,10 @@ export default function ProfileScreen() {
         <Text style={styles.topName}>{profile?.displayName || 'User'}</Text>
         <View style={styles.topActions}>
           <Pressable style={styles.iconBtn} onPress={handleShareProfile}>
-            <Ionicons name="share-outline" size={24} color={COLORS.textPrimary} />
+            <AppIcon name="share-outline" size={24} color={COLORS.textPrimary} />
           </Pressable>
           <Pressable style={styles.iconBtn} onPress={handleMenu}>
-            <Ionicons name="menu-outline" size={28} color={COLORS.textPrimary} />
+            <AppIcon name="menu-outline" size={28} color={COLORS.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -223,7 +223,7 @@ export default function ProfileScreen() {
           <Text style={styles.outlineBtnText}>Share profile</Text>
         </Pressable>
         <Pressable style={styles.chevronBox}>
-          <Ionicons name="chevron-down" size={18} color={COLORS.textPrimary} />
+          <AppIcon name="chevron-down" size={18} color={COLORS.textPrimary} />
         </Pressable>
       </View>
 

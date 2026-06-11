@@ -1,26 +1,18 @@
 import { useEffect } from 'react';
-import { Redirect } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { resolveRoute } from '@/lib/auth-routing';
-import { COLORS } from '@/lib/constants';
+import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Index() {
-  const { user, loading, isOnboarded } = useAuth();
+  const { user, loading } = useAuth();
 
-  const route = resolveRoute({ loading, user, isOnboarded });
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      router.replace('/(tabs)/friends');
+    } else {
+      router.replace('/login');
+    }
+  }, [user, loading]);
 
-  if (route === null) {
-    return (
-      <View style={styles.screen}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
-      </View>
-    );
-  }
-
-  return <Redirect href={route} />;
+  return null;
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
-});
