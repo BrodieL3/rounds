@@ -1,0 +1,3 @@
+# Maestro project config. `maestro test .maestro/` runs the flows matched here.
+flows:
+  - "auth-*.yaml"

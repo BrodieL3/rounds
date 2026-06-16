@@ -31,8 +31,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>Rounds</Text>
+        <Text style={styles.title} testID="login-title">Rounds</Text>
         <TextInput
+          testID="login-email-input"
           style={styles.input}
           placeholder="Email"
           placeholderTextColor={COLORS.textSecondary}
@@ -42,6 +43,7 @@ export default function LoginScreen() {
           onChangeText={setEmail}
         />
         <TextInput
+          testID="login-password-input"
           style={styles.input}
           placeholder="Password"
           placeholderTextColor={COLORS.textSecondary}
@@ -50,8 +52,8 @@ export default function LoginScreen() {
           onChangeText={setPassword}
           onSubmitEditing={handleSignIn}
         />
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable style={styles.button} onPress={handleSignIn} disabled={loading}>
+        {error ? <Text style={styles.error} testID="login-error">{error}</Text> : null}
+        <Pressable style={styles.button} onPress={handleSignIn} disabled={loading} testID="login-submit">
           {loading
             ? <ActivityIndicator color={COLORS.bg} />
             : <Text style={styles.buttonText}>Sign in</Text>

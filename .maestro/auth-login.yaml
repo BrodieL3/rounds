@@ -1,0 +1,53 @@
+# Rounds — Auth sign-in E2E (happy path)
+#
+# Drives the REAL login screen against the Firebase emulator and asserts the user
+# lands on the Friends surface. This is the first "trust wall" tile for a surface
+# jest can't reach (real navigation + Firebase Auth round-trip on a device).
+#
+# Prereqs (see .maestro/README.md):
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. npm run e2e:seed         (Firestore docs + Auth user `alice@example.com`)
+#   3. App running in Expo Go with EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1
+#   4. A device/emulator connected (maestro needs one — no headless mode)
+#
+# Run: maestro test .maestro/auth-login.yaml
+#
+# appId = Expo Go (Android). For iOS Expo Go use `host.exp.Exponent`.
+# For a dev-client / standalone build: set appId to the app's bundle id and
+# replace the `openLink` step below with a bare `- launchApp`.
+appId: host.exp.exponent
+env:
+  EXPO_URL: "exp://127.0.0.1:8081"
+  E2E_EMAIL: "alice@example.com"
+  E2E_PASSWORD: "Test1234!"
+---
+- launchApp:
+    clearState: true
+- openLink: "${EXPO_URL}"
+
+# Unauthenticated entry routes to /login (app/index.js).
+- assertVisible:
+    id: "login-title"
+
+# Enter credentials by stable testID — never placeholder text.
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_PASSWORD}"
+- hideKeyboard
+
+- tapOn:
+    id: "login-submit"
+
+# Success: login is gone AND the Friends surface rendered.
+# extendedWaitUntil is required here: login-submit stays mounted while Auth is loading.
+- extendedWaitUntil:
+    notVisible:
+      id: "login-submit"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 20000

@@ -1,0 +1,38 @@
+# Rounds — Auth sign-in E2E (negative / error path)
+#
+# Wrong password must surface the inline error and keep the user on the login
+# screen — proves the failure branch in app/login.js (catch -> setError) works
+# end-to-end, not just in unit tests.
+#
+# Prereqs identical to auth-login.yaml. Run: maestro test .maestro/auth-login-invalid.yaml
+appId: host.exp.exponent
+env:
+  EXPO_URL: "exp://127.0.0.1:8081"
+  E2E_EMAIL: "alice@example.com"
+  E2E_BAD_PASSWORD: "wrong-password"
+---
+- launchApp:
+    clearState: true
+- openLink: "${EXPO_URL}"
+
+- assertVisible:
+    id: "login-title"
+
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_BAD_PASSWORD}"
+- hideKeyboard
+
+- tapOn:
+    id: "login-submit"
+
+# Failure: error text appears and we are still on login (not routed to Friends).
+- extendedWaitUntil:
+    visible:
+      id: "login-error"
+    timeout: 15000
+- assertVisible:
+    id: "login-submit"
