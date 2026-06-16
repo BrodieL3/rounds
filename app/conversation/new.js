@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { COLORS } from '../../lib/constants';
 import { db, functions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -89,7 +89,7 @@ export default function NewConversationScreen() {
           <Text style={styles.friendHandle}>{item.username ? `@${item.username}` : 'Friend'}</Text>
         </View>
         <View style={[styles.check, selected && styles.checkSelected]}>
-          {selected ? <Ionicons name="checkmark" size={16} color="#ffffff" /> : null}
+          {selected ? <AppIcon name="checkmark" size={16} color="#ffffff" /> : null}
         </View>
       </Pressable>
     );
@@ -99,7 +99,7 @@ export default function NewConversationScreen() {
     <View style={styles.screen}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
         </Pressable>
         <Text style={styles.title}>Create group</Text>
         <Pressable

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './ui/AppIcon';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { COLORS } from '../lib/constants';
 import { isVoicePlayableForViewer } from '../lib/friends/voice-service';
@@ -77,9 +77,9 @@ export default function VoiceBubble({ message, isMine, db, storage, user }) {
     <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
       <Pressable onPress={togglePlay} disabled={expired || loading} style={styles.playButton}>
         {loading ? (
-          <Ionicons name="sync" size={18} color={isMine ? '#ffffff' : COLORS.accent} />
+          <AppIcon name="sync" size={18} color={isMine ? '#ffffff' : COLORS.accent} />
         ) : (
-          <Ionicons
+          <AppIcon
             name={isPlaying ? 'pause' : 'play'}
             size={18}
             color={isMine ? '#ffffff' : COLORS.accent}

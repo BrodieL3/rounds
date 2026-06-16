@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../ui/AppIcon';
 import VoiceBubble from '../VoiceBubble';
 import MediaImage from '../ui/media-image';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
@@ -150,7 +150,7 @@ export default function MessageBubble({
           <View style={[styles.photoBubble, isMine ? styles.photoBubbleMine : styles.photoBubbleTheirs]}>
             {(!photoUrls || photoUrls.length === 0) ? (
               <View style={styles.photoPlaceholder}>
-                <Ionicons name="image" size={24} color={COLORS.textMuted} />
+                <AppIcon name="image" size={24} color={COLORS.textMuted} />
               </View>
             ) : message.mediaPaths.length === 1 ? (
               <MediaImage
@@ -187,7 +187,7 @@ export default function MessageBubble({
             style={[styles.locationCard, isMine ? styles.locationCardMine : styles.locationCardTheirs]}
             onPress={handleOpenMaps}
           >
-            <Ionicons name="location" size={20} color={COLORS.accent} />
+            <AppIcon name="location" size={20} color={COLORS.accent} />
             <View style={styles.locationCopy}>
               <Text style={styles.locationLabel} numberOfLines={2}>{message.label || 'Location'}</Text>
               <Text style={styles.locationCoords}>{message.lat?.toFixed(4)}, {message.lng?.toFixed(4)}</Text>
@@ -209,7 +209,7 @@ export default function MessageBubble({
             onPress={handlePressVenue}
           >
             <View style={[styles.venueLinkThumb, { backgroundColor: visual.colors[0] }]}>
-              <Ionicons name={visual.iconName} size={20} color="#ffffff" />
+              <AppIcon name={visual.iconName} size={20} color="#ffffff" />
             </View>
             <View style={styles.venueLinkCopy}>
               <Text style={styles.venueLinkLabel}>Venue</Text>
@@ -229,7 +229,7 @@ export default function MessageBubble({
             onPress={handlePressReview}
           >
             <View style={[styles.reviewLinkThumb, { backgroundColor: visual.colors[0] }]}>
-              <Ionicons name={visual.iconName} size={20} color="#ffffff" />
+              <AppIcon name={visual.iconName} size={20} color="#ffffff" />
             </View>
             <View style={styles.reviewLinkCopy}>
               <View style={styles.reviewLinkHeader}>

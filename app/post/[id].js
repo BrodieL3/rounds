@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable, TextInput, Alert,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
   doc, onSnapshot, collection, query, addDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDoc,
@@ -251,7 +251,7 @@ export default function PostDetailScreen() {
                 },
               })}
             >
-              <Ionicons name="paper-plane-outline" size={18} color={COLORS.accent} />
+              <AppIcon name="paper-plane-outline" size={18} color={COLORS.accent} />
               <Text style={styles.shareBtnText}>Share</Text>
             </Pressable>
           )}

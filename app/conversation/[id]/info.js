@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../../components/ui/AppIcon';
 import { COLORS } from '../../../lib/constants';
 import { db, functions } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -205,7 +205,7 @@ export default function GroupInfoScreen() {
           <Text style={styles.mutedText}>{item.username ? `@${item.username}` : 'Friend'}</Text>
         </View>
         <View style={[styles.check, selected && styles.checkSelected]}>
-          {selected ? <Ionicons name="checkmark" size={16} color="#ffffff" /> : null}
+          {selected ? <AppIcon name="checkmark" size={16} color="#ffffff" /> : null}
         </View>
       </Pressable>
     );
@@ -228,7 +228,7 @@ export default function GroupInfoScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
         </Pressable>
         <Text style={styles.title}>{conversation?.name || 'Group info'}</Text>
       </View>
@@ -284,7 +284,7 @@ export default function GroupInfoScreen() {
             <Pressable key={member.uid} style={styles.memberRow} onPress={() => setNextAdminUid(member.uid)}>
               <Text style={styles.memberName}>{member.label}</Text>
               <View style={[styles.check, nextAdminUid === member.uid && styles.checkSelected]}>
-                {nextAdminUid === member.uid ? <Ionicons name="checkmark" size={16} color="#ffffff" /> : null}
+                {nextAdminUid === member.uid ? <AppIcon name="checkmark" size={16} color="#ffffff" /> : null}
               </View>
             </Pressable>
           ))}

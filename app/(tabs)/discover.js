@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { router } from 'expo-router';
 import {
   collection, doc, limit, onSnapshot, query, updateDoc, where,
@@ -57,7 +57,7 @@ function ActionIcon({ name, activeName, active, color, onPress, disabled, access
       hitSlop={8}
       style={disabled ? styles.actionDisabled : null}
     >
-      <Ionicons
+      <AppIcon
         name={active ? activeName : name}
         size={24}
         color={active ? color : COLORS.textPrimary}
@@ -118,7 +118,7 @@ function IconRow({
   );
 }
 
-export function FeedItem({ item, city, currentUserId }) {
+export function DiscoverItem({ item, city, currentUserId }) {
   const display = buildFeedItemDisplay(item, city);
   const mediaRefs = getMediaReferences(item);
   const [media, setMedia] = useState([]);
@@ -220,7 +220,7 @@ export function FeedItem({ item, city, currentUserId }) {
   );
 }
 
-export default function FeedScreen() {
+export default function DiscoverScreen() {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -244,7 +244,7 @@ export default function FeedScreen() {
       }));
       setRefreshing(false);
     }, (err) => {
-      console.error('Feed snapshot error:', err);
+      console.error('Discover snapshot error:', err);
       setRefreshing(false);
     });
 
@@ -256,10 +256,10 @@ export default function FeedScreen() {
       <FlatList
         contentInsetAdjustmentBehavior="automatic"
         data={posts}
-        renderItem={({ item }) => <FeedItem item={item} city={profile?.city} currentUserId={user?.uid} />}
+        renderItem={({ item }) => <DiscoverItem item={item} city={profile?.city} currentUserId={user?.uid} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={<Text style={styles.title}>Feed</Text>}
+        ListHeaderComponent={<Text style={styles.title}>Discover</Text>}
         refreshControl={(
           <RefreshControl
             refreshing={refreshing}

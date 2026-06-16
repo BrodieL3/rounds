@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../../components/ui/AppIcon';
 import {
   collection, query, where, getDocs, onSnapshot, doc, getDoc,
 } from 'firebase/firestore';
@@ -187,7 +187,7 @@ export default function RateScreen() {
       {/* Venue thumbnail */}
       {visual && (
         <View style={[styles.venueThumb, { backgroundColor: visual.colors[0] }]}>
-          <Ionicons name={visual.iconName} size={32} color="#ffffff" />
+          <AppIcon name={visual.iconName} size={32} color="#ffffff" />
         </View>
       )}
 
@@ -242,7 +242,7 @@ export default function RateScreen() {
                 <Text style={[styles.companionChipText, selected && styles.companionChipTextActive]}>
                   {friend.displayName || friend.username || friend.uid}
                 </Text>
-                {selected && <Ionicons name="checkmark" size={14} color="#ffffff" style={{ marginLeft: 4 }} />}
+                {selected && <AppIcon name="checkmark" size={14} color="#ffffff" style={{ marginLeft: 4 }} />}
               </Pressable>
             );
           })}

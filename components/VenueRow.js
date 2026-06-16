@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from './ui/AppIcon';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { COLORS, COHORT_LABELS } from '../lib/constants';
 import { formatVenueMetadataLines } from '../lib/venue-display';
@@ -26,7 +26,7 @@ export default function VenueRow({
     <Pressable style={styles.row} onPress={onPress}>
       {/* Thumbnail */}
       <View style={[styles.thumb, { backgroundColor: visual.colors[0] }]}>
-        <Ionicons name={visual.iconName} size={18} color="#ffffff" />
+        <AppIcon name={visual.iconName} size={18} color="#ffffff" />
       </View>
 
       <View style={styles.copy}>
@@ -52,7 +52,7 @@ export default function VenueRow({
 
       {mode === 'ranked' ? (
         <View style={styles.rankAction}>
-          <Ionicons name="lock-closed-outline" size={13} color={COLORS.textMuted} />
+          <AppIcon name="lock-closed-outline" size={13} color={COLORS.textMuted} />
         </View>
       ) : (
         <Pressable
@@ -63,7 +63,7 @@ export default function VenueRow({
           }}
           hitSlop={8}
         >
-          <Ionicons
+          <AppIcon
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
             size={18}
             color={bookmarked ? COLORS.accent : COLORS.textMuted}

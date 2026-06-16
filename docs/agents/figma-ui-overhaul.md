@@ -1,6 +1,18 @@
 # Figma UI Overhaul Slice
 
-Status: READY FOR IMPLEMENTATION — owner decisions captured in ADR 006. Use TDD. Do not commit secrets.
+Status: IN PROGRESS — owner decisions captured in ADR 006; Figma extraction, route shell contract, Discover/Plus route start, and auth/onboarding frontend purge started with TDD. Do not commit secrets.
+
+## Handoff status — 2026-06-16 (continue on branch `agent/figma-ui-overhaul`)
+
+**Boundary on `main`:** commit `215c807` is the Maestro auth E2E harness + login testIDs (verification scaffolding — leave intact). *This* commit is the figma slice WIP checkpoint and is your base.
+
+**Done so far:** auth/onboarding + `welcome` + legacy `feed`/`leaderboard`/`add-tab-placeholder` routes purged; `Discover` and `Plus` routes scaffolded; `app/post/new.js` added; `lib/figma-rounds-ui.js` design tokens; Ionicons→`AppIcon`/Heroicons migration underway across screens; figma contract tests added (`figma-route-shell-ui`, `figma-plus-drawer-ui`, `figma-ui-overhaul-contract`).
+
+**WIP / next (per the Figma inventory below):** bring **Friends, Discover, Plus Menu, My List, Profile, Chat** to the Figma frames, then reconnect Firebase Auth/Firestore/Storage/Functions behind `lib/**` seams at the end.
+
+**Invariants — do not break:** TDD (red → green → refactor); **never auto-send texts/DMs**; group membership only via the trusted `createGroupConversation` callable (ADR 004); cohort isolation across venue lists/Ratings/Comparisons/Ranking; canonical Rating → public Post projection (ADR 005).
+
+**Verify with:** `npm test`, `npm run test:rules`, and the new `npm run test:e2e:auth` (needs an emulator/device — see `.maestro/README.md`). Start by running `rounds-start`.
 
 ## Source of truth
 
@@ -82,6 +94,8 @@ Already decided/started as prep:
 - Check `git status --short` before changes.
 - `mcp.json`, `.claude/worktrees/`, and `scripts/friends-seed.js` are local-only ignores. Do not commit them.
 - Redact/rotate any real Figma token that appeared in local config.
+
+Progress note 2026-06-08: Figma source/spec module and `docs/design/figma-rounds-ui.md` created; route shell now uses `friends`, `discover`, `plus`, `list`, `profile`; Plus reverted to route-backed `formSheet` for native drag-to-close and animation, with default tab icon layout for alignment; old auth/onboarding and legacy tab route files removed.
 
 ### 1. Extract precise design data
 

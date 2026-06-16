@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { COLORS } from '../../lib/constants';
 import { db, storage } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -81,7 +81,7 @@ export default function ConversationScreen() {
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.headerSafeArea}>
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
           </Pressable>
           <Pressable
             style={styles.headerTitleArea}
@@ -93,7 +93,7 @@ export default function ConversationScreen() {
               <Text style={styles.avatarText}>{surface.title.charAt(0).toUpperCase()}</Text>
             </View>
             <Text style={styles.title}>{surface.title}</Text>
-            {isGroup ? <Ionicons name="information-circle-outline" size={22} color={COLORS.textMuted} /> : null}
+            {isGroup ? <AppIcon name="information-circle-outline" size={22} color={COLORS.textMuted} /> : null}
           </Pressable>
         </View>
       </SafeAreaView>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { router } from 'expo-router';
 import { COLORS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
@@ -157,7 +157,7 @@ export default function FriendsScreen() {
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>{viewModel.screenTitle}</Text>
+          <Text style={styles.title} testID="friends-screen-title">{viewModel.screenTitle}</Text>
           <Text style={styles.subtitle}>{viewModel.screenSubtitle}</Text>
         </View>
         <Pressable
@@ -166,7 +166,7 @@ export default function FriendsScreen() {
           style={styles.createButton}
           onPress={() => router.push('/conversation/new')}
         >
-          <Ionicons name="add" size={26} color="#ffffff" />
+          <AppIcon name="add" size={26} color="#ffffff" />
         </Pressable>
       </View>
 
@@ -176,13 +176,13 @@ export default function FriendsScreen() {
         onPress={() => setRequestsExpanded((expanded) => !expanded)}
       >
         <View style={styles.requestIcon}>
-          <Ionicons name="person-add-outline" size={20} color={COLORS.accent} />
+          <AppIcon name="person-add-outline" size={20} color={COLORS.accent} />
         </View>
         <View style={styles.requestCopy}>
           <Text style={styles.requestTitle}>{viewModel.actions.friendRequestsLabel}</Text>
           <Text style={styles.requestSub}>{requestSummary}</Text>
         </View>
-        <Ionicons
+        <AppIcon
           name={requestsExpanded ? 'chevron-down' : 'chevron-forward'}
           size={20}
           color={COLORS.textMuted}
@@ -202,7 +202,7 @@ export default function FriendsScreen() {
       {viewModel.isEmpty ? (
         <View style={styles.emptyCard}>
           <View style={styles.emptyIcon}>
-            <Ionicons name="chatbubbles-outline" size={32} color={COLORS.accent} />
+            <AppIcon name="chatbubbles-outline" size={32} color={COLORS.accent} />
           </View>
           <Text style={styles.emptyTitle}>{viewModel.emptyState.title}</Text>
           <Text style={styles.emptyBody}>{viewModel.emptyState.body}</Text>

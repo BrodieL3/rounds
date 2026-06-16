@@ -4,7 +4,7 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable, Alert, TextInput, Linking, Modal,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../../components/ui/AppIcon';
 import {
   collection, addDoc, serverTimestamp,
   query, where, getDocs, orderBy, limit,
@@ -181,11 +181,11 @@ export default function VenueDetailScreen() {
       {/* Hero */}
       <View style={[styles.hero, { backgroundColor: visual.colors[0] }]}>
         <View style={styles.heroOverlay}>
-          <Ionicons name={visual.iconName} size={48} color="#ffffff" />
+          <AppIcon name={visual.iconName} size={48} color="#ffffff" />
         </View>
         {user && (
           <Pressable style={styles.bookmarkBtn} onPress={toggleBookmark} disabled={bookmarkLoading}>
-            <Ionicons
+            <AppIcon
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
               size={24}
               color="#ffffff"
@@ -211,15 +211,15 @@ export default function VenueDetailScreen() {
       {/* Action buttons */}
       <View style={styles.actionRow}>
         <Pressable style={styles.actionBtn} onPress={() => openWebsite(venue.name)}>
-          <Ionicons name="globe-outline" size={18} color={COLORS.accent} />
+          <AppIcon name="globe-outline" size={18} color={COLORS.accent} />
           <Text style={styles.actionBtnText}>Website</Text>
         </Pressable>
         <Pressable style={styles.actionBtn} onPress={() => openMap(venue.name, latitude, longitude)}>
-          <Ionicons name="navigate-outline" size={18} color={COLORS.accent} />
+          <AppIcon name="navigate-outline" size={18} color={COLORS.accent} />
           <Text style={styles.actionBtnText}>Directions</Text>
         </Pressable>
         <Pressable style={styles.actionBtn} onPress={shareVenue}>
-          <Ionicons name="paper-plane-outline" size={18} color={COLORS.accent} />
+          <AppIcon name="paper-plane-outline" size={18} color={COLORS.accent} />
           <Text style={styles.actionBtnText}>Share</Text>
         </Pressable>
       </View>
@@ -310,7 +310,7 @@ export default function VenueDetailScreen() {
                     },
                   })}
                 >
-                  <Ionicons name="paper-plane-outline" size={16} color={COLORS.accent} />
+                  <AppIcon name="paper-plane-outline" size={16} color={COLORS.accent} />
                 </Pressable>
               )}
             </View>

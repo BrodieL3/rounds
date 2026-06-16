@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo/vector-icons": "^15.0.3",
+    "@heroicons/react": "^2.2.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@testing-library/react-native": "~13.2.0",
     "expo": "~54.0.0",
@@ -26,6 +26,7 @@
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.2",
     "react-native-webview": "13.15.0"
   },
@@ -36,7 +37,11 @@
     "web": "expo start --web",
     "test": "jest",
     "doctor:expo": "expo-doctor",
-    "test:rules": "firebase emulators:exec --project rounds-8d89f --only firestore,storage \"jest lib/__tests__/firestore-friends-rules.test.js lib/__tests__/venue-bookmark-rules.test.js lib/__tests__/storage-rules.test.js --runInBand\""
+    "test:rules": "firebase emulators:exec --project rounds-8d89f --only firestore,storage \"jest lib/__tests__/firestore-friends-rules.test.js lib/__tests__/venue-bookmark-rules.test.js lib/__tests__/storage-rules.test.js --runInBand\"",
+    "emulators": "firebase emulators:start --only auth,firestore,functions,storage",
+    "e2e:seed": "node scripts/friends-seed.js && node scripts/e2e-auth-seed.js",
+    "test:e2e:auth": "maestro test .maestro/auth-login.yaml",
+    "test:e2e": "maestro test .maestro/"
   },
   "private": true,
   "devDependencies": {

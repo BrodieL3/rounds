@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView, FlatList, Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
   collection, query, where, getDocs, getDoc, doc, updateDoc, arrayUnion, arrayRemove, limit,
@@ -278,7 +278,7 @@ export default function UserProfileScreen() {
               },
             })}
           >
-            <Ionicons name="paper-plane-outline" size={16} color={COLORS.accent} />
+            <AppIcon name="paper-plane-outline" size={16} color={COLORS.accent} />
           </Pressable>
         )}
       </View>

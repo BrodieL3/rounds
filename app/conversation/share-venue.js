@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../../components/ui/AppIcon';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -87,14 +87,14 @@ export default function ShareVenueScreen() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Send venue</Text>
       </View>
 
       <View style={styles.venueCard}>
         <View style={[styles.venueThumb, { backgroundColor: visual.colors[0] }]}>
-          <Ionicons name={visual.iconName} size={28} color="#ffffff" />
+          <AppIcon name={visual.iconName} size={28} color="#ffffff" />
         </View>
         <View style={styles.venueCopy}>
           <Text style={styles.venueName}>{venue.name}</Text>
@@ -131,7 +131,7 @@ export default function ShareVenueScreen() {
                   <Text style={styles.conversationTitle}>{conversation.displayName}</Text>
                   <Text style={styles.conversationPreview} numberOfLines={1}>{conversation.preview}</Text>
                 </View>
-                <Ionicons name="paper-plane-outline" size={20} color={COLORS.accent} />
+                <AppIcon name="paper-plane-outline" size={20} color={COLORS.accent} />
               </Pressable>
             );
           })}

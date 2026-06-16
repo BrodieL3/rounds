@@ -5,7 +5,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../ui/AppIcon';
 import { COLORS } from '../../lib/constants';
 import { formatVoiceDuration } from '../../lib/friends/conversation-surface';
 
@@ -43,7 +43,7 @@ export default function Composer({
           </Text>
         </View>
         <Pressable onPress={onStopRecording} style={styles.voiceRecordingStop}>
-          <Ionicons name="stop" size={24} color="#ffffff" />
+          <AppIcon name="stop" size={24} color="#ffffff" />
         </Pressable>
       </View>
     );
@@ -108,13 +108,13 @@ export default function Composer({
             </Text>
           </View>
           <Pressable onPress={onCancelReply}>
-            <Ionicons name="close" size={20} color={COLORS.textMuted} />
+            <AppIcon name="close" size={20} color={COLORS.textMuted} />
           </Pressable>
         </View>
       ) : null}
       <View style={styles.composer}>
         <Pressable onPress={onAttach} style={styles.attachButton}>
-          <Ionicons name="attach" size={22} color={COLORS.textMuted} />
+          <AppIcon name="attach" size={22} color={COLORS.textMuted} />
         </Pressable>
         <TextInput
           style={styles.input}

@@ -1,7 +1,7 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '../components/ui/AppIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS } from '../lib/constants';
 import MediaImage from '../components/ui/media-image';
@@ -39,11 +39,11 @@ function EditField({ label, value, locked, accountSettings }) {
     >
       <View style={styles.fieldLabelWrap}>
         <Text style={[styles.fieldLabel, accountSettings && styles.accountLabel]}>{label}</Text>
-        {locked ? <Ionicons name="lock-closed" size={16} color={LINK_BLUE} style={styles.lockIcon} /> : null}
+        {locked ? <AppIcon name="lock-closed" size={16} color={LINK_BLUE} style={styles.lockIcon} /> : null}
       </View>
       <View style={styles.fieldRight}>
         {value ? <Text style={styles.fieldValue} numberOfLines={1}>{value}</Text> : null}
-        <Ionicons name="chevron-forward" size={20} color="#c7c7c7" />
+        <AppIcon name="chevron-forward" size={20} color="#c7c7c7" />
       </View>
     </Pressable>
   );
@@ -64,7 +64,7 @@ export default function EditProfileScreen() {
       >
         <View style={styles.header}>
           <Pressable style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <AppIcon name="chevron-back" size={28} color={COLORS.textPrimary} />
           </Pressable>
           <Text style={styles.headerTitle}>Edit profile</Text>
           <View style={styles.headerSpacer} />
