@@ -1,95 +1,69 @@
-import { useState, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, Pressable, FlatList, KeyboardAvoidingView, Platform,
+  StyleSheet, Text, View, TextInput, FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import {
-  collection, query, where, getDocs, limit, orderBy,
-} from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
 import { COLORS } from '../lib/constants';
+import VenueRow from '../components/VenueRow';
 
+const { flattenCatalogVenues, searchVenues, SEARCH_MIN_LENGTH } = require('../lib/venue-catalog');
+const venueSeed = require('../assets/venues.json');
+
+// Cold-start-safe venue search (parent ISA ISC-22): filters the bundled OSM
+// seed entirely client-side — no Firestore round-trip — so a brand-new user
+// with zero posts can find a bar by name, area, or type and tap straight into
+// its detail to log a visit. (Previously this screen searched the `users`
+// collection; people-search is deferred to the social slice.)
 export default function SearchScreen() {
-  const { user } = useAuth();
+  const corpus = useMemo(() => flattenCatalogVenues(venueSeed), []);
   const [queryText, setQueryText] = useState('');
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const search = useCallback(async () => {
-    if (!queryText.trim() || queryText.length < 2) {
-      setResults([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, 'users'),
-        where('username', '>=', queryText.toLowerCase()),
-        where('username', '<=', queryText.toLowerCase() + '\uf8ff'),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      const users = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((u) => u.uid !== user?.uid);
-      setResults(users);
-    } catch (err) {
-      console.error('Search error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [queryText, user]);
+  const results = useMemo(() => searchVenues(corpus, queryText), [corpus, queryText]);
 
-  const renderUser = ({ item }) => (
-    <Pressable
-      style={styles.userRow}
-      onPress={() => router.push(`/user/${item.username}`)}
-    >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {(item.displayName || item.username || '?').charAt(0).toUpperCase()}
-        </Text>
-      </View>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.displayName || item.username}</Text>
-        <Text style={styles.userHandle}>@{item.username}</Text>
-      </View>
-    </Pressable>
-  );
+  const openVenue = useCallback((venue) => {
+    router.push(`/venue/${venue.id}`);
+  }, []);
+
+  const showEmpty = queryText.trim().length >= SEARCH_MIN_LENGTH && results.length === 0;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.screen}
     >
-      <Text style={styles.title}>Find people</Text>
+      <Text style={styles.title}>Find a bar</Text>
 
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by username..."
+          placeholder="Search by name, area, or type..."
           placeholderTextColor={COLORS.textPlaceholder}
           value={queryText}
           onChangeText={setQueryText}
           autoCapitalize="none"
+          autoCorrect={false}
           autoFocus
-          onSubmitEditing={search}
+          returnKeyType="search"
         />
-        <Pressable style={styles.searchBtn} onPress={search}>
-          <Text style={styles.searchBtnText}>Search</Text>
-        </Pressable>
       </View>
 
       <FlatList
         contentInsetAdjustmentBehavior="automatic"
         data={results}
-        renderItem={renderUser}
-        keyExtractor={(item) => item.uid}
+        renderItem={({ item }) => (
+          <VenueRow
+            item={item}
+            cityKey={item.cityKey}
+            actionMode="discovery"
+            onPress={() => openVenue(item)}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 24 }}
         ListEmptyComponent={
-          queryText.length >= 2 && !loading ? (
-            <Text style={styles.empty}>No users found</Text>
+          showEmpty ? (
+            <Text style={styles.empty}>No bars match “{queryText.trim()}”</Text>
           ) : null
         }
       />
@@ -108,23 +82,5 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: COLORS.bgElevated, color: COLORS.textPrimary,
     fontSize: 16, padding: 14, borderRadius: 12,
   },
-  searchBtn: {
-    backgroundColor: COLORS.accent, paddingHorizontal: 16,
-    borderRadius: 12, justifyContent: 'center',
-  },
-  searchBtnText: { color: COLORS.bg, fontWeight: '800', fontSize: 14 },
-  userRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: COLORS.bgElevated, padding: 14,
-    borderRadius: 12, marginBottom: 8,
-  },
-  avatar: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: COLORS.bgCard, alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { color: COLORS.accent, fontSize: 18, fontWeight: '700' },
-  userInfo: { flex: 1 },
-  userName: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700' },
-  userHandle: { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
   empty: { color: COLORS.textMuted, textAlign: 'center', marginTop: 24 },
 });

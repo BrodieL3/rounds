@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  FlatList,
   Pressable,
-  RefreshControl,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   View,
@@ -16,8 +15,9 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { COLORS } from '../../lib/constants';
+import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import MediaImage from '../../components/ui/media-image';
+import VenueRow from '../../components/VenueRow';
 
 const { buildFeedItemDisplay } = require('../../lib/feed-display');
 const {
@@ -29,6 +29,7 @@ const {
 } = require('../../lib/feed-engagement');
 const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
 const { buildFeedViewItems, createSeedVenueLookup } = require('../../lib/feed-view-model');
+const { buildVenueCatalog, getAttribution } = require('../../lib/venue-catalog');
 const venueSeed = require('../../assets/venues.json');
 
 const AVATAR_SIZE = 44;
@@ -118,6 +119,9 @@ function IconRow({
   );
 }
 
+// Social feed row — preserved for the eventual social slice. Not the primary
+// beta surface (a zero-post user has no feed), but kept intact so the existing
+// feed-engagement/share wiring and its suites (feed-actions-ui) stay green.
 export function DiscoverItem({ item, city, currentUserId }) {
   const display = buildFeedItemDisplay(item, city);
   const mediaRefs = getMediaReferences(item);
@@ -220,10 +224,34 @@ export function DiscoverItem({ item, city, currentUserId }) {
   );
 }
 
+// Tappable search affordance that hands off to the dedicated venue search.
+function SearchBar() {
+  return (
+    <Pressable
+      style={styles.searchBar}
+      onPress={() => router.push('/search')}
+      accessibilityRole="button"
+      accessibilityLabel="Search bars by name"
+    >
+      <AppIcon name="search" size={18} color={COLORS.textMuted} />
+      <Text style={styles.searchBarText}>Search bars by name, area, or type</Text>
+    </Pressable>
+  );
+}
+
 export default function DiscoverScreen() {
   const { user, profile } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+  // The browsable seeded catalog IS the beta discovery surface: a brand-new
+  // user with ZERO posts and ZERO friends can still scroll real bars and tap
+  // into one to log it (parent ISA ISC-24/54). The catalog renders from the
+  // bundled OSM seed and never gates on profile.city (onboarding doesn't set
+  // one for the single Boston+Cambridge beta pool).
+  const sections = useMemo(() => buildVenueCatalog(venueSeed), []);
+  const attribution = getAttribution(venueSeed);
+
+  // Social posts stay subscribed-to so the feed lights up once activity exists,
+  // but they are not the cold-start surface and do not block browsing.
+  const [, setPosts] = useState([]);
 
   useEffect(() => {
     if (!user || !profile?.city) return undefined;
@@ -242,35 +270,51 @@ export default function DiscoverScreen() {
         following: profile?.following || [],
         venueLookup: VENUES_BY_CITY,
       }));
-      setRefreshing(false);
     }, (err) => {
       console.error('Discover snapshot error:', err);
-      setRefreshing(false);
     });
 
     return unsub;
   }, [user, profile?.city, profile?.following]);
 
+  const totalVenues = sections.reduce((sum, section) => sum + section.count, 0);
+
   return (
     <View style={styles.screen}>
-      <FlatList
+      <SectionList
         contentInsetAdjustmentBehavior="automatic"
-        data={posts}
-        renderItem={({ item }) => <DiscoverItem item={item} city={profile?.city} currentUserId={user?.uid} />}
+        sections={sections}
         keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={<Text style={styles.title}>Discover</Text>}
-        refreshControl={(
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => setRefreshing(true)}
-            tintColor={COLORS.accent}
+        renderItem={({ item }) => (
+          <VenueRow
+            item={item}
+            cityKey={item.cityKey}
+            actionMode="discovery"
+            onPress={() => router.push(`/venue/${item.id}`)}
           />
+        )}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <Text style={styles.sectionCount}>{section.count} bars</Text>
+          </View>
+        )}
+        ListHeaderComponent={(
+          <View style={styles.header}>
+            <Text style={styles.title}>Discover</Text>
+            <Text style={styles.subtitle}>{totalVenues} bars near you — tap one to log a visit</Text>
+            <SearchBar />
+          </View>
+        )}
+        ListFooterComponent={(
+          <Text style={styles.attribution}>{attribution}</Text>
         )}
         ListEmptyComponent={(
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No activity yet</Text>
-            <Text style={styles.emptySub}>Be the first to rate a venue in your city.</Text>
+            <Text style={styles.emptyText}>No bars loaded yet</Text>
+            <Text style={styles.emptySub}>Pull to refresh or try search.</Text>
           </View>
         )}
       />
@@ -280,26 +324,69 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
+  header: { paddingHorizontal: 20, paddingTop: 8 },
   title: {
     color: COLORS.textPrimary,
     fontSize: 28,
     fontWeight: '800',
-    marginBottom: 8,
-    paddingHorizontal: 20,
+    marginBottom: 4,
   },
-  listContent: { paddingBottom: 24 },
+  subtitle: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 8,
+  },
+  searchBarText: { color: COLORS.textMuted, fontSize: 15, fontWeight: '500' },
+  listContent: { paddingHorizontal: 20, paddingBottom: 24 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingTop: 20,
+    paddingBottom: 6,
+    backgroundColor: COLORS.bg,
+  },
+  sectionTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sectionCount: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  attribution: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    paddingTop: 24,
+    paddingBottom: 8,
+  },
+  // Social feed styles (preserved with the DiscoverItem component).
   feedItem: {
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: COLORS.border,
   },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start' },
   avatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: COLORS.bgElevated,
   },
   headerCopy: { flex: 1, marginLeft: 12, paddingRight: 12 },
   activitySentence: {
@@ -320,7 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#faf5f8',
+    backgroundColor: COLORS.bgElevated,
   },
   ratingText: { color: COLORS.accent, fontSize: 16, fontWeight: '800' },
   mediaScroller: { gap: 10, paddingTop: 16, paddingLeft: AVATAR_SIZE + 12 },
@@ -328,7 +415,7 @@ const styles = StyleSheet.create({
     width: 168,
     height: 128,
     borderRadius: 10,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: COLORS.bgElevated,
   },
   notes: {
     color: COLORS.textSecondary,

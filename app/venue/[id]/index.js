@@ -322,7 +322,7 @@ export default function VenueDetailScreen() {
         style={styles.rateBtn}
         onPress={() => router.push(`/venue/${venue.id}/rate`)}
       >
-        <Text style={styles.rateBtnText}>Rate this place</Text>
+        <Text style={styles.rateBtnText}>Log a visit</Text>
       </Pressable>
 
       <Pressable style={styles.reportBtn} onPress={() => setReportModal(true)}>

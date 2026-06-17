@@ -20,6 +20,7 @@ import {
 import { db } from '../../../lib/firebase';
 import { pickReviewImagesAsync } from '../../../lib/media-upload';
 import { createRatingWithProjectionAsync } from '../../../lib/ratings/rating-service';
+import { buildLogConfirmation } from '../../../lib/log-visit';
 import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback } from '../../../lib/venue-visuals';
@@ -130,6 +131,10 @@ export default function RateScreen() {
       });
       if (!result.success) throw new Error(result.error || 'Rating failed');
 
+      // The hero "it saved" signal: every successful log gets a clear confirmation
+      // before we leave the screen (F3 slice 1, parent ISA ISC-16).
+      const confirmation = buildLogConfirmation(sentiment, venue.name);
+
       const ratingsQ = query(
         collection(db, 'ratings'),
         where('userId', '==', user.uid),
@@ -138,18 +143,16 @@ export default function RateScreen() {
       const ratingsSnap = await getDocs(ratingsQ);
       const count = ratingsSnap.size;
 
-      if (count >= 2) {
-        Alert.alert(
-          'Rank it!',
-          `You've rated ${count} ${COHORT_LABELS[venue.cohort] || venue.cohort}. Time to compare!`,
-          [
-            { text: 'Later', onPress: () => router.back() },
-            { text: 'Compare', onPress: () => router.push('/compare') },
-          ]
-        );
-      } else {
-        router.back();
-      }
+      // At 2+ ratings in a cohort, offer the comparison flow as a secondary action;
+      // otherwise just acknowledge the save. Either way the user is told it saved.
+      const buttons = count >= 2
+        ? [
+          { text: 'Done', style: 'cancel', onPress: () => router.back() },
+          { text: 'Compare', onPress: () => router.push('/compare') },
+        ]
+        : [{ text: 'Done', onPress: () => router.back() }];
+
+      Alert.alert(confirmation.title, confirmation.message, buttons);
     } catch (err) {
       Alert.alert('Error', err.message);
     } finally {
