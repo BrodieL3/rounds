@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rounds — Beta Theme Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Inter:wght@400;500;600;700&family=Archivo:wght@500;700;900&family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#202024; font-family:'Inter',system-ui,sans-serif; padding:40px 28px 60px; color:#fff; }
+  h1 { font:700 26px/1 'Inter',sans-serif; letter-spacing:-.02em; margin-bottom:6px; }
+  .sub { color:#9b9ba6; font-size:14px; margin-bottom:34px; }
+  .grid { display:flex; flex-wrap:wrap; gap:30px 26px; justify-content:flex-start; }
+  .cell { width:330px; }
+  .cap { margin:0 0 12px 2px; }
+  .cap .num { font:700 12px/1 'Space Mono',monospace; color:#6f6f7a; }
+  .cap .nm { font:700 18px/1.2 'Inter',sans-serif; letter-spacing:-.01em; margin:4px 0 3px; }
+  .cap .vibe { font-size:12.5px; color:#a7a7b2; line-height:1.45; }
+  .cap .sig { font-size:11.5px; color:#75757f; margin-top:5px; }
+  /* phone shell */
+  .phone { width:330px; height:680px; border-radius:38px; overflow:hidden; position:relative;
+           box-shadow:0 18px 50px rgba(0,0,0,.5); border:7px solid #0c0c10; }
+  .scr { position:absolute; inset:0; display:flex; flex-direction:column; }
+  .stat { display:flex; justify-content:space-between; align-items:center; padding:14px 22px 0; font-size:12px; font-weight:600; opacity:.8; }
+  .head { padding:14px 20px 6px; }
+  .loc { display:flex; align-items:center; gap:6px; font-weight:700; }
+  .loc .chev { opacity:.6; font-size:12px; }
+  .meta { font-size:12px; margin-top:3px; }
+  .cta { margin:14px 18px 8px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:9px; font-weight:700; font-size:14.5px; }
+  .list { flex:1; overflow:hidden; padding:6px 14px 0; display:flex; flex-direction:column; gap:9px; }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 12px; border-radius:14px; }
+  .rk { font-weight:800; width:22px; text-align:center; flex:none; }
+  .info { flex:1; min-width:0; }
+  .bn { font-weight:700; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bm { font-size:11.5px; margin-top:2px; opacity:.7; }
+  .chip { font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:20px; flex:none; letter-spacing:.02em; }
+  .nav { height:62px; display:flex; align-items:center; justify-content:space-around; font-size:19px; }
+  .nav .plus { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:700; }
+  .nav span { opacity:.55; }
+  .nav .on { opacity:1; }
+
+  /* ───────── D1 MIDNIGHT NEON ───────── */
+  .d1 .phone{background:#0a0a0f;color:#f5f5fa;font-family:'Space Grotesk',sans-serif;}
+  .d1 .loc{font-size:19px;text-transform:uppercase;letter-spacing:.04em;}
+  .d1 .meta{color:#00e5ff;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;}
+  .d1 .cta{background:linear-gradient(90deg,#00e5ff,#0096ff);color:#06121a;box-shadow:0 0 22px rgba(0,229,255,.5);}
+  .d1 .row{background:#14141c;border:1px solid #1f1f2b;}
+  .d1 .rk{color:#00e5ff;text-shadow:0 0 10px rgba(0,229,255,.7);font-family:'Space Grotesk';}
+  .d1 .chip{background:rgba(0,229,255,.12);color:#00e5ff;border:1px solid rgba(0,229,255,.4);}
+  .d1 .chip.fine{background:rgba(255,45,146,.12);color:#ff2d92;border-color:rgba(255,45,146,.4);}
+  .d1 .nav{background:#0c0c12;border-top:1px solid #1c1c28;}
+  .d1 .nav .on{color:#00e5ff;}
+  .d1 .nav .plus{background:linear-gradient(135deg,#00e5ff,#ff2d92);color:#000;box-shadow:0 0 18px rgba(0,229,255,.6);}
+
+  /* ───────── D2 SPEAKEASY AMBER ───────── */
+  .d2 .phone{background:#1a1410;color:#ede3d3;font-family:'DM Sans',sans-serif;}
+  .d2 .loc{font:500 22px/1 'Playfair Display',serif;}
+  .d2 .meta{color:#c8964b;font-style:italic;}
+  .d2 .cta{background:#c8964b;color:#241b14;font-family:'DM Sans';box-shadow:0 6px 18px rgba(200,150,75,.25);}
+  .d2 .row{background:#241b14;border:1px solid #3a2c20;}
+  .d2 .rk{font:700 19px/1 'Playfair Display',serif;color:#c8964b;}
+  .d2 .bn{font:500 16px/1.1 'Playfair Display',serif;}
+  .d2 .chip{background:transparent;color:#c8964b;border:1px solid #c8964b;}
+  .d2 .chip.fine{color:#a8856a;border-color:#6e2b2b;}
+  .d2 .nav{background:#15100c;border-top:1px solid #3a2c20;}
+  .d2 .nav .on{color:#c8964b;}
+  .d2 .nav .plus{background:#c8964b;color:#241b14;}
+
+  /* ───────── D3 STARK EDITORIAL ───────── */
+  .d3 .phone{background:#fafaf7;color:#0b0b0b;font-family:'Inter',sans-serif;border-color:#0b0b0b;}
+  .d3 .stat{opacity:.6;}
+  .d3 .loc{font:900 25px/.95 'Archivo',sans-serif;letter-spacing:-.02em;text-transform:uppercase;}
+  .d3 .meta{font:700 10px/1 'Space Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#ff3b30;margin-top:6px;}
+  .d3 .cta{background:#0b0b0b;color:#fff;border-radius:0;font-family:'Archivo';text-transform:uppercase;letter-spacing:.05em;}
+  .d3 .list{padding:8px 18px 0;gap:0;}
+  .d3 .row{border-radius:0;border-bottom:1px solid #e2e2dc;padding:15px 4px;}
+  .d3 .rk{font:900 26px/1 'Archivo',sans-serif;width:40px;color:#0b0b0b;}
+  .d3 .bn{font:900 17px/1 'Archivo',sans-serif;text-transform:uppercase;}
+  .d3 .bm{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+  .d3 .chip{background:#ff3b30;color:#fff;border-radius:0;font-family:'Space Mono';}
+  .d3 .chip.fine{background:#0b0b0b;}
+  .d3 .nav{background:#fafaf7;border-top:2px solid #0b0b0b;color:#0b0b0b;}
+  .d3 .nav .on{color:#ff3b30;}
+  .d3 .nav .plus{background:#ff3b30;color:#fff;border-radius:0;}
+
+  /* ───────── D4 MOODY GLASS ───────── */
+  .d4 .phone{background:linear-gradient(165deg,#1b1035 0%,#0e1b3a 100%);color:#eaeafe;font-family:'DM Sans',sans-serif;}
+  .d4 .loc{font-size:19px;font-weight:700;}
+  .d4 .meta{color:#28e0c4;}
+  .d4 .cta{background:rgba(124,92,255,.85);color:#fff;backdrop-filter:blur(8px);box-shadow:0 8px 28px rgba(124,92,255,.4);}
+  .d4 .row{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px);border-radius:18px;}
+  .d4 .rk{color:#7c5cff;}
+  .d4 .chip{background:rgba(40,224,196,.16);color:#28e0c4;border:1px solid rgba(40,224,196,.35);}
+  .d4 .chip.fine{background:rgba(124,92,255,.18);color:#b9a7ff;border-color:rgba(124,92,255,.4);}
+  .d4 .nav{background:rgba(10,8,26,.5);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,.1);}
+  .d4 .nav .on{color:#28e0c4;}
+  .d4 .nav .plus{background:linear-gradient(135deg,#7c5cff,#28e0c4);color:#0e1b3a;}
+
+  /* ───────── D5 MINIMAL MONO LUXE ───────── */
+  .d5 .phone{background:#111;color:#e8e2d6;font-family:'Inter',sans-serif;}
+  .d5 .loc{font-size:17px;font-weight:600;letter-spacing:-.01em;}
+  .d5 .meta{color:#6f6f68;font-size:11.5px;}
+  .d5 .cta{background:#1a1a1a;color:#e8e2d6;border:1px solid #2a2a28;font-weight:600;}
+  .d5 .cta .dot{width:7px;height:7px;border-radius:50%;background:#c0ff3e;display:inline-block;}
+  .d5 .list{gap:0;padding:10px 20px 0;}
+  .d5 .row{border-radius:0;border-bottom:1px solid #222220;padding:16px 2px;}
+  .d5 .rk{color:#55554e;font-weight:500;font-size:15px;}
+  .d5 .bn{font-weight:600;font-size:15px;letter-spacing:-.01em;}
+  .d5 .bm{color:#6f6f68;}
+  .d5 .chip{background:transparent;color:#9a9a90;border:1px solid #2e2e2b;font-weight:500;}
+  .d5 .chip.loved{color:#111;background:#c0ff3e;border-color:#c0ff3e;}
+  .d5 .nav{background:#111;border-top:1px solid #222220;}
+  .d5 .nav .on{color:#e8e2d6;}
+  .d5 .nav .plus{background:#e8e2d6;color:#111;}
+
+  /* ───────── D6 LAST CALL (ticket/receipt wildcard) ───────── */
+  .d6 .phone{background:#14110d;color:#f2e9d8;font-family:'Space Mono',monospace;}
+  .d6 .loc{font:400 30px/1 'Bebas Neue',sans-serif;letter-spacing:.03em;color:#f2e9d8;}
+  .d6 .meta{color:#e8472b;font-size:11px;text-transform:uppercase;}
+  .d6 .cta{background:#e8472b;color:#f2e9d8;border-radius:6px;font-family:'Bebas Neue';font-size:20px;letter-spacing:.06em;}
+  .d6 .list{gap:11px;}
+  .d6 .row{background:#f2e9d8;color:#1a1a1a;border-radius:4px;position:relative;border:none;
+           box-shadow:0 3px 0 rgba(0,0,0,.35);}
+  .d6 .row::before,.d6 .row::after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#14110d;top:50%;transform:translateY(-50%);}
+  .d6 .row::before{left:-6px;} .d6 .row::after{right:-6px;}
+  .d6 .rk{font:400 26px/1 'Bebas Neue',sans-serif;color:#e8472b;}
+  .d6 .bn{font:400 19px/1 'Bebas Neue',sans-serif;letter-spacing:.02em;}
+  .d6 .bm{font-size:10px;color:#5a5446;}
+  .d6 .chip{background:#1e5945;color:#f2e9d8;border-radius:3px;border:1px dashed #f2e9d8;transform:rotate(-3deg);}
+  .d6 .chip.fine{background:#9a7b1e;}
+  .d6 .nav{background:#0f0c08;border-top:2px dashed #3a342a;}
+  .d6 .nav .on{color:#e8472b;}
+  .d6 .nav .plus{background:#e8472b;color:#f2e9d8;border-radius:6px;}
+</style>
+</head>
+<body>
+<h1>Rounds — 6 beta theme directions</h1>
+<div class="sub">Same screen (your Boston · Cambridge list), six visual languages. Pick one — or mix-and-match (e.g. "D5's restraint + D1's accent").</div>
+<div class="grid" id="grid"></div>
+<script>
+const bars = [
+  {r:1,n:"The Hawthorne",m:"Cocktail Bar · Kenmore · 0.4 mi",s:"loved",c:"Loved"},
+  {r:2,n:"Backbar",m:"Cocktail Bar · Somerville · 1.2 mi",s:"loved",c:"Loved"},
+  {r:3,n:"Yvonne's",m:"Cocktail Bar · Downtown · 0.8 mi",s:"fine",c:"Fine"},
+  {r:4,n:"Drink",m:"Cocktail Bar · Fort Point · 1.0 mi",s:"loved",c:"Loved"},
+  {r:5,n:"State Park",m:"Dive Bar · Kendall, Cambridge · 1.5 mi",s:"fine",c:"Fine"},
+];
+const dirs = [
+  {k:"d1",num:"01",nm:"Midnight Neon",vibe:"Electric, after-dark, a little loud. The default 'nightlife app' instinct done sharp.",sig:"Signature: glowing cyan rank numbers + magenta gradient ＋."},
+  {k:"d2",num:"02",nm:"Speakeasy Amber",vibe:"Warm, candlelit, intimate. Playfair serif + antique gold; a cocktail-bar in app form.",sig:"Signature: serif rank numerals, gold hairlines."},
+  {k:"d3",num:"03",nm:"Stark Editorial",vibe:"Print-magazine ranking. Huge Archivo numerals, one red, lots of paper-white space.",sig:"Signature: oversized index numbers like a printed top-list."},
+  {k:"d4",num:"04",nm:"Moody Glass",vibe:"Premium, modern, depth. Purple→navy gradient, frosted glass cards, mint accent.",sig:"Signature: translucent blurred cards floating on gradient."},
+  {k:"d5",num:"05",nm:"Minimal Mono Luxe",vibe:"Restraint as luxury. Near-monochrome, type & space do the work, one lime micro-accent.",sig:"Signature: no color except a single lime 'you/loved' dot."},
+  {k:"d6",num:"06",nm:"Last Call (wildcard)",vibe:"Most personality. Each logged bar is a stamped receipt/ticket stub — a collected stack of nights.",sig:"Signature: cream ticket-stub cards w/ perforations on dark."},
+];
+const navOn = ["","","","",""];
+function screen(d){
+  const rows = bars.map(b=>`
+    <div class="row">
+      <div class="rk">${b.r}</div>
+      <div class="info"><div class="bn">${b.n}</div><div class="bm">${b.m}</div></div>
+      <div class="chip ${b.s}">${b.c}</div>
+    </div>`).join("");
+  return `
+  <div class="cell ${d.k}">
+    <div class="cap"><div class="num">${d.num}</div><div class="nm">${d.nm}</div><div class="vibe">${d.vibe}</div><div class="sig">${d.sig}</div></div>
+    <div class="phone"><div class="scr">
+      <div class="stat"><span>11:48</span><span>● ● ●  ▰▰▰</span></div>
+      <div class="head">
+        <div class="loc">Boston · Cambridge <span class="chev">▾</span></div>
+        <div class="meta">Your list · 12 logged</div>
+      </div>
+      <div class="cta">${d.k==='d5'?'<span class="dot"></span>':'📍'} Log the bar I'm at</div>
+      <div class="list">${rows}</div>
+      <div class="nav"><span class="on">⌕</span><span>▤</span><span class="plus">＋</span><span>♥</span><span>◯</span></div>
+    </div></div>
+  </div>`;
+}
+document.getElementById('grid').innerHTML = dirs.map(screen).join("");
+</script>
+</body>
+</html>

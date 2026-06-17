@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rounds — 05 Minimal Mono Luxe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#1c1c1e;font-family:'Inter',system-ui,sans-serif;color:#e8e2d6;padding:30px 34px 40px;}
+  h1{font:800 22px/1 'Inter';letter-spacing:-.02em;}
+  .sub{color:#8a8a82;font-size:13px;margin:6px 0 26px;}
+  .rowwrap{display:flex;gap:34px;align-items:flex-start;}
+  .cap{font:600 12px/1 'Inter';color:#8a8a82;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px 4px;}
+  /* phone — Minimal Mono Luxe */
+  .phone{width:340px;height:710px;border-radius:40px;overflow:hidden;position:relative;background:#111;border:8px solid #050505;box-shadow:0 22px 60px rgba(0,0,0,.55);}
+  .scr{position:absolute;inset:0;display:flex;flex-direction:column;color:#e8e2d6;}
+  .stat{display:flex;justify-content:space-between;align-items:center;padding:15px 24px 0;font-size:12px;font-weight:600;opacity:.55;}
+  .head{padding:16px 22px 8px;}
+  .loc{display:flex;align-items:center;gap:7px;font-weight:600;font-size:18px;letter-spacing:-.01em;}
+  .loc .chev{opacity:.45;font-size:13px;}
+  .meta{color:#6f6f68;font-size:12px;margin-top:4px;}
+  .cta{margin:16px 20px 6px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:14.5px;background:#1a1a1a;border:1px solid #2a2a28;color:#e8e2d6;}
+  .cta .dot{width:8px;height:8px;border-radius:50%;background:#c0ff3e;display:inline-block;box-shadow:0 0 10px rgba(192,255,62,.6);}
+  .list{flex:1;padding:8px 22px 0;display:flex;flex-direction:column;}
+  .row{display:flex;align-items:center;gap:14px;padding:16px 2px;border-bottom:1px solid #222220;}
+  .rk{color:#55554e;font-weight:500;font-size:15px;width:18px;}
+  .info{flex:1;min-width:0;}
+  .bn{font-weight:600;font-size:15px;letter-spacing:-.01em;}
+  .bm{color:#6f6f68;font-size:11.5px;margin-top:3px;}
+  .chip{font-size:10.5px;font-weight:500;padding:5px 11px;border-radius:20px;background:transparent;color:#9a9a90;border:1px solid #2e2e2b;}
+  .chip.loved{color:#111;background:#c0ff3e;border-color:#c0ff3e;font-weight:600;}
+  .nav{height:64px;display:flex;align-items:center;justify-content:space-around;font-size:19px;background:#111;border-top:1px solid #222220;}
+  .nav span{opacity:.5;} .nav .on{opacity:1;color:#e8e2d6;}
+  .nav .plus{width:44px;height:44px;border-radius:50%;background:#e8e2d6;color:#111;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:600;}
+  /* detail / log screen */
+  .dhead{padding:16px 22px 4px;display:flex;align-items:center;gap:14px;}
+  .back{font-size:20px;opacity:.6;}
+  .dtitle{font-weight:700;font-size:20px;letter-spacing:-.02em;}
+  .dmeta{padding:0 22px;color:#6f6f68;font-size:12.5px;margin-top:2px;}
+  .hero{margin:20px 22px 0;padding:22px;border:1px solid #222220;border-radius:18px;background:#161616;}
+  .q{font-weight:600;font-size:15px;margin-bottom:16px;}
+  .rate{display:flex;gap:10px;}
+  .opt{flex:1;height:64px;border-radius:13px;border:1px solid #2a2a28;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:12px;color:#9a9a90;}
+  .opt .ic{font-size:19px;}
+  .opt.sel{background:#c0ff3e;color:#111;border-color:#c0ff3e;font-weight:600;}
+  .note{margin:16px 22px 0;height:46px;border-radius:12px;border:1px solid #222220;background:#161616;display:flex;align-items:center;padding:0 16px;color:#55554e;font-size:13px;}
+  .rank-hint{margin:18px 22px 0;color:#6f6f68;font-size:12.5px;display:flex;align-items:center;gap:8px;}
+  .rank-hint b{color:#c0ff3e;font-weight:600;}
+  .logbtn{margin:auto 22px 0;height:52px;border-radius:13px;background:#e8e2d6;color:#111;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .pad{height:18px;}
+</style></head>
+<body>
+<h1>Rounds — direction 05, Minimal Mono Luxe</h1>
+<div class="sub">Your pick, applied across the two core-loop screens. Near-monochrome; the only color in the whole app is one lime accent that means "you / loved / go".</div>
+<div class="rowwrap">
+  <div><div class="cap">Your list (rank unlocked at 5)</div>
+  <div class="phone"><div class="scr">
+    <div class="stat"><span>11:48</span><span>●●●  ▰▰▰</span></div>
+    <div class="head"><div class="loc">Boston · Cambridge <span class="chev">▾</span></div><div class="meta">Your list · 12 logged</div></div>
+    <div class="cta"><span class="dot"></span> Log the bar I'm at</div>
+    <div class="list">
+      <div class="row"><div class="rk">1</div><div class="info"><div class="bn">The Hawthorne</div><div class="bm">Cocktail Bar · Kenmore · 0.4 mi</div></div><div class="chip loved">Loved</div></div>
+      <div class="row"><div class="rk">2</div><div class="info"><div class="bn">Backbar</div><div class="bm">Cocktail Bar · Somerville · 1.2 mi</div></div><div class="chip loved">Loved</div></div>
+      <div class="row"><div class="rk">3</div><div class="info"><div class="bn">Yvonne's</div><div class="bm">Cocktail Bar · Downtown · 0.8 mi</div></div><div class="chip">Fine</div></div>
+      <div class="row"><div class="rk">4</div><div class="info"><div class="bn">Drink</div><div class="bm">Cocktail Bar · Fort Point · 1.0 mi</div></div><div class="chip loved">Loved</div></div>
+      <div class="row"><div class="rk">5</div><div class="info"><div class="bn">State Park</div><div class="bm">Dive Bar · Kendall, Cambridge · 1.5 mi</div></div><div class="chip">Fine</div></div>
+    </div>
+    <div class="nav"><span class="on">⌕</span><span>▤</span><span class="plus">＋</span><span>♥</span><span>◯</span></div>
+  </div></div></div>
+
+  <div><div class="cap">Log a visit (the hero action)</div>
+  <div class="phone"><div class="scr">
+    <div class="stat"><span>11:49</span><span>●●●  ▰▰▰</span></div>
+    <div class="dhead"><span class="back">‹</span><span class="dtitle">The Hawthorne</span></div>
+    <div class="dmeta">Cocktail Bar · Kenmore · 0.4 mi away</div>
+    <div class="hero">
+      <div class="q">How was it?</div>
+      <div class="rate">
+        <div class="opt sel"><span class="ic">♥</span>Loved</div>
+        <div class="opt"><span class="ic">◐</span>Fine</div>
+        <div class="opt"><span class="ic">○</span>Nah</div>
+      </div>
+    </div>
+    <div class="note">Add a note (optional)…</div>
+    <div class="rank-hint">This is your <b>3rd</b> visit logged · <b>rank unlocks at 5</b></div>
+    <div class="logbtn">Log visit</div>
+    <div class="pad"></div>
+    <div class="nav"><span>⌕</span><span>▤</span><span class="plus">＋</span><span>♥</span><span>◯</span></div>
+  </div></div></div>
+</div>
+</body></html>
