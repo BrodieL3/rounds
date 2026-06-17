@@ -3,23 +3,28 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleShee
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS } from '../lib/constants';
+import { validateSignupInput, mapAuthError } from '../lib/auth-signup';
 
-export default function LoginScreen() {
-  const { signIn } = useAuth();
+export default function SignupScreen() {
+  const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function handleSignIn() {
-    if (!email || !password) return;
+  async function handleSignUp() {
+    const validation = validateSignupInput(email, password);
+    if (!validation.ok) {
+      setError(validation.error);
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      await signIn(email.trim(), password);
+      await signUp(email.trim(), password);
       router.replace('/(tabs)/friends');
     } catch (e) {
-      setError('Invalid email or password.');
+      setError(mapAuthError(e));
     } finally {
       setLoading(false);
     }
@@ -31,9 +36,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <Text style={styles.title} testID="login-title">Rounds</Text>
+        <Text style={styles.title} testID="signup-title">Create account</Text>
         <TextInput
-          testID="login-email-input"
+          testID="signup-email-input"
           style={styles.input}
           placeholder="Email"
           placeholderTextColor={COLORS.textSecondary}
@@ -43,24 +48,24 @@ export default function LoginScreen() {
           onChangeText={setEmail}
         />
         <TextInput
-          testID="login-password-input"
+          testID="signup-password-input"
           style={styles.input}
-          placeholder="Password"
+          placeholder="Password (6+ characters)"
           placeholderTextColor={COLORS.textSecondary}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          onSubmitEditing={handleSignIn}
+          onSubmitEditing={handleSignUp}
         />
-        {error ? <Text style={styles.error} testID="login-error">{error}</Text> : null}
-        <Pressable style={styles.button} onPress={handleSignIn} disabled={loading} testID="login-submit">
+        {error ? <Text style={styles.error} testID="signup-error">{error}</Text> : null}
+        <Pressable style={styles.button} onPress={handleSignUp} disabled={loading} testID="signup-submit">
           {loading
             ? <ActivityIndicator color={COLORS.bg} />
-            : <Text style={styles.buttonText}>Sign in</Text>
+            : <Text style={styles.buttonText}>Create account</Text>
           }
         </Pressable>
-        <Pressable onPress={() => router.replace('/signup')} testID="login-to-signup">
-          <Text style={styles.link}>New to Rounds? Create an account</Text>
+        <Pressable onPress={() => router.replace('/login')} testID="signup-to-login">
+          <Text style={styles.link}>Already have an account? Sign in</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
