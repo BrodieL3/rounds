@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getCachedProfile, setCachedProfile, clearCachedProfile } from '../lib/auth-cache';
+import { loadUserProfile } from '../lib/auth-profile';
 
 const AuthContext = createContext(null);
 
@@ -25,16 +26,26 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!mounted) return;
       setUser(firebaseUser);
-      if (firebaseUser) {
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-        const data = snap.exists() ? snap.data() : null;
-        setProfile(data);
-        if (data) await setCachedProfile(data);
-      } else {
-        setProfile(null);
-        await clearCachedProfile();
+      try {
+        if (firebaseUser) {
+          // ISC-5: loadUserProfile never throws — a Firestore failure resolves
+          // to { profile: null, error } instead of escaping the callback.
+          const { profile: data } = await loadUserProfile(firebaseUser.uid, {
+            db,
+            doc,
+            getDoc,
+            setCachedProfile,
+          });
+          if (mounted) setProfile(data);
+        } else {
+          setProfile(null);
+          await clearCachedProfile();
+        }
+      } finally {
+        // Must always run so the app can leave the loading state even if the
+        // profile fetch or cache clear fails.
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
@@ -45,14 +56,24 @@ export function AuthProvider({ children }) {
 
   const reloadProfile = async () => {
     if (!user) return;
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    const data = snap.exists() ? snap.data() : null;
+    const { profile: data } = await loadUserProfile(user.uid, {
+      db,
+      doc,
+      getDoc,
+      setCachedProfile,
+    });
     setProfile(data);
-    if (data) await setCachedProfile(data);
   };
 
   const signIn = async (email, password) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    return cred;
+  };
+
+  // ISC-1: in-app, self-serve account creation. onAuthStateChanged fires on
+  // success and bootstraps the (still empty) profile through the same path.
+  const signUp = async (email, password) => {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
     return cred;
   };
 
@@ -64,7 +85,7 @@ export function AuthProvider({ children }) {
   const isOnboarded = profile?.onboardingComplete === true;
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, isOnboarded, reloadProfile, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, isOnboarded, reloadProfile, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
