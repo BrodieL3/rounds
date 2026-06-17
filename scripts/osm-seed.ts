@@ -280,6 +280,13 @@ function preferVenue(a: Venue, b: Venue) {
   return a.id <= b.id ? a : b;
 }
 
+// Manually excluded venues (owner spot-check 2026-06-17): OSM-tagged under a bar
+// amenity but not drinking establishments. Keyed by stable `osm:<type>/<id>` so a
+// re-seed never re-adds them.
+const EXCLUDED_OSM_IDS = new Set<string>([
+  'osm:node/5060771733', // Muse Paintbar (Cambridge) — paint-and-sip, not a bar
+]);
+
 function normalizeElements(elements: OsmElement[]) {
   const dropped: DroppedCounts = { noName: 0, noCoords: 0, duplicate: 0, outsideCity: 0 };
   const lowConfidence: LowConfidence[] = [];
@@ -287,6 +294,8 @@ function normalizeElements(elements: OsmElement[]) {
 
   for (const element of elements) {
     const tags = element.tags ?? {};
+    // Skip manually-excluded venues (owner spot-check) before any processing.
+    if (EXCLUDED_OSM_IDS.has(`osm:${element.type}/${element.id}`)) continue;
     const name = cleanText(tags.name);
     if (!name) {
       dropped.noName += 1;

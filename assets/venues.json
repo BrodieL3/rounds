@@ -4043,26 +4043,6 @@
           "cohortConfidence": "high"
         },
         {
-          "id": "osm:node/5060771733",
-          "name": "Muse Paintbar",
-          "cohort": "cocktail_bar",
-          "city": "cambridge",
-          "address": "461 Artisan Way, Somerville MA 02145",
-          "latitude": 42.395141,
-          "longitude": -71.078395,
-          "location": {
-            "latitude": 42.395141,
-            "longitude": -71.078395
-          },
-          "types": [
-            "amenity:bar"
-          ],
-          "source": "openstreetmap",
-          "osmType": "node",
-          "osmId": 5060771733,
-          "cohortConfidence": "low"
-        },
-        {
           "id": "osm:node/5060771749",
           "name": "Civility Social House",
           "cohort": "cocktail_bar",
