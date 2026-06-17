@@ -22,7 +22,8 @@ export default function SignupScreen() {
     setLoading(true);
     try {
       await signUp(email.trim(), password);
-      router.replace('/(tabs)/friends');
+      // New accounts have no profile yet → collect it in onboarding.
+      router.replace('/onboarding');
     } catch (e) {
       setError(mapAuthError(e));
     } finally {
