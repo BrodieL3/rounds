@@ -31,6 +31,7 @@ const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/m
 const { buildFeedViewItems, createSeedVenueLookup } = require('../../lib/feed-view-model');
 const { buildVenueCatalog, getAttribution } = require('../../lib/venue-catalog');
 const venueSeed = require('../../assets/venues.json');
+const { usePostHog } = require('posthog-react-native');
 
 const AVATAR_SIZE = 44;
 const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces';
@@ -125,6 +126,7 @@ function IconRow({
 export function DiscoverItem({ item, city, currentUserId }) {
   const display = buildFeedItemDisplay(item, city);
   const mediaRefs = getMediaReferences(item);
+  const posthog = usePostHog();
   const [media, setMedia] = useState([]);
   const [pendingAction, setPendingAction] = useState(null);
   const liked = isPostLikedBy(item, currentUserId);
@@ -214,7 +216,10 @@ export function DiscoverItem({ item, city, currentUserId }) {
       <IconRow
         liked={liked}
         bookmarked={bookmarked}
-        onLikePress={() => updateEngagement('like', buildPostLikeUpdate)}
+        onLikePress={() => {
+          updateEngagement('like', buildPostLikeUpdate);
+          if (!liked) posthog.capture('post_liked', { post_id: item.id, venue_id: item.venueId, venue_name: item.venueName });
+        }}
         onCommentPress={openPost}
         onSharePress={sharePost}
         onBookmarkPress={() => updateEngagement('bookmark', buildPostBookmarkUpdate)}

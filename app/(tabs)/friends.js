@@ -6,6 +6,7 @@ import { COLORS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import ScreenContainer from '../../components/ui/ScreenContainer';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePostHog } from 'posthog-react-native';
 
 const {
   FRIENDS_EMPTY_INBOX,
@@ -23,6 +24,7 @@ const {
 
 export default function FriendsScreen() {
   const { user, reloadProfile } = useAuth();
+  const posthog = usePostHog();
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [requestsExpanded, setRequestsExpanded] = useState(false);
@@ -62,6 +64,7 @@ export default function FriendsScreen() {
     try {
       if (action === 'accept') {
         await acceptFriendRequest({ db, fromUid: request.fromUid, toUid: user.uid });
+        posthog.capture('friend_request_accepted', { from_uid: request.fromUid });
         await reloadProfile?.();
       } else {
         await declineFriendRequest({ db, fromUid: request.fromUid, toUid: user.uid });

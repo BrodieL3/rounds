@@ -25,6 +25,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback } from '../../../lib/venue-visuals';
 import MediaImage from '../../../components/ui/media-image';
+import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../../../assets/venues.json');
 
@@ -39,6 +40,7 @@ function findVenue(id) {
 export default function RateScreen() {
   const { id } = useLocalSearchParams();
   const { user, profile } = useAuth();
+  const posthog = usePostHog();
   const venue = findVenue(id);
   const visual = venue ? getVenueVisualFallback(venue) : null;
 
@@ -130,6 +132,16 @@ export default function RateScreen() {
         visibility: 'public',
       });
       if (!result.success) throw new Error(result.error || 'Rating failed');
+
+      posthog.capture('visit_logged', {
+        venue_id: venue.id,
+        venue_name: venue.name,
+        cohort: venue.cohort,
+        sentiment,
+        has_notes: notes.trim().length > 0,
+        photo_count: photos.length,
+        companion_count: companions.length,
+      });
 
       // The hero "it saved" signal: every successful log gets a clear confirmation
       // before we leave the screen (F3 slice 1, parent ISA ISC-16).

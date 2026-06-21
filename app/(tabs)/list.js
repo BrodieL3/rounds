@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -10,6 +10,7 @@ import { buildStackRankings } from '../../lib/personal-rankings';
 import { buildVisitHistory, getLogCount, getRankUnlockState } from '../../lib/my-list';
 import VenueRow from '../../components/VenueRow';
 import ScreenContainer from '../../components/ui/ScreenContainer';
+import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../../assets/venues.json');
 
@@ -25,6 +26,8 @@ const SENTIMENT_TONE = {
 // reveals the personal ranked list via the EXISTING Elo engine.
 export default function ListScreen() {
   const { user, profile } = useAuth();
+  const posthog = usePostHog();
+  const rankUnlockedFired = useRef(false);
   const [ratings, setRatings] = useState([]);
   const [comparisons, setComparisons] = useState([]);
 
@@ -64,6 +67,13 @@ export default function ListScreen() {
   const logCount = getLogCount(ratings);
   const unlock = useMemo(() => getRankUnlockState(logCount), [logCount]);
   const { unlocked } = unlock;
+
+  useEffect(() => {
+    if (unlocked && !rankUnlockedFired.current) {
+      rankUnlockedFired.current = true;
+      posthog.capture('rank_unlocked', { log_count: logCount });
+    }
+  }, [unlocked]);
 
   // The ranked list is still derived from Comparisons via the EXISTING Elo
   // (lib/personal-rankings.js → lib/ranking.js); we only build it once unlocked.

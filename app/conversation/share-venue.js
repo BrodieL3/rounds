@@ -6,6 +6,7 @@ import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { getVenueVisualFallback } from '../../lib/venue-visuals';
+import { usePostHog } from 'posthog-react-native';
 
 const { subscribeUserConversations } = require('../../lib/friends/dm-service');
 const {
@@ -26,6 +27,7 @@ function findVenueWithCity(venueId) {
 export default function ShareVenueScreen() {
   const { venueId } = useLocalSearchParams();
   const { user } = useAuth();
+  const posthog = usePostHog();
   const normalizedVenueId = Array.isArray(venueId) ? venueId[0] : venueId;
   const { venue, cityKey } = useMemo(() => findVenueWithCity(normalizedVenueId), [normalizedVenueId]);
   const [conversations, setConversations] = useState([]);
@@ -59,6 +61,12 @@ export default function ShareVenueScreen() {
           cityKey,
         });
       }
+      posthog.capture('venue_shared_to_dm', {
+        venue_id: venue.id,
+        venue_name: venue.name,
+        cohort: venue.cohort,
+        conversation_type: conversation.type || 'direct',
+      });
       router.replace({
         pathname: '/conversation/[id]',
         params: conversation.otherUid

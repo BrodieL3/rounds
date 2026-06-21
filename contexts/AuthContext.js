@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { getCachedProfile, setCachedProfile, clearCachedProfile } from '../lib/auth-cache';
 import { loadUserProfile } from '../lib/auth-profile';
+import { posthog } from '../src/config/posthog';
 
 const AuthContext = createContext(null);
 
@@ -26,6 +27,9 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!mounted) return;
       setUser(firebaseUser);
+      if (firebaseUser) {
+        posthog.identify(firebaseUser.uid, { $set: { email: firebaseUser.email } });
+      }
       try {
         if (firebaseUser) {
           // ISC-5: loadUserProfile never throws — a Firestore failure resolves
@@ -67,6 +71,8 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    posthog.identify(cred.user.uid, { $set: { email: cred.user.email } });
+    posthog.capture('user_signed_in', { email: cred.user.email });
     return cred;
   };
 
@@ -74,10 +80,17 @@ export function AuthProvider({ children }) {
   // success and bootstraps the (still empty) profile through the same path.
   const signUp = async (email, password) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    posthog.identify(cred.user.uid, {
+      $set: { email: cred.user.email },
+      $set_once: { signup_date: new Date().toISOString() },
+    });
+    posthog.capture('user_signed_up', { email: cred.user.email });
     return cred;
   };
 
   const signOut = async () => {
+    posthog.capture('user_signed_out');
+    posthog.reset();
     await firebaseSignOut(auth);
     await clearCachedProfile();
   };

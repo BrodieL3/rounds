@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { COLORS } from '../lib/constants';
 import { persistOnboarding } from '../lib/onboarding';
+import { posthog } from '../src/config/posthog';
 
 export default function OnboardingScreen() {
   const { user, reloadProfile } = useAuth();
@@ -31,6 +32,11 @@ export default function OnboardingScreen() {
         { db, uid: user.uid, doc, collection, query, where, limit, getDocs, setDoc, serverTimestamp },
       );
       if (res.ok) {
+        posthog.identify(user.uid, {
+          $set: { username, display_name: displayName },
+          $set_once: { onboarding_completed_date: new Date().toISOString() },
+        });
+        posthog.capture('onboarding_completed', { username, display_name: displayName });
         // Re-read the profile so isOnboarded flips and routing settles.
         await reloadProfile?.();
         router.replace('/(tabs)/friends');

@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../lib/constants';
 import { computeRankings } from '../lib/ranking';
 import { normalizeComparison } from '../lib/personal-rankings';
+import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../assets/venues.json');
 
@@ -43,6 +44,7 @@ function pickRandomPair(venues, history) {
 
 export default function CompareScreen() {
   const { user, profile } = useAuth();
+  const posthog = usePostHog();
   const [pair, setPair] = useState(null);
   const [comparisons, setComparisons] = useState([]);
   const [venues, setVenues] = useState([]);
@@ -115,9 +117,24 @@ export default function CompareScreen() {
         createdAt: serverTimestamp(),
       });
 
+      posthog.capture('comparison_submitted', {
+        cohort,
+        venue_a: a,
+        venue_b: b,
+        result,
+        is_too_tough: result === 'too-tough',
+      });
+
       const next = [...comparisons, { a, b, result }];
       setComparisons(next);
       const nextPair = pickRandomPair(venues, next);
+      if (!nextPair) {
+        posthog.capture('ranking_completed', {
+          cohort,
+          total_comparisons: next.length,
+          venue_count: venues.length,
+        });
+      }
       setPair(nextPair);
     } catch (err) {
       Alert.alert('Error', err.message);

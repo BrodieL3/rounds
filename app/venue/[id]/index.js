@@ -15,6 +15,7 @@ import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback, formatOpenClosedStatus, formatVenueAverageScore } from '../../../lib/venue-visuals';
 import { getBookmarkAsync, setBookmarkAsync, removeBookmarkAsync } from '../../../lib/venue-bookmark-service';
 import CopyableText from '../../../components/ui/CopyableText';
+import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../../../assets/venues.json');
 
@@ -66,6 +67,7 @@ function openWebsite(venueName) {
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuth();
+  const posthog = usePostHog();
   const venue = findVenue(id);
   const [reportModal, setReportModal] = useState(false);
   const [reportText, setReportText] = useState('');
@@ -74,6 +76,15 @@ export default function VenueDetailScreen() {
   const [recentRatings, setRecentRatings] = useState([]);
   const [averageScore, setAverageScore] = useState(null);
   const [ratingsLoading, setRatingsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!venue) return;
+    posthog.capture('venue_viewed', {
+      venue_id: venue.id,
+      venue_name: venue.name,
+      cohort: venue.cohort,
+    });
+  }, [venue?.id]);
 
   useEffect(() => {
     if (!user || !venue) return;
@@ -120,6 +131,7 @@ export default function VenueDetailScreen() {
         const result = await removeBookmarkAsync(user.uid, venue.id);
         if (!result.success) throw new Error(result.error);
         setBookmarked(false);
+        posthog.capture('venue_bookmarked', { venue_id: venue.id, venue_name: venue.name, cohort: venue.cohort, action: 'removed' });
       } else {
         const result = await setBookmarkAsync(user.uid, {
           id: venue.id,
@@ -131,6 +143,7 @@ export default function VenueDetailScreen() {
         });
         if (!result.success) throw new Error(result.error);
         setBookmarked(true);
+        posthog.capture('venue_bookmarked', { venue_id: venue.id, venue_name: venue.name, cohort: venue.cohort, action: 'added' });
       }
     } catch (err) {
       Alert.alert('Error', err.message);
