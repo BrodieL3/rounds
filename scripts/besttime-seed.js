@@ -8,7 +8,21 @@
 const fs = require('fs');
 const path = require('path');
 
-const PRI_KEY = process.env.BESTTIME_PRIVATE_KEY || 'pri_18b259b1543549c3ab4d604b93efce4f';
+// Load .env (gitignored) without adding a dependency, so the private key
+// lives in .env instead of in this tracked file.
+try {
+  const envPath = path.join(__dirname, '..', '.env');
+  for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+  }
+} catch { /* no .env present — fall back to the real environment */ }
+
+const PRI_KEY = process.env.BESTTIME_PRIVATE_KEY;
+if (!PRI_KEY) {
+  console.error('Missing BESTTIME_PRIVATE_KEY — add it to .env (gitignored) or export it before running.');
+  process.exit(1);
+}
 const API_BASE = 'https://besttime.app/api/v1';
 const DELAY_MS_OK = 1200;   // polite delay after successful API call
 const DELAY_MS_FAIL = 100;  // tiny delay after failure to avoid hammering
