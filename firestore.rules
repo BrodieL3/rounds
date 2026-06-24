@@ -405,7 +405,7 @@ service cloud.firestore {
         && isConversationMemberAfter(conversationId)
         && uid in getAfter(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids
         && (isSignedInAs(uid)
-          && request.resource.data.keys().hasOnly(['hiddenAt', 'lastSeenAt', 'deletedForSelfAt', 'hiddenMessageIds'])
+          && request.resource.data.keys().hasOnly(['hiddenAt', 'lastSeenAt', 'deletedForSelfAt', 'hiddenMessageIds', 'pinnedAt'])
           && (!request.resource.data.keys().hasAny(['hiddenMessageIds']) || request.resource.data.hiddenMessageIds is list)
           || !exists(statePath)
             && request.resource.data.keys().hasOnly(['hiddenAt'])
@@ -648,11 +648,21 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Comparisons: public read, self write
+    // Comparisons: public read, self write. New writes MUST be versioned (v2,
+    // ADR 009 §5) so no thin/legacy-shaped record can poison Tier B (the global
+    // BT leaderboard). Field-level v2 completeness is enforced in
+    // lib/comparisons/comparison-payload.js; existing stored docs are unaffected
+    // (rules gate writes, not reads).
     match /comparisons/{comparisonId} {
       allow read: if true;
       allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.schemaVersion is int
+        && request.resource.data.cohort is string
+        && request.resource.data.venueA is string
+        && request.resource.data.venueB is string
+        && request.resource.data.venueA != request.resource.data.venueB
+        && request.resource.data.result is string;
       allow update, delete: if request.auth != null
         && resource.data.userId == request.auth.uid;
     }

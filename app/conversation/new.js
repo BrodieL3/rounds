@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import AppIcon from '../../components/ui/AppIcon';
+import ScreenContainer from '../../components/ui/ScreenContainer';
 import { COLORS } from '../../lib/constants';
 import { db, functions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -96,19 +97,12 @@ export default function NewConversationScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <ScreenContainer style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
           <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
         </Pressable>
         <Text style={styles.title}>Create group</Text>
-        <Pressable
-          style={[styles.createButton, (createDisabled || creating) && styles.createButtonDisabled]}
-          disabled={createDisabled || creating}
-          onPress={create}
-        >
-          <Text style={styles.createText}>Create group</Text>
-        </Pressable>
       </View>
 
       <Text style={styles.label}>Group name</Text>
@@ -132,6 +126,7 @@ export default function NewConversationScreen() {
       <Text style={styles.helper}>{selectedUids.length}/24 selected · pick at least 2</Text>
 
       <FlatList
+        style={styles.list}
         contentInsetAdjustmentBehavior="automatic"
         data={filteredFriends}
         renderItem={renderFriend}
@@ -144,7 +139,15 @@ export default function NewConversationScreen() {
           </View>
         )}
       />
-    </View>
+
+      <Pressable
+        style={[styles.createButton, (createDisabled || creating) && styles.createButtonDisabled]}
+        disabled={createDisabled || creating}
+        onPress={create}
+      >
+        <Text style={styles.createText}>Create group</Text>
+      </Pressable>
+    </ScreenContainer>
   );
 }
 
@@ -153,9 +156,17 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22 },
   backButton: { padding: 4 },
   title: { flex: 1, color: COLORS.textPrimary, fontSize: 24, fontWeight: '800' },
-  createButton: { borderRadius: 16, backgroundColor: COLORS.accent, paddingHorizontal: 14, paddingVertical: 10 },
+  list: { flex: 1 },
+  createButton: {
+    borderRadius: 16,
+    backgroundColor: COLORS.accent,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 12,
+  },
   createButtonDisabled: { opacity: 0.5 },
-  createText: { color: '#ffffff', fontWeight: '800', fontSize: 13 },
+  createText: { color: COLORS.bg, fontWeight: '800', fontSize: 16 },
   label: { color: COLORS.textPrimary, fontSize: 15, fontWeight: '800', marginBottom: 8 },
   input: {
     minHeight: 46,

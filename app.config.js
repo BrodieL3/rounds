@@ -31,10 +31,19 @@ module.exports = {
       'expo-font',
       'expo-audio',
       'expo-asset',
+      [
+        'expo-media-library',
+        {
+          photosPermission: 'Allow Rounds to access your photos so you can send them in chats.',
+        },
+      ],
     ],
     extra: {
       posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
       posthogHost: process.env.POSTHOG_HOST,
+     "eas": {
+        "projectId": "4f921114-4dd8-4566-a92d-26b849bd301e"
+      }
     },
   },
 };

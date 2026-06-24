@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, Text, View, Pressable, Alert,
 } from 'react-native';
@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../lib/constants';
 import { computeRankings } from '../lib/ranking';
 import { normalizeComparison } from '../lib/personal-rankings';
+import { buildComparisonPayload, newSessionId } from '../lib/comparisons/comparison-payload';
 import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../assets/venues.json');
@@ -50,6 +51,9 @@ export default function CompareScreen() {
   const [venues, setVenues] = useState([]);
   const [cohort, setCohort] = useState('');
   const [loading, setLoading] = useState(true);
+  const [sentimentByVenue, setSentimentByVenue] = useState({});
+  const sessionIdRef = useRef(null);
+  const sequenceRef = useRef(0);
 
   useEffect(() => {
     if (!user || !profile?.city) return;
@@ -66,6 +70,19 @@ export default function CompareScreen() {
       );
       const ratingsSnap = await getDocs(ratingsQ);
       const ratings = ratingsSnap.docs.map((d) => d.data());
+
+      // Map each rated venue → the user's sentiment so each comparison can carry
+      // both venues' sentiment band (ADR 009 §5 — the connectivity prior Tier B uses).
+      const sentByVenue = {};
+      for (const r of ratings) {
+        if (r.venueId) sentByVenue[r.venueId] = r.sentiment || null;
+      }
+      setSentimentByVenue(sentByVenue);
+
+      // One session id per compare session; sequence increments per decision so
+      // Tier B can reconstruct "one user, N comparisons" (anti-gaming, ADR 009 §6).
+      sessionIdRef.current = newSessionId();
+      sequenceRef.current = 0;
 
       // Find first cohort with 2+ ratings
       const cohortCounts = {};
@@ -108,14 +125,22 @@ export default function CompareScreen() {
     if (!pair) return;
     const [a, b] = pair;
     try {
-      await addDoc(collection(db, 'comparisons'), {
+      const payload = buildComparisonPayload({
         userId: user.uid,
         cohort,
         venueA: a,
         venueB: b,
         result,
+        sentimentA: sentimentByVenue[a] || null,
+        sentimentB: sentimentByVenue[b] || null,
+        city: profile?.city || null,
+        sessionId: sessionIdRef.current || newSessionId(),
+        sequence: sequenceRef.current,
+        context: 'pairwise',
         createdAt: serverTimestamp(),
       });
+      sequenceRef.current += 1;
+      await addDoc(collection(db, 'comparisons'), payload);
 
       posthog.capture('comparison_submitted', {
         cohort,
@@ -139,7 +164,7 @@ export default function CompareScreen() {
     } catch (err) {
       Alert.alert('Error', err.message);
     }
-  }, [pair, comparisons, venues, cohort, user]);
+  }, [pair, comparisons, venues, cohort, user, profile, sentimentByVenue]);
 
   if (loading) {
     return (

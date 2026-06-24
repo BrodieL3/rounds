@@ -37,6 +37,10 @@ const {
   sendGroupLocationMessage,
 } = require('../lib/friends/location-service');
 const {
+  sendDirectVenueLinkMessage,
+  sendGroupVenueLinkMessage,
+} = require('../lib/friends/venue-link-service');
+const {
   sendDirectVoiceMessage,
   sendGroupVoiceMessage,
 } = require('../lib/friends/voice-service');
@@ -249,6 +253,43 @@ export default function useConversationSurface({ conversationId, recipientUid, u
       setSendingPhotos(false);
     }
   }, [conversation, isGroup, recipientUid, sendingPhotos, user]);
+
+  const sendPhotoAssets = useCallback(async (photos) => {
+    if (!user || sendingPhotos || !photos?.length) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
+
+    setSendingPhotos(true);
+    try {
+      if (conversation?.type === 'group') {
+        await sendGroupPhotoMessage({ db, storage, conversation, senderUid: user.uid, photos });
+      } else {
+        await sendDirectPhotoMessage({ db, storage, senderUid: user.uid, recipientUid, photos });
+        setConversationReloadKey((key) => key + 1);
+      }
+    } catch (err) {
+      Alert.alert('Photo send failed', err.message);
+    } finally {
+      setSendingPhotos(false);
+    }
+  }, [conversation, isGroup, recipientUid, sendingPhotos, user]);
+
+  const sendVenueLink = useCallback(async ({ venue, cityKey }) => {
+    if (!user) return;
+    if (!isGroup && !recipientUid) return;
+    if (isGroup && !conversation) return;
+
+    try {
+      if (conversation?.type === 'group') {
+        await sendGroupVenueLinkMessage({ db, conversation, senderUid: user.uid, venue, cityKey });
+      } else {
+        await sendDirectVenueLinkMessage({ db, senderUid: user.uid, recipientUid, venue, cityKey });
+        setConversationReloadKey((key) => key + 1);
+      }
+    } catch (err) {
+      Alert.alert('Venue not sent', err.message);
+    }
+  }, [conversation, isGroup, recipientUid, user]);
 
   const sendPoll = useCallback(async () => {
     if (!user || sendingPoll) return;
@@ -498,8 +539,10 @@ export default function useConversationSurface({ conversationId, recipientUid, u
     recipientUid,
     send,
     sendPhotos,
+    sendPhotoAssets,
     sendPoll,
     sendLocation,
+    sendVenueLink,
     startRecording,
     stopRecordingAndSend,
     toggleMessageReaction,

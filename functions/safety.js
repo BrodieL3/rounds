@@ -1,6 +1,7 @@
+// Vendored: functions deploy excludes ../lib, so keep functions/safety-service.js + functions/ids.js in sync with lib/friends/.
 const {
   buildBlockUserWrites,
-} = require('../lib/friends/safety-service');
+} = require('./safety-service');
 
 class SafetyError extends Error {
   constructor(code, message) {

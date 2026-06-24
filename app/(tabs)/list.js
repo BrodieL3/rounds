@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, SectionList } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import AppIcon from '../../components/ui/AppIcon';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { COLORS, COHORT_LABELS } from '../../lib/constants';
+import { COLORS, COHORT_LABELS, DEFAULT_METRO, getMetroCities } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
 import { buildVisitHistory, getLogCount, getRankUnlockState } from '../../lib/my-list';
 import VenueRow from '../../components/VenueRow';
@@ -13,6 +13,41 @@ import ScreenContainer from '../../components/ui/ScreenContainer';
 import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../../assets/venues.json');
+const {
+  buildVenueCatalog, getAttribution, flattenCatalogVenues, searchVenues, SEARCH_MIN_LENGTH,
+} = require('../../lib/venue-catalog');
+
+// Live search field — filters the catalog inline on this screen (replaces the
+// old affordance that pushed to the standalone /search page). Stateless: the
+// query lives in ListScreen so the results below can react to it.
+function SearchField({ value, onChangeText }) {
+  return (
+    <View style={styles.searchBar}>
+      <AppIcon name="search" size={18} color={COLORS.textMuted} />
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search bars by name, area, or type"
+        placeholderTextColor={COLORS.textMuted}
+        value={value}
+        onChangeText={onChangeText}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        accessibilityLabel="Search bars by name"
+      />
+      {value.length > 0 ? (
+        <Pressable
+          onPress={() => onChangeText('')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search"
+        >
+          <AppIcon name="close" size={18} color={COLORS.textMuted} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 const SENTIMENT_TONE = {
   loved: COLORS.success,
@@ -31,8 +66,11 @@ export default function ListScreen() {
   const [ratings, setRatings] = useState([]);
   const [comparisons, setComparisons] = useState([]);
 
-  const cityKey = profile?.city || 'nyc';
-  const cityVenues = VENUE_DATA.cities[cityKey]?.venues || [];
+  // The ranked list spans the whole metro lens (Boston + Cambridge), not a
+  // single phantom city (ADR 007). Venues keep their own .city for precise labels.
+  const metro = profile?.metro || DEFAULT_METRO;
+  const cityVenues = getMetroCities(metro)
+    .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
 
   const loadPersonalData = useCallback(async () => {
     if (!user) {
@@ -91,18 +129,42 @@ export default function ListScreen() {
 
   const isEmpty = history.length === 0;
 
-  return (
-    <ScreenContainer style={styles.screen}>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.title}>My List</Text>
-        <Text style={styles.subtitle}>Your private record of the nights out you've rated.</Text>
+  // The browsable seeded catalog — the same Discover surface (city-grouped,
+  // name-sorted bars from the bundled OSM seed) now living under My List so a
+  // brand-new (empty) user can find a bar to log without leaving this screen.
+  const catalogSections = useMemo(() => buildVenueCatalog(VENUE_DATA), []);
+  const attribution = getAttribution(VENUE_DATA);
 
-        {/* Ranked area — locked under 5 logs, revealed via the existing Elo at N≥5. */}
-        <View style={styles.rankSection}>
+  // Inline search (was a push to the standalone /search page): filter the same
+  // bundled OSM seed client-side. While searching, the catalog below collapses
+  // to a flat, name-sorted result set; My List's own content hides so results
+  // own the screen — same behavior the dedicated page had, without navigating.
+  const [queryText, setQueryText] = useState('');
+  const corpus = useMemo(() => flattenCatalogVenues(VENUE_DATA), []);
+  const trimmedQuery = queryText.trim();
+  const isSearching = trimmedQuery.length >= SEARCH_MIN_LENGTH;
+  const results = useMemo(
+    () => (isSearching ? searchVenues(corpus, queryText) : []),
+    [isSearching, corpus, queryText]
+  );
+  const displaySections = isSearching
+    ? (results.length > 0 ? [{ title: '', cityKey: 'results', count: results.length, data: results }] : [])
+    : catalogSections;
+
+  // My List's own contents (title, search, ranked area, history) ride above the
+  // catalog as the SectionList header; the venue sections render beneath them.
+  const listHeader = (
+    <View>
+      <Text style={styles.title}>My List</Text>
+
+      {/* Search — live inline filter (top, under the title), no longer a page push. */}
+      <SearchField value={queryText} onChangeText={setQueryText} />
+
+      {/* While searching, My List's own content hides so the results own the screen. */}
+      {!isSearching ? (
+        <>
+      {/* Ranked area — locked under 5 logs, revealed via the existing Elo at N≥5. */}
+      <View style={styles.rankSection}>
           {unlocked ? (
             <>
               <View style={styles.rankHeaderRow}>
@@ -120,9 +182,9 @@ export default function ListScreen() {
                     <VenueRow
                       key={venue.id}
                       item={venue}
-                      cityKey={cityKey}
+                      cityKey={venue.city}
                       actionMode="ranked"
-                      onPress={() => router.push(`/venue/${venue.id}`)}
+                      onPress={() => router.push(`/venue/${encodeURIComponent(venue.id)}`)}
                     />
                   ))}
                 </View>
@@ -180,7 +242,7 @@ export default function ListScreen() {
               <Pressable
                 key={entry.key}
                 style={styles.historyRow}
-                onPress={() => router.push(`/venue/${entry.venueId}`)}
+                onPress={() => router.push(`/venue/${encodeURIComponent(entry.venueId)}`)}
               >
                 <View style={[styles.sentimentDot, { backgroundColor: SENTIMENT_TONE[entry.sentiment] || COLORS.textMuted }]} />
                 <View style={styles.historyCopy}>
@@ -196,20 +258,99 @@ export default function ListScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
+
+        {/* Browse — the Discover catalog, now under My List's own contents. */}
+        <Text style={styles.browseTitle}>Browse bars</Text>
+        </>
+      ) : null}
+      </View>
+    );
+
+  return (
+    <ScreenContainer style={styles.screen}>
+      <SectionList
+        contentInsetAdjustmentBehavior="automatic"
+        sections={displaySections}
+        keyExtractor={(item) => item.id}
+        stickySectionHeadersEnabled={false}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        renderItem={({ item }) => (
+          <VenueRow
+            item={item}
+            cityKey={item.cityKey}
+            actionMode="discovery"
+            onPress={() => router.push(`/venue/${encodeURIComponent(item.id)}`)}
+          />
+        )}
+        renderSectionHeader={({ section }) => (
+          section.title ? (
+            <View style={styles.catalogSectionHeader}>
+              <Text style={styles.catalogSectionTitle}>{section.title}</Text>
+              <Text style={styles.catalogSectionCount}>{section.count} bars</Text>
+            </View>
+          ) : null
+        )}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          isSearching ? (
+            <Text style={styles.searchEmpty}>No bars match “{trimmedQuery}”</Text>
+          ) : null
+        }
+        ListFooterComponent={
+          !isSearching ? <Text style={styles.attribution}>{attribution}</Text> : null
+        }
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: 16, paddingBottom: 32 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
   title: {
-    color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 8,
+    color: COLORS.textPrimary, fontSize: 32, fontWeight: '800', marginBottom: 20,
   },
-  subtitle: { color: COLORS.textSecondary, fontSize: 14, lineHeight: 19, marginTop: 4, marginBottom: 20 },
+  subtitle: { color: COLORS.textSecondary, fontSize: 15, lineHeight: 21, marginTop: 6, marginBottom: 20 },
   sectionTitle: {
     color: COLORS.textPrimary, fontSize: 18, fontWeight: '800', marginBottom: 12,
+  },
+
+  // Search affordance — mirrors Discover's old searchBar so position/feel match,
+  // but now wraps a live TextInput (inline filter) instead of a tappable label.
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 24,
+  },
+  searchInput: { flex: 1, color: COLORS.textPrimary, fontSize: 15, padding: 0 },
+  searchEmpty: { color: COLORS.textMuted, textAlign: 'center', marginTop: 24, fontSize: 14 },
+
+  // Browse catalog (below My List's own contents) — mirrors Discover sections.
+  browseTitle: {
+    color: COLORS.textPrimary, fontSize: 18, fontWeight: '800', marginTop: 28, marginBottom: 4,
+  },
+  catalogSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingTop: 20,
+    paddingBottom: 6,
+    backgroundColor: COLORS.bg,
+  },
+  catalogSectionTitle: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '800' },
+  catalogSectionCount: {
+    color: COLORS.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase',
+  },
+  attribution: {
+    color: COLORS.textMuted, fontSize: 11, lineHeight: 16, paddingTop: 24, paddingBottom: 8,
   },
 
   rankSection: { marginBottom: 28 },

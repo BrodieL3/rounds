@@ -35,7 +35,7 @@ export default function RootLayout() {
       }}
     >
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
           {ROOT_STACK_SCREENS.map((screen) => (
             <Stack.Screen key={screen.name} name={screen.name} options={screen.options} />
           ))}

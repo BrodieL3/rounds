@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   durationMine: {
-    color: '#ffffff',
+    color: COLORS.onAccent,
   },
   durationTheirs: {
     color: COLORS.textPrimary,

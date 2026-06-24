@@ -45,4 +45,6 @@ firestore-debug.log
 # local agent/MCP workspace
 mcp.json
 .claude/worktrees/
+.claude/skills/
+.agents/
 scripts/friends-seed.js

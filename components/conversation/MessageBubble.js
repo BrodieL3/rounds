@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   bubbleMine: { backgroundColor: COLORS.accent },
   bubbleTheirs: { backgroundColor: COLORS.bgElevated },
   messageText: { fontSize: 15, lineHeight: 20 },
-  messageTextMine: { color: '#ffffff' },
+  messageTextMine: { color: COLORS.onAccent },
   messageTextTheirs: { color: COLORS.textPrimary },
   photoBubble: { maxWidth: 240, borderRadius: 18, overflow: 'hidden' },
   photoBubbleMine: { borderWidth: 1, borderColor: COLORS.accent },

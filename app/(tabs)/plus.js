@@ -1,5 +1,5 @@
 import { Redirect } from 'expo-router';
 
 export default function PlusPlaceholder() {
-  return <Redirect href="/plus-menu" />;
+  return <Redirect href="/add" />;
 }

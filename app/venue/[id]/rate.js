@@ -257,7 +257,6 @@ export default function RateScreen() {
                 <Text style={[styles.companionChipText, selected && styles.companionChipTextActive]}>
                   {friend.displayName || friend.username || friend.uid}
                 </Text>
-                {selected && <AppIcon name="checkmark" size={14} color="#ffffff" style={{ marginLeft: 4 }} />}
               </Pressable>
             );
           })}
@@ -309,7 +308,7 @@ export default function RateScreen() {
         onPress={submit}
         disabled={!sentiment || submitting}
       >
-        <Text style={styles.submitText}>{submitting ? 'Saving...' : 'Submit'}</Text>
+        <Text style={[styles.submitText, !sentiment && styles.submitTextDisabled]}>{submitting ? 'Saving...' : 'Submit'}</Text>
       </Pressable>
 
       <Pressable onPress={() => router.back()} style={styles.cancel}>
@@ -359,7 +358,8 @@ const styles = StyleSheet.create({
     borderRadius: 12, alignItems: 'center', marginTop: 24,
   },
   submitBtnDisabled: { backgroundColor: COLORS.bgCard },
-  submitText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  submitText: { color: COLORS.onAccent, fontWeight: '800', fontSize: 16 },
+  submitTextDisabled: { color: COLORS.textMuted },
   cancel: { marginTop: 16, alignItems: 'center' },
   cancelText: { color: COLORS.textMuted, fontSize: 14 },
   venueThumb: {
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   companionChipTextActive: {
-    color: '#ffffff',
+    color: COLORS.onAccent,
   },
   emptyText: {
     color: COLORS.textMuted,

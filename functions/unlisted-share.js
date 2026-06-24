@@ -1,4 +1,5 @@
-const { validateShareRequest, buildShareGrants } = require('../lib/unlisted-share-service');
+// Vendored: functions deploy excludes ../lib, so keep functions/unlisted-share-service.js in sync with lib/unlisted-share-service.js.
+const { validateShareRequest, buildShareGrants } = require('./unlisted-share-service');
 
 async function sharePrivateRatingCallable(request, deps) {
   const { db, ErrorClass, now } = deps;

@@ -21,7 +21,7 @@ export default function SearchScreen() {
   const results = useMemo(() => searchVenues(corpus, queryText), [corpus, queryText]);
 
   const openVenue = useCallback((venue) => {
-    router.push(`/venue/${venue.id}`);
+    router.push(`/venue/${encodeURIComponent(venue.id)}`);
   }, []);
 
   const showEmpty = queryText.trim().length >= SEARCH_MIN_LENGTH && results.length === 0;

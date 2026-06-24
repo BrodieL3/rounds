@@ -1,98 +1,32 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef } from 'react';
 import AppIcon from '../ui/AppIcon';
+import AttachmentMenu from './AttachmentMenu';
 import { COLORS } from '../../lib/constants';
-import { formatVoiceDuration } from '../../lib/friends/conversation-surface';
 
+// The persistent input row: attach menu, text field, send button. Attachment flows (photo,
+// poll, voice, venue) render in keyboard-height panels below this row, not inside it.
 export default function Composer({
   text,
   setText,
   sending,
   sendingPhotos,
   onSend,
-  onAttach,
+  bottomInset = 0,
+  isGroup = false,
+  onSelectAttachment,
+  onFocusInput,
   replyingTo,
   onCancelReply,
   senderProfiles,
-  voiceRecording,
-  voiceRecordElapsed,
-  onStopRecording,
-  pollComposerOpen,
-  pollQuestion,
-  setPollQuestion,
-  pollOptions,
-  setPollOptions,
-  pollAllowMultiple,
-  setPollAllowMultiple,
-  sendingPoll,
-  onSendPoll,
-  onClosePollComposer,
 }) {
-  if (voiceRecording) {
-    return (
-      <View style={styles.voiceRecordingOverlay}>
-        <View style={styles.voiceRecordingRow}>
-          <View style={styles.voiceRecordingDot} />
-          <Text style={styles.voiceRecordingText}>
-            Recording {formatVoiceDuration(voiceRecordElapsed)}
-          </Text>
-        </View>
-        <Pressable onPress={onStopRecording} style={styles.voiceRecordingStop}>
-          <AppIcon name="stop" size={24} color="#ffffff" />
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (pollComposerOpen) {
-    return (
-      <View style={styles.pollComposer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Ask a question..."
-          placeholderTextColor={COLORS.textPlaceholder}
-          value={pollQuestion}
-          onChangeText={setPollQuestion}
-          maxLength={500}
-        />
-        {pollOptions.map((option, index) => (
-          <TextInput
-            key={index}
-            style={styles.pollOptionInput}
-            placeholder={`Option ${index + 1}`}
-            placeholderTextColor={COLORS.textPlaceholder}
-            value={option}
-            onChangeText={(txt) => {
-              const next = [...pollOptions];
-              next[index] = txt;
-              setPollOptions(next);
-            }}
-            maxLength={200}
-          />
-        ))}
-        <Pressable onPress={() => setPollOptions([...pollOptions, ''])}>
-          <Text style={styles.pollAddOption}>+ Add option</Text>
-        </Pressable>
-        <View style={styles.pollActions}>
-          <Pressable onPress={onClosePollComposer}>
-            <Text style={styles.pollActionText}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.sendButton, (!pollQuestion.trim() || pollOptions.filter(Boolean).length < 2 || sendingPoll) && styles.sendButtonDisabled]}
-            onPress={onSendPoll}
-            disabled={!pollQuestion.trim() || pollOptions.filter(Boolean).length < 2 || sendingPoll}
-          >
-            <Text style={styles.sendText}>Send poll</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
+  const inputRef = useRef(null);
+  // Raise the keyboard when the conversation opens. autoFocus alone can miss after a
+  // navigation transition, so also focus via ref once the screen settles.
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
@@ -112,26 +46,33 @@ export default function Composer({
           </Pressable>
         </View>
       ) : null}
-      <View style={styles.composer}>
-        <Pressable onPress={onAttach} style={styles.attachButton}>
-          <AppIcon name="attach" size={22} color={COLORS.textMuted} />
-        </Pressable>
-        <TextInput
-          style={styles.input}
-          placeholder="Message..."
-          placeholderTextColor={COLORS.textPlaceholder}
-          value={text}
-          onChangeText={setText}
-          multiline
-          maxLength={2000}
-        />
-        <Pressable
-          style={[styles.sendButton, (!text.trim() || sending || sendingPhotos) && styles.sendButtonDisabled]}
-          onPress={onSend}
-          disabled={!text.trim() || sending || sendingPhotos}
-        >
-          <Text style={styles.sendText}>Send</Text>
-        </Pressable>
+      <View style={[styles.composer, { paddingBottom: Math.max(12, bottomInset) }]}>
+        <AttachmentMenu isGroup={isGroup} onSelect={onSelectAttachment} />
+        <View style={styles.messageInputWrap}>
+          <TextInput
+            ref={inputRef}
+            style={styles.messageInput}
+            placeholder="Message..."
+            placeholderTextColor={COLORS.textPlaceholder}
+            value={text}
+            onChangeText={setText}
+            onFocus={onFocusInput}
+            multiline
+            maxLength={2000}
+            autoFocus
+          />
+        </View>
+        {text.trim() ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Send"
+            style={[styles.sendCircle, (sending || sendingPhotos) && styles.sendButtonDisabled]}
+            onPress={onSend}
+            disabled={sending || sendingPhotos}
+          >
+            <AppIcon name="chat.send" focused size={22} color={COLORS.onAccent} />
+          </Pressable>
+        ) : null}
       </View>
     </>
   );
@@ -143,104 +84,33 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'flex-end',
     padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.bgCard,
     backgroundColor: COLORS.bg,
   },
-  attachButton: {
+  messageInputWrap: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    borderRadius: 18,
+    backgroundColor: COLORS.bgElevated,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  messageInput: {
+    color: COLORS.textPrimary,
+    fontSize: 15,
+    paddingVertical: 8,
+    margin: 0,
+    textAlignVertical: 'center',
+  },
+  sendCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.bgElevated,
-  },
-  input: {
-    flex: 1,
-    maxHeight: 120,
-    minHeight: 44,
-    borderRadius: 18,
-    backgroundColor: COLORS.bgElevated,
-    color: COLORS.textPrimary,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  sendButton: {
-    minHeight: 44,
-    borderRadius: 18,
-    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.accent,
   },
   sendButtonDisabled: { opacity: 0.5 },
-  sendText: { color: '#ffffff', fontWeight: '800' },
-  pollComposer: {
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.bgCard,
-    backgroundColor: COLORS.bg,
-    gap: 10,
-  },
-  pollOptionInput: {
-    borderRadius: 12,
-    backgroundColor: COLORS.bgElevated,
-    color: COLORS.textPrimary,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  pollAddOption: {
-    color: COLORS.accent,
-    fontSize: 14,
-    fontWeight: '700',
-    paddingHorizontal: 4,
-  },
-  pollActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  pollActionText: {
-    color: COLORS.textMuted,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  voiceRecordingOverlay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.bgCard,
-    backgroundColor: COLORS.bg,
-  },
-  voiceRecordingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  voiceRecordingDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.danger,
-  },
-  voiceRecordingText: {
-    color: COLORS.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  voiceRecordingStop: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   replyComposerBar: {
     flexDirection: 'row',
     alignItems: 'center',

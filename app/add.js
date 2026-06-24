@@ -5,7 +5,7 @@ import {
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import VenueRow from '../components/VenueRow';
-import { COLORS } from '../lib/constants';
+import { COLORS, DEFAULT_METRO, getMetroCities } from '../lib/constants';
 import ScreenContainer from '../components/ui/ScreenContainer';
 
 const VENUE_DATA = require('../assets/venues.json');
@@ -14,8 +14,11 @@ export default function AddScreen() {
   const { profile } = useAuth();
   const [query, setQuery] = useState('');
 
-  const cityKey = profile?.city || 'nyc';
-  const cityVenues = VENUE_DATA.cities[cityKey]?.venues || [];
+  // Browse the whole metro lens (Boston + Cambridge), not a phantom user city
+  // (ADR 007). Each venue keeps its own .city for routing + precise labels.
+  const metro = profile?.metro || DEFAULT_METRO;
+  const cityVenues = getMetroCities(metro)
+    .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
 
   const filtered = useMemo(() => {
     if (!query) return cityVenues.slice(0, 20);
@@ -27,9 +30,9 @@ export default function AddScreen() {
   const renderVenue = ({ item }) => (
     <VenueRow
       item={item}
-      cityKey={cityKey}
+      cityKey={item.city}
       actionMode="discovery"
-      onPress={() => router.push(`/venue/${item.id}/rate`)}
+      onPress={() => router.push(`/venue/${encodeURIComponent(item.id)}/rate`)}
     />
   );
 

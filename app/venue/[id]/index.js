@@ -4,10 +4,11 @@ import {
   StyleSheet, Text, View, ScrollView, Pressable, Alert, TextInput, Linking, Modal,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppIcon from '../../../components/ui/AppIcon';
 import {
   collection, addDoc, serverTimestamp,
-  query, where, getDocs, orderBy, limit,
+  query, where, getDocs,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -37,18 +38,24 @@ const PRICE_LABELS = {
 
 const SKIP_TYPES = new Set([
   'point_of_interest', 'establishment', 'food', 'store', 'premise',
+  'amenity', 'bar', 'pub', 'nightclub', 'night_club', 'cafe', 'restaurant',
 ]);
 
 function formatTypes(types) {
   if (!types) return [];
-  return types
-    .filter((t) => !SKIP_TYPES.has(t))
-    .map((t) =>
-      t
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase())
-    )
-    .slice(0, 6);
+  const seen = new Set();
+  const out = [];
+  for (const raw of types) {
+    // OSM types look like "amenity:bar"; keep the descriptive part after the colon
+    // and drop generic ones the cohort badge already conveys.
+    const t = String(raw).includes(':') ? raw.slice(raw.indexOf(':') + 1) : raw;
+    const key = t.toLowerCase();
+    if (SKIP_TYPES.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push(t.replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+    if (out.length >= 6) break;
+  }
+  return out;
 }
 
 function openMap(name, lat, lng) {
@@ -66,6 +73,7 @@ function openWebsite(venueName) {
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const posthog = usePostHog();
   const venue = findVenue(id);
@@ -97,15 +105,17 @@ export default function VenueDetailScreen() {
 
     async function loadRatings() {
       try {
+        // Equality-only query (no orderBy) needs no composite index; a single venue's
+        // public ratings are few, so we sort by recency client-side.
         const q = query(
           collection(db, 'ratings'),
           where('venueId', '==', venue.id),
-          where('visibility', '==', 'public'),
-          orderBy('createdAt', 'desc'),
-          limit(10)
+          where('visibility', '==', 'public')
         );
         const snap = await getDocs(q);
-        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         if (!canceled) {
           setRecentRatings(docs);
           setAverageScore(formatVenueAverageScore(docs));
@@ -184,20 +194,29 @@ export default function VenueDetailScreen() {
   }
 
   const tags = formatTypes(venue.types);
-  const price = PRICE_LABELS[venue.priceLevel] || '—';
+  const price = PRICE_LABELS[venue.priceLevel] || null;
   const { latitude, longitude } = venue.location || {};
   const visual = getVenueVisualFallback(venue);
   const openStatus = formatOpenClosedStatus(venue.hours);
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
+    <ScrollView contentInsetAdjustmentBehavior="never" contentContainerStyle={styles.screen}>
       {/* Hero */}
       <View style={[styles.hero, { backgroundColor: visual.colors[0] }]}>
+        <Pressable
+          style={[styles.backBtn, { top: insets.top + 8 }]}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={8}
+        >
+          <AppIcon name="chevron-back" size={24} color="#ffffff" />
+        </Pressable>
         <View style={styles.heroOverlay}>
           <AppIcon name={visual.iconName} size={48} color="#ffffff" />
         </View>
         {user && (
-          <Pressable style={styles.bookmarkBtn} onPress={toggleBookmark} disabled={bookmarkLoading}>
+          <Pressable style={[styles.bookmarkBtn, { top: insets.top + 8 }]} onPress={toggleBookmark} disabled={bookmarkLoading}>
             <AppIcon
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
               size={24}
@@ -213,7 +232,7 @@ export default function VenueDetailScreen() {
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{COHORT_LABELS[venue.cohort] || venue.cohort}</Text>
         </View>
-        <Text style={styles.price}>{price}</Text>
+        {price ? <Text style={styles.price}>{price}</Text> : null}
         {openStatus && (
           <Text style={[styles.openStatus, openStatus.startsWith('Open') ? styles.open : styles.closed]}>
             {openStatus}
@@ -246,23 +265,15 @@ export default function VenueDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{venue.rating?.toFixed(1) || '—'}</Text>
-          <Text style={styles.statLabel}>Google Rating</Text>
+      {/* Community signal — only what we actually have (OSM venues carry no Google data) */}
+      {recentRatings.length > 0 && (
+        <View style={styles.communityRow}>
+          <Text style={styles.communityScore}>{averageScore}</Text>
+          <Text style={styles.communityMeta}>
+            · {recentRatings.length} {recentRatings.length === 1 ? 'visit' : 'visits'} logged on Rounds
+          </Text>
         </View>
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{venue.userRatingCount || '—'}</Text>
-          <Text style={styles.statLabel}>Google Reviews</Text>
-        </View>
-        {averageScore && (
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>{averageScore}</Text>
-            <Text style={styles.statLabel}>Rounds Rating</Text>
-          </View>
-        )}
-      </View>
+      )}
 
       {tags.length > 0 && (
         <View style={styles.tagsCard}>
@@ -333,7 +344,7 @@ export default function VenueDetailScreen() {
 
       <Pressable
         style={styles.rateBtn}
-        onPress={() => router.push(`/venue/${venue.id}/rate`)}
+        onPress={() => router.push(`/venue/${encodeURIComponent(venue.id)}/rate`)}
       >
         <Text style={styles.rateBtnText}>Log a visit</Text>
       </Pressable>
@@ -380,11 +391,10 @@ export default function VenueDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flexGrow: 1, backgroundColor: COLORS.bg, padding: 24 },
+  screen: { flexGrow: 1, backgroundColor: COLORS.bg, paddingHorizontal: 24, paddingBottom: 24 },
   hero: {
-    height: 180,
-    borderRadius: 16,
-    marginTop: 24,
+    height: 220,
+    marginHorizontal: -24,
     marginBottom: 16,
     justifyContent: 'center',
     alignItems: 'center',
@@ -400,8 +410,19 @@ const styles = StyleSheet.create({
   },
   bookmarkBtn: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    right: 16,
+    zIndex: 2,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backBtn: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 2,
     backgroundColor: 'rgba(0,0,0,0.3)',
     width: 40,
     height: 40,
@@ -438,14 +459,12 @@ const styles = StyleSheet.create({
   addressRow: { marginBottom: 16 },
   address: { color: COLORS.textSecondary, fontSize: 15, lineHeight: 22 },
   mapLink: { color: COLORS.accent, fontSize: 14, fontWeight: '700', marginTop: 4 },
-  statsRow: {
-    flexDirection: 'row', gap: 16,
-    backgroundColor: COLORS.bgElevated, borderRadius: 16,
-    padding: 16, marginBottom: 16,
+  communityRow: {
+    flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap',
+    marginBottom: 16,
   },
-  stat: { alignItems: 'center', flex: 1 },
-  statNum: { color: COLORS.textPrimary, fontSize: 20, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  statLabel: { color: COLORS.textMuted, fontSize: 11, marginTop: 2, textAlign: 'center' },
+  communityScore: { color: COLORS.accent, fontSize: 16, fontWeight: '800' },
+  communityMeta: { color: COLORS.textSecondary, fontSize: 14, marginLeft: 6 },
   card: {
     backgroundColor: COLORS.bgElevated, padding: 16,
     borderRadius: 16, marginBottom: 12,
@@ -492,7 +511,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.hero, padding: 16,
     borderRadius: 12, alignItems: 'center', marginTop: 12,
   },
-  rateBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 16 },
+  rateBtnText: { color: COLORS.onAccent, fontWeight: '800', fontSize: 16 },
   reportBtn: {
     marginTop: 12, padding: 12, alignItems: 'center',
   },

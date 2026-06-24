@@ -2,6 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import { COLORS } from '../../lib/constants';
 import AppIcon from '../../components/ui/AppIcon';
+import PlusMorphIcon from '../../components/ui/PlusMorphIcon';
 import { selectionHaptic } from '../../lib/platform-service';
 
 const {
@@ -37,20 +38,13 @@ function TabIcon({ focused, tab }) {
   );
 }
 
-function renderPrimaryTab(tab, onOpenPlusMenu) {
-  const isPlusMenu = tab.kind === 'formSheet';
+// The Plus tab's +→X morph lives in components/ui/PlusMorphIcon.js (shared with BottomNav).
 
+function renderPrimaryTab(tab) {
   return (
     <Tabs.Screen
       key={tab.name}
       name={tab.name}
-      listeners={isPlusMenu ? {
-        tabPress: (event) => {
-          event.preventDefault();
-          selectionHaptic();
-          onOpenPlusMenu();
-        },
-      } : undefined}
       options={{
         title: tab.title,
         tabBarIcon: ({ focused }) => <TabIcon focused={focused} tab={tab} />,
@@ -60,15 +54,39 @@ function renderPrimaryTab(tab, onOpenPlusMenu) {
   );
 }
 
+// The center + is an icon-only tab whose press is intercepted: instead of switching to a
+// tab screen it opens the tab's configured route (tab.opens, currently /add) as a modal,
+// leaving the current tab active underneath. Target lives in lib/navigation-shell.js.
+function renderPlusTab(tab, onPress) {
+  return (
+    <Tabs.Screen
+      key={tab.name}
+      name={tab.name}
+      listeners={{
+        tabPress: (event) => {
+          event.preventDefault();
+          selectionHaptic();
+          onPress();
+        },
+      }}
+      options={{
+        title: tab.title,
+        tabBarIcon: () => <PlusMorphIcon open={false} />,
+        tabBarLabel: tab.label,
+      }}
+    />
+  );
+}
+
 export default function TabLayout() {
   const router = useRouter();
-  const openPlusMenu = () => router.push('/plus-menu');
 
   return (
     <View style={styles.shell}>
       <Tabs
         screenOptions={{
           headerShown: false,
+          animation: 'shift',
           sceneStyle: styles.scene,
           tabBarStyle: styles.tabBar,
           tabBarShowLabel: false,
@@ -79,7 +97,11 @@ export default function TabLayout() {
           tabBarInactiveTintColor: COLORS.textPrimary,
         }}
       >
-        {PRIMARY_TABS.map((tab) => renderPrimaryTab(tab, openPlusMenu))}
+        {PRIMARY_TABS.map((tab) => (
+          tab.kind === 'formSheet'
+            ? renderPlusTab(tab, () => router.push(tab.opens))
+            : renderPrimaryTab(tab)
+        ))}
         {HIDDEN_TAB_ROUTES.map((name) => (
           <Tabs.Screen key={name} name={name} options={{ href: null }} />
         ))}

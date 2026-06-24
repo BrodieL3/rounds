@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  FlatList,
   Pressable,
   ScrollView,
-  SectionList,
   StyleSheet,
   Text,
   View,
@@ -15,9 +16,10 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { COLORS, COHORT_LABELS } from '../../lib/constants';
+import { COLORS, COHORT_LABELS, DEFAULT_METRO, METROS } from '../../lib/constants';
 import MediaImage from '../../components/ui/media-image';
 import VenueRow from '../../components/VenueRow';
+import ScreenContainer from '../../components/ui/ScreenContainer';
 
 const { buildFeedItemDisplay } = require('../../lib/feed-display');
 const {
@@ -34,16 +36,21 @@ const venueSeed = require('../../assets/venues.json');
 const { usePostHog } = require('posthog-react-native');
 
 const AVATAR_SIZE = 44;
-const PLACEHOLDER_AVATAR = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=160&h=160&fit=crop&crop=faces';
 const VENUES_BY_CITY = createSeedVenueLookup(venueSeed);
 
-function getAvatarUri(item) {
+// Real uploaded profile photo only — no auto-generated avatars. A missing photo
+// falls back to the initials placeholder (matching ProfileAvatar / friends).
+function getAvatarPhoto(item) {
   return item.photoURL
     || item.avatarURL
     || item.userPhotoURL
     || item.profilePhotoURL
     || item.authorPhotoURL
-    || (item.userId ? `https://i.pravatar.cc/160?u=${encodeURIComponent(item.userId)}` : PLACEHOLDER_AVATAR);
+    || null;
+}
+
+function getAvatarInitial(item) {
+  return (item.displayName || item.username || '?').charAt(0).toUpperCase();
 }
 
 function ActionIcon({ name, activeName, active, color, onPress, disabled, accessibilityLabel }) {
@@ -125,6 +132,7 @@ function IconRow({
 // feed-engagement/share wiring and its suites (feed-actions-ui) stay green.
 export function DiscoverItem({ item, city, currentUserId }) {
   const display = buildFeedItemDisplay(item, city);
+  const avatarPhoto = getAvatarPhoto(item);
   const mediaRefs = getMediaReferences(item);
   const posthog = usePostHog();
   const [media, setMedia] = useState([]);
@@ -170,7 +178,13 @@ export function DiscoverItem({ item, city, currentUserId }) {
   return (
     <Pressable style={styles.feedItem} onPress={openPost}>
       <View style={styles.headerRow}>
-        <MediaImage source={{ uri: getAvatarUri(item) }} style={styles.avatar} />
+        {avatarPhoto ? (
+          <MediaImage source={{ uri: avatarPhoto }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarFallback]}>
+            <Text style={styles.avatarInitial}>{getAvatarInitial(item)}</Text>
+          </View>
+        )}
 
         <View style={styles.headerCopy}>
           <Text style={styles.activitySentence}>
@@ -244,101 +258,96 @@ function SearchBar() {
   );
 }
 
+// Discover is the public social feed: public Rating projections from the
+// viewer's city, with people they follow surfaced first (buildFeedViewItems).
+// Browse/search lives on My List; this surface is read-only social discovery.
+// A city with no public posts shows the empty state below.
 export default function DiscoverScreen() {
   const { user, profile } = useAuth();
-  // The browsable seeded catalog IS the beta discovery surface: a brand-new
-  // user with ZERO posts and ZERO friends can still scroll real bars and tap
-  // into one to log it (parent ISA ISC-24/54). The catalog renders from the
-  // bundled OSM seed and never gates on profile.city (onboarding doesn't set
-  // one for the single Boston+Cambridge beta pool).
-  const sections = useMemo(() => buildVenueCatalog(venueSeed), []);
-  const attribution = getAttribution(venueSeed);
+  const currentUserId = user?.uid || null;
+  // P1 will set this from device GPS (Beli-exact). Until then the lens defaults
+  // to the Boston metro so Discover shows Boston + Cambridge, not a phantom city.
+  const metro = profile?.metro || DEFAULT_METRO;
+  const metroCities = METROS[metro]?.cities || [];
+  const fallbackCity = metroCities[0] || null;
+  const following = useMemo(() => profile?.following || [], [profile?.following]);
 
-  // Social posts stay subscribed-to so the feed lights up once activity exists,
-  // but they are not the cold-start surface and do not block browsing.
-  const [, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !profile?.city) return undefined;
-
-    const cityQ = query(
+    setLoading(true);
+    // Two equality filters (no orderBy) need no composite index; the view model
+    // sorts by recency client-side, so limit() just caps reads for the feed.
+    const postsQuery = query(
       collection(db, 'posts'),
-      where('city', '==', profile.city),
-      limit(50)
+      where('visibility', '==', 'public'),
+      where('metro', '==', metro),
+      limit(100),
     );
+    const unsubscribe = onSnapshot(
+      postsQuery,
+      (snapshot) => {
+        setPosts(snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() })));
+        setLoading(false);
+      },
+      () => setLoading(false),
+    );
+    return unsubscribe;
+  }, [metro]);
 
-    const unsub = onSnapshot(cityQ, (snap) => {
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setPosts(buildFeedViewItems({
-        posts: items,
-        city: profile.city,
-        following: profile?.following || [],
-        venueLookup: VENUES_BY_CITY,
-      }));
-    }, (err) => {
-      console.error('Discover snapshot error:', err);
-    });
-
-    return unsub;
-  }, [user, profile?.city, profile?.following]);
-
-  const totalVenues = sections.reduce((sum, section) => sum + section.count, 0);
+  const items = useMemo(
+    () => buildFeedViewItems({ posts, city: fallbackCity, following, venueLookup: VENUES_BY_CITY }),
+    [posts, fallbackCity, following],
+  );
 
   return (
-    <View style={styles.screen}>
-      <SectionList
-        contentInsetAdjustmentBehavior="automatic"
-        sections={sections}
+    <ScreenContainer style={styles.screen}>
+      <FlatList
+        data={items}
         keyExtractor={(item) => item.id}
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <VenueRow
-            item={item}
-            cityKey={item.cityKey}
-            actionMode="discovery"
-            onPress={() => router.push(`/venue/${item.id}`)}
-          />
-        )}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.sectionCount}>{section.count} bars</Text>
-          </View>
+          <DiscoverItem item={item} city={fallbackCity} currentUserId={currentUserId} />
         )}
         ListHeaderComponent={(
           <View style={styles.header}>
             <Text style={styles.title}>Discover</Text>
-            <Text style={styles.subtitle}>{totalVenues} bars near you — tap one to log a visit</Text>
-            <SearchBar />
           </View>
         )}
-        ListFooterComponent={(
-          <Text style={styles.attribution}>{attribution}</Text>
-        )}
-        ListEmptyComponent={(
+        ListEmptyComponent={loading ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>No bars loaded yet</Text>
-            <Text style={styles.emptySub}>Pull to refresh or try search.</Text>
+            <ActivityIndicator color={COLORS.accent} />
+          </View>
+        ) : (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No reviews yet</Text>
+            <Text style={styles.emptySub}>
+              Public reviews from people in your city will show up here.
+            </Text>
           </View>
         )}
+        contentContainerStyle={styles.feedListContent}
+        showsVerticalScrollIndicator={false}
       />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
-  header: { paddingHorizontal: 20, paddingTop: 8 },
+  // Standalone header (the SectionList that used to supply the inset is gone),
+  // so pad it by 20 to match the app's standard title position (e.g. My List).
+  header: { paddingTop: 16, paddingHorizontal: 20 },
   title: {
     color: COLORS.textPrimary,
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 18,
   },
   subtitle: {
     color: COLORS.textMuted,
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 21,
     marginBottom: 16,
   },
   searchBar: {
@@ -353,6 +362,9 @@ const styles = StyleSheet.create({
   },
   searchBarText: { color: COLORS.textMuted, fontSize: 15, fontWeight: '500' },
   listContent: { paddingHorizontal: 20, paddingBottom: 24 },
+  // Feed rows own their horizontal padding + full-width divider, so the list
+  // container only pads the bottom and grows to center the empty/loading state.
+  feedListContent: { paddingBottom: 24, flexGrow: 1 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -393,6 +405,8 @@ const styles = StyleSheet.create({
     borderRadius: AVATAR_SIZE / 2,
     backgroundColor: COLORS.bgElevated,
   },
+  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { color: COLORS.accent, fontSize: 18, fontWeight: '800' },
   headerCopy: { flex: 1, marginLeft: 12, paddingRight: 12 },
   activitySentence: {
     color: COLORS.textPrimary,

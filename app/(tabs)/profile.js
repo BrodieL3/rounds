@@ -5,7 +5,7 @@ import AppIcon from '../../components/ui/AppIcon';
 import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { COLORS } from '../../lib/constants';
+import { COLORS, DEFAULT_METRO, getMetroCities } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
 import VenueRow from '../../components/VenueRow';
 import CopyableText from '../../components/ui/CopyableText';
@@ -17,23 +17,8 @@ const BLUE = '#4f93f7';
 const LINK_BLUE = '#155e6d';
 const BORDER = '#dedede';
 
-const SUGGESTED_USERS = [
-  {
-    id: 'emily',
-    fullName: 'Emily Ginsburg',
-    avatarUrl: 'https://i.pravatar.cc/240?img=47',
-  },
-  {
-    id: 'eliot',
-    fullName: 'Eliot Frost',
-    avatarUrl: 'https://i.pravatar.cc/240?img=12',
-  },
-  {
-    id: 'ava',
-    fullName: 'Ava Morgan',
-    avatarUrl: 'https://i.pravatar.cc/240?img=32',
-  },
-];
+// Real follow suggestions aren't wired yet; render nothing until a backend feeds this.
+const SUGGESTED_USERS = [];
 
 function formatMemberSince(createdAt) {
   const raw = createdAt?.toDate?.() || createdAt;
@@ -110,8 +95,11 @@ export default function ProfileScreen() {
   const [comparisons, setComparisons] = useState([]);
   const [hiddenSuggestionIds, setHiddenSuggestionIds] = useState([]);
 
-  const cityKey = profile?.city || 'nyc';
-  const cityVenues = VENUE_DATA.cities[cityKey]?.venues || [];
+  // Personal ranked list spans the metro lens (Boston + Cambridge), not a
+  // phantom user city (ADR 007).
+  const metro = profile?.metro || DEFAULT_METRO;
+  const cityVenues = getMetroCities(metro)
+    .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
   const personalList = useMemo(() => {
     const cohorts = [...new Set(cityVenues.map((v) => v.cohort))];
     return cohorts.flatMap((cohort) =>
@@ -241,9 +229,9 @@ export default function ProfileScreen() {
               <VenueRow
                 key={venue.id}
                 item={venue}
-                cityKey={cityKey}
+                cityKey={venue.city}
                 actionMode="ranked"
-                onPress={() => router.push(`/venue/${venue.id}`)}
+                onPress={() => router.push(`/venue/${encodeURIComponent(venue.id)}`)}
               />
             ))}
           </View>
@@ -255,26 +243,30 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <View style={styles.suggestHeader}>
-        <Text style={styles.suggestTitle}>Suggested for you</Text>
-        <Pressable onPress={() => router.push('/search')}>
-          <Text style={styles.seeAll}>See all</Text>
-        </Pressable>
-      </View>
+      {visibleSuggestions.length > 0 && (
+        <>
+          <View style={styles.suggestHeader}>
+            <Text style={styles.suggestTitle}>Suggested for you</Text>
+            <Pressable onPress={() => router.push('/search')}>
+              <Text style={styles.seeAll}>See all</Text>
+            </Pressable>
+          </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.suggestionsList}
-      >
-        {visibleSuggestions.map((item) => (
-          <SuggestedUserCard
-            key={item.id}
-            item={item}
-            onDismiss={(id) => setHiddenSuggestionIds((current) => [...current, id])}
-          />
-        ))}
-      </ScrollView>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.suggestionsList}
+          >
+            {visibleSuggestions.map((item) => (
+              <SuggestedUserCard
+                key={item.id}
+                item={item}
+                onDismiss={(id) => setHiddenSuggestionIds((current) => [...current, id])}
+              />
+            ))}
+          </ScrollView>
+        </>
+      )}
 
       <View style={styles.activityList}>
         <ProfileActivityRow
