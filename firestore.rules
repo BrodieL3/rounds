@@ -725,5 +725,17 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // Events: public read, server-only write (seed script + P4 ingestion via admin SDK).
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Happy hours: public read, server-only write.
+    match /happyHours/{happyHourId} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }
