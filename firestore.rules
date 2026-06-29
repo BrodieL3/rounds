@@ -9,6 +9,11 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function isCheckedInAt(venueId, uid) {
+      let p = /databases/$(database)/documents/venuePresence/$(venueId)/present/$(uid);
+      return exists(p) && get(p).data.expiresAt > request.time;
+    }
+
     function requestActorsUnchanged() {
       return request.resource.data.fromUid == resource.data.fromUid
         && request.resource.data.toUid == resource.data.toUid
@@ -736,6 +741,25 @@ service cloud.firestore {
     match /happyHours/{happyHourId} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // Venue presence: a user's own check-in record. expiresAt is a Timestamp so
+    // rules can compare it to request.time. One doc per uid per venue.
+    match /venuePresence/{venueId}/present/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isSignedInAs(uid) && request.resource.data.uid == uid;
+      allow delete: if isSignedInAs(uid); // manual checkout
+    }
+
+    // Venue forum: ephemeral room. Signed-in read; posts only by users currently
+    // checked in (non-expired presence), authored as themselves. Immutable —
+    // cleared server-side each night.
+    match /venueForums/{venueId}/messages/{messageId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && isCheckedInAt(venueId, request.auth.uid);
+      allow update, delete: if false;
     }
   }
 }
