@@ -761,5 +761,14 @@ service cloud.firestore {
         && isCheckedInAt(venueId, request.auth.uid);
       allow update, delete: if false;
     }
+
+    // Connection tokens: a user mints their own ephemeral QR token. Resolved only
+    // by the trusted resolveConnectionToken Function (admin) — never client-read,
+    // never client-mutated (consumption happens server-side).
+    match /connectionTokens/{token} {
+      allow read: if false;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
   }
 }

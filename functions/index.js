@@ -11,6 +11,7 @@ const {
   blockUserCallable,
   deleteMessageForEveryoneCallable,
 } = require('./safety');
+const { resolveConnectionTokenCallable } = require('./connection-resolve');
 
 admin.initializeApp();
 
@@ -30,3 +31,4 @@ exports.leaveGroup = onCall(async (request) => leaveGroupCallable(request, calla
 exports.sharePrivateRating = onCall(async (request) => sharePrivateRatingCallable(request, callableDeps()));
 exports.blockUser = onCall(async (request) => blockUserCallable(request, callableDeps()));
 exports.deleteMessageForEveryone = onCall(async (request) => deleteMessageForEveryoneCallable(request, callableDeps()));
+exports.resolveConnectionToken = onCall(async (request) => resolveConnectionTokenCallable(request, callableDeps()));
