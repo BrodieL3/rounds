@@ -37,6 +37,13 @@ module.exports = {
           photosPermission: 'Allow Rounds to access your photos so you can send them in chats.',
         },
       ],
+      [
+        'expo-camera',
+        {
+          cameraPermission: 'Allow Rounds to use the camera to scan a friend’s connect code.',
+          recordAudioAndroid: false,
+        },
+      ],
     ],
     extra: {
       posthogProjectToken: process.env.POSTHOG_PROJECT_TOKEN,
