@@ -12,7 +12,7 @@ import {
 import AppIcon from '../../components/ui/AppIcon';
 import { router } from 'expo-router';
 import {
-  collection, doc, limit, onSnapshot, query, updateDoc, where,
+  collection, doc, limit, onSnapshot, orderBy, query, updateDoc, where,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,6 +31,9 @@ const {
 } = require('../../lib/feed-engagement');
 const { getMediaReferences, resolveMediaReferencesAsync } = require('../../lib/media-display');
 const { buildFeedViewItems, createSeedVenueLookup } = require('../../lib/feed-view-model');
+const { mergeFeed } = require('../../lib/feed-merge');
+const { tonightWindow } = require('../../lib/events/tonight-window');
+const { buildEventItemDisplay } = require('../../lib/events/event-display');
 const { buildVenueCatalog, getAttribution } = require('../../lib/venue-catalog');
 const venueSeed = require('../../assets/venues.json');
 const { usePostHog } = require('posthog-react-native');
@@ -243,6 +246,30 @@ export function DiscoverItem({ item, city, currentUserId }) {
   );
 }
 
+// Tonight's event-post — the imminence-tier card that leads Discover. Visually
+// distinct from Review posts (TONIGHT pill, accent border). Tapping opens the venue.
+export function DiscoverEventCard({ item }) {
+  const display = buildEventItemDisplay(item);
+  return (
+    <Pressable
+      style={styles.eventCard}
+      onPress={() => router.push(`/venue/${encodeURIComponent(item.venueId)}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`${display.title} at ${display.venueName} tonight`}
+    >
+      <View style={styles.eventTopRow}>
+        <View style={styles.tonightPill}>
+          <Text style={styles.tonightPillText}>TONIGHT</Text>
+        </View>
+        {display.time ? <Text style={styles.eventTime}>{display.time}</Text> : null}
+      </View>
+      <Text style={styles.eventTitle}>{display.icon} {display.title}</Text>
+      <Text style={styles.eventVenue}>{display.venueName}</Text>
+      <Text style={styles.eventMeta}>{display.metadata}</Text>
+    </Pressable>
+  );
+}
+
 // Tappable search affordance that hands off to the dedicated venue search.
 function SearchBar() {
   return (
@@ -273,6 +300,7 @@ export default function DiscoverScreen() {
   const following = useMemo(() => profile?.following || [], [profile?.following]);
 
   const [posts, setPosts] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -296,18 +324,48 @@ export default function DiscoverScreen() {
     return unsubscribe;
   }, [metro]);
 
-  const items = useMemo(
+  useEffect(() => {
+    // Tonight's events for this metro. The startTime range + metro equality use the
+    // deployed (metro, startTime) composite index; mergeFeed re-filters to the exact
+    // tonight window client-side so the card list never drifts from the query bounds.
+    const { startISO, endISO } = tonightWindow();
+    const eventsQuery = query(
+      collection(db, 'events'),
+      where('metro', '==', metro),
+      where('startTime', '>=', startISO),
+      where('startTime', '<=', endISO),
+      orderBy('startTime', 'asc'),
+      limit(50),
+    );
+    const unsubscribe = onSnapshot(
+      eventsQuery,
+      (snapshot) => setEvents(snapshot.docs.map((snap) => ({ id: snap.id, ...snap.data() }))),
+      () => setEvents([]),
+    );
+    return unsubscribe;
+  }, [metro]);
+
+  const postItems = useMemo(
     () => buildFeedViewItems({ posts, city: fallbackCity, following, venueLookup: VENUES_BY_CITY }),
     [posts, fallbackCity, following],
   );
+
+  // Imminence leads recency: tonight's events first (soonest-first, tagged 'event'),
+  // then the social post feed. mergeFeed with no posts yields just the events.
+  const tonightItems = useMemo(() => mergeFeed({ posts: [], events }), [events]);
+  const items = useMemo(() => [...tonightItems, ...postItems], [tonightItems, postItems]);
 
   return (
     <ScreenContainer style={styles.screen}>
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item.type === 'event' ? `event-${item.id}` : item.id)}
         renderItem={({ item }) => (
-          <DiscoverItem item={item} city={fallbackCity} currentUserId={currentUserId} />
+          item.type === 'event' ? (
+            <DiscoverEventCard item={item} />
+          ) : (
+            <DiscoverItem item={item} city={fallbackCity} currentUserId={currentUserId} />
+          )
         )}
         ListHeaderComponent={(
           <View style={styles.header}>
@@ -335,6 +393,34 @@ export default function DiscoverScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg },
+  // Tonight's event-post card — accent border + TONIGHT pill set it apart from
+  // the Review post rows below it in the same imminence-then-recency list.
+  eventCard: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  eventTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  tonightPill: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  tonightPillText: { color: COLORS.onAccent, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  eventTime: { color: COLORS.accent, fontSize: 14, fontWeight: '800' },
+  eventTitle: { color: COLORS.textPrimary, fontSize: 17, fontWeight: '800' },
+  eventVenue: { color: COLORS.textSecondary, fontSize: 15, fontWeight: '600', marginTop: 2 },
+  eventMeta: { color: COLORS.textMuted, fontSize: 13, marginTop: 6 },
   // Standalone header (the SectionList that used to supply the inset is gone),
   // so pad it by 20 to match the app's standard title position (e.g. My List).
   header: { paddingTop: 16, paddingHorizontal: 20 },
