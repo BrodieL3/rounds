@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppIcon from '../../../components/ui/AppIcon';
-import MapView, { Marker } from 'react-native-maps';
+import VenueMap from '../../../components/VenueMap';
 import {
   collection, addDoc, serverTimestamp,
   query, where, getDocs,
@@ -266,27 +266,8 @@ export default function VenueDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Location map — single pin on Apple Maps (provider default on iOS). Static
-          preview; the address row + Directions button own actual navigation. */}
-      {latitude != null && longitude != null ? (
-        <View style={styles.mapCard}>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude,
-              longitude,
-              latitudeDelta: 0.008,
-              longitudeDelta: 0.008,
-            }}
-            scrollEnabled={false}
-            zoomEnabled={false}
-            rotateEnabled={false}
-            pitchEnabled={false}
-          >
-            <Marker coordinate={{ latitude, longitude }} title={venue.name} />
-          </MapView>
-        </View>
-      ) : null}
+      {/* Location map — single pin (native: Apple Maps; web: placeholder). */}
+      <VenueMap latitude={latitude} longitude={longitude} name={venue.name} />
 
       {/* Community signal — only what we actually have (OSM venues carry no Google data) */}
       {recentRatings.length > 0 && (
@@ -482,14 +463,6 @@ const styles = StyleSheet.create({
   addressRow: { marginBottom: 16 },
   address: { color: COLORS.textSecondary, fontSize: 15, lineHeight: 22 },
   mapLink: { color: COLORS.accent, fontSize: 14, fontWeight: '700', marginTop: 4 },
-  mapCard: {
-    height: 160,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-    backgroundColor: COLORS.bgElevated,
-  },
-  map: { ...StyleSheet.absoluteFillObject },
   communityRow: {
     flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap',
     marginBottom: 16,
