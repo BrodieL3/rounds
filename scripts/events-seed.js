@@ -30,6 +30,7 @@ const { getFirestore } = require('firebase-admin/firestore');
 const venueSeed = require('../assets/venues.json');
 const { buildEventId } = require('../lib/events/event-id');
 const { buildEventPayload, buildHappyHourPayload } = require('../lib/events/event-payload');
+const { localDateOf } = require('../lib/events/event-date');
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'rounds-8d89f';
 const APPLY = process.argv.includes('--apply');
@@ -66,13 +67,6 @@ function atLocal(daysFromNow, hour) {
   return d;
 }
 
-function localDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 // Build the full set of intended writes from the curated venues.
 function planWrites(venues) {
   const events = [];
@@ -82,7 +76,7 @@ function planWrites(venues) {
     for (const [dayOffset, tplIndex] of [[i % 7, i % EVENT_TEMPLATES.length], [(i + 3) % 7, (i + 2) % EVENT_TEMPLATES.length]]) {
       const tpl = EVENT_TEMPLATES[tplIndex];
       const startTime = atLocal(dayOffset, tpl.hour);
-      const localDate = localDateStr(startTime);
+      const localDate = localDateOf(startTime);
       const payload = buildEventPayload({
         venue,
         title: tpl.title,
