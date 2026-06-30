@@ -1,0 +1,149 @@
+# Rounds — Pairwise Comparison + Personal Ranking E2E for the iOS DEV CLIENT.
+#
+# Surface under test: app/compare.js (the "Which was better?" pairwise screen that
+# feeds lib/ranking.js Elo via lib/personal-rankings.js), reached from My List.
+#
+# PREAMBLE (lines through the friends-screen-title assertion) is copied VERBATIM
+# from devclient-auth-login.yaml — launches the dev client, loads the emulator
+# bundle (Metro :8082), dismisses the dev menu, logs in as alice@example.com, and
+# lands on Friends. Same prereqs as that flow:
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. node scripts/e2e-auth-seed.js && node scripts/friends-seed.js
+#   3. EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo start --dev-client --port 8082
+#   4. iOS Simulator booted with the dev client installed
+#
+# DATA REALITY (see findings): the seed creates NO ratings and NO `city` on alice's
+# profile, so the Compare screen cannot produce a pair. Per the brief's fallback,
+# this flow asserts the needs-more-data ("rank unlocks at 5 visits") gate on My
+# List — the canonical entry point to Compare — instead of a live comparison.
+# The would-be comparison steps are encoded as a data-gated runFlow block that is a
+# no-op today and auto-activates once enough ratings exist.
+#
+# Run: ~/.maestro/bin/maestro test .maestro/compare.yaml
+appId: com.eidorbeel.rounds
+env:
+  E2E_EMAIL: "alice@example.com"
+  E2E_PASSWORD: "Test1234!"
+---
+# ════════════════════ PREAMBLE (verbatim from devclient-auth-login.yaml) ════════════════════
+- launchApp:
+    clearState: true
+# Two possible entry states into the dev client:
+#  (A) it auto-reopens its last URL behind an "Open in rounds?" dialog → confirm it.
+#  (B) plain launcher listing discovered Metro servers → tap the emulator one (:8082).
+- runFlow:
+    when:
+      visible: "Open in"
+    commands:
+      - tapOn:
+          text: "^Open$"
+- runFlow:
+    when:
+      visible:
+        text: "http://localhost:8082"
+    commands:
+      - tapOn:
+          text: "http://localhost:8082"
+
+# On a fresh load the dev client shows a one-time "developer menu" sheet over the
+# app. First bundle build can take a while, so wait generously for its Continue
+# button, then dismiss it to reveal the app.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 120000
+- tapOn: "Continue"
+# "Continue" advances into the full dev menu; close it via the X (top-right) to
+# reveal the app underneath.
+- tapOn:
+    point: "91%, 47%"
+
+# Unauthenticated entry routes to /login.
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 60000
+
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_PASSWORD}"
+# hideKeyboard is unreliable on the iOS dev client — tap the (non-interactive)
+# title to dismiss the keyboard instead.
+- tapOn:
+    id: "login-title"
+
+- tapOn:
+    id: "login-submit"
+
+# Success: login submit unmounts AND the Friends surface renders.
+- extendedWaitUntil:
+    notVisible:
+      id: "login-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 30000
+# ════════════════════ END PREAMBLE ════════════════════
+
+# Navigate to the My List tab (the canonical entry to Compare via "Rank more" /
+# "Compare bars"). NO tab in app/(tabs)/_layout.js carries a testID, so we tap by
+# the accessibilityLabel React Navigation auto-generates on iOS for the 4th of 5
+# tabs (tabBarLabel is ''):  "<label>, tab, <index+1> of <count>"  →  ", tab, 4 of 5".
+# GAP: this is position-derived; it breaks if tab order/count changes. A
+# `tabBarButtonTestID` (e.g. "tab-list") on each tab would make this stable.
+- extendedWaitUntil:
+    visible:
+      text: ".*tab, 4 of 5.*"
+    timeout: 15000
+- tapOn:
+    text: ".*tab, 4 of 5.*"
+
+# Landed on My List (app/(tabs)/list.js). Its screen title is the only stable text
+# here — the screen itself has NO testIDs.
+- extendedWaitUntil:
+    visible:
+      text: "My List"
+    timeout: 20000
+
+# NEEDS-MORE-DATA assertion (the brief's fallback): alice has 0 logged ratings, so
+# the ranked area renders its locked gate. This proves Compare is correctly gated
+# behind the rank-unlock threshold and that the seed cannot produce a pair.
+- extendedWaitUntil:
+    visible:
+      text: ".*rank unlocks at 5 visits.*"
+    timeout: 20000
+
+# ─────────────── DATA-GATED COMPARISON (no-op with current seed) ───────────────
+# Once enough ratings exist AND the profile carries a `city` (see Bug #1), My List
+# unlocks and shows a "Rank more" / "Compare bars" button into app/compare.js.
+# This block auto-activates then; it is skipped today because that button is absent.
+# NOTE: the compare buttons ("Too tough" + two venue-name buttons) have NO testID,
+# so the only stable selector on the Compare screen is the literal "Too tough" text
+# and the per-pair venue names. GAP: add testIDs (e.g. compare-pick-a / compare-pick-b
+# / compare-too-tough / compare-title) so this can be driven deterministically.
+- runFlow:
+    when:
+      visible:
+        text: ".*(Rank more|Compare bars).*"
+    commands:
+      - tapOn:
+          text: ".*(Rank more|Compare bars).*"
+      # Compare screen header (app/compare.js: <Text>Which was better?</Text>).
+      - extendedWaitUntil:
+          visible:
+            text: "Which was better?"
+          timeout: 20000
+      # Make a comparison via the canonical too-tough escape hatch (stable text;
+      # venue-name buttons are dynamic per pair).
+      - tapOn:
+          text: "Too tough"
+      # Expected next state: either a fresh pair ("Which was better?" persists) or
+      # the cohort is fully placed ("All caught up!"). Assert the surface advanced
+      # without crashing — the cohort eyebrow + one of the two headers remains.
+      - extendedWaitUntil:
+          visible:
+            text: ".*(Which was better\\?|All caught up!).*"
+          timeout: 20000

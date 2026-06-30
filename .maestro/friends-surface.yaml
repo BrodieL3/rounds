@@ -1,0 +1,145 @@
+# Rounds — Friends + DMs/conversations surface E2E for the iOS DEV CLIENT.
+#
+# PREAMBLE (launch → login → land on Friends) is copied VERBATIM from
+# devclient-auth-login.yaml — the proven harness. Do not edit it here; keep it
+# in sync with that file.
+#
+# Prereqs (same as devclient-auth-login.yaml):
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. node scripts/e2e-auth-seed.js && node scripts/friends-seed.js
+#   3. EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo start --dev-client --port 8082
+#   4. iOS Simulator booted with the dev client installed
+#
+# SEED REALITY: friends-seed.js creates ONLY users/test-alice (no conversations,
+# no friendships, no friend requests). So every surface here renders its EMPTY
+# state. This flow asserts those empty states deterministically.
+#
+# Run: ~/.maestro/bin/maestro test .maestro/friends-surface.yaml
+appId: com.eidorbeel.rounds
+env:
+  E2E_EMAIL: "alice@example.com"
+  E2E_PASSWORD: "Test1234!"
+---
+# ============================================================================
+# PREAMBLE — verbatim from devclient-auth-login.yaml
+# ============================================================================
+- launchApp:
+    clearState: true
+# Two possible entry states into the dev client:
+#  (A) it auto-reopens its last URL behind an "Open in rounds?" dialog → confirm it.
+#  (B) plain launcher listing discovered Metro servers → tap the emulator one (:8082).
+- runFlow:
+    when:
+      visible: "Open in"
+    commands:
+      - tapOn:
+          text: "^Open$"
+- runFlow:
+    when:
+      visible:
+        text: "http://localhost:8082"
+    commands:
+      - tapOn:
+          text: "http://localhost:8082"
+
+# On a fresh load the dev client shows a one-time "developer menu" sheet over the
+# app. First bundle build can take a while, so wait generously for its Continue
+# button, then dismiss it to reveal the app.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 120000
+- tapOn: "Continue"
+# "Continue" advances into the full dev menu; close it via the X (top-right) to
+# reveal the app underneath.
+- tapOn:
+    point: "91%, 47%"
+
+# Unauthenticated entry routes to /login.
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 60000
+
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_PASSWORD}"
+# hideKeyboard is unreliable on the iOS dev client — tap the (non-interactive)
+# title to dismiss the keyboard instead.
+- tapOn:
+    id: "login-title"
+
+- tapOn:
+    id: "login-submit"
+
+# Success: login submit unmounts AND the Friends surface renders.
+- extendedWaitUntil:
+    notVisible:
+      id: "login-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 30000
+
+# ============================================================================
+# SURFACE — Friends inbox + Friend requests + New group
+# ============================================================================
+# NOTE: `friends-screen-title` is the ONLY testID on this entire surface. Every
+# other selector below falls back to visible label text / accessibilityLabel
+# because the elements have NO testID (see report — these are findings/gaps).
+
+# --- 1. Friends inbox renders in its EMPTY state (no conversations seeded) ---
+# Empty card copy comes from FRIENDS_EMPTY_INBOX in lib/friends/inbox-display.js.
+# GAP: the empty card / "Start a chat" CTA have no testID — asserting via text.
+- extendedWaitUntil:
+    visible:
+      text: "No conversations yet"
+    timeout: 20000
+- assertVisible:
+    text: "Add friends, then start a DM or group chat to plan your next night out."
+
+# --- 2. Open the Friend requests screen ---
+# Header icon button has accessibilityLabel "Friend requests" (no testID).
+- tapOn:
+    text: "Friend requests"
+# Friend requests screen: title + empty state (no requests seeded).
+# GAP: screen title and ListEmptyComponent have no testID — asserting via text.
+- extendedWaitUntil:
+    visible:
+      text: "No pending requests"
+    timeout: 20000
+- assertVisible:
+    text: "When someone sends you a friend request, it shows up here."
+
+# Back to Friends. GlassBackButton exposes accessibilityLabel "Back" (no testID).
+- tapOn:
+    text: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 20000
+
+# --- 3. Open the New (group) conversation composer ---
+# Empty-state CTA "Start a chat" → /conversation/new. Unique visible text.
+- tapOn:
+    text: "Start a chat"
+# New conversation screen: "Create group" header + empty friend picker
+# (no friendships seeded for test-alice).
+# GAP: header title, friend rows, and create button have no testID.
+- extendedWaitUntil:
+    visible:
+      text: "Create group"
+    timeout: 20000
+- assertVisible:
+    text: "No Friends found"
+
+# Back to Friends, confirm we land on the inbox again.
+- tapOn:
+    text: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 20000

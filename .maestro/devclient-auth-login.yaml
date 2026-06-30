@@ -1,0 +1,81 @@
+# Rounds — Auth sign-in E2E for the iOS DEV CLIENT (com.eidorbeel.rounds).
+#
+# Adapted from auth-login.yaml. The dev machine runs an EAS dev client, not
+# Expo Go, so:
+#   - appId is the app bundle id, not host.exp.Exponent
+#   - we deep-link the dev client to a Metro server started with
+#     EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 (port 8082) so the app talks to the
+#     Firebase emulator the seed scripts populate — NOT prod.
+#
+# Prereqs:
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. node scripts/e2e-auth-seed.js && node scripts/friends-seed.js
+#   3. EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo start --dev-client --port 8082
+#   4. iOS Simulator booted with the dev client installed
+#
+# Run: ~/.maestro/bin/maestro test .maestro/devclient-auth-login.yaml
+appId: com.eidorbeel.rounds
+env:
+  E2E_EMAIL: "alice@example.com"
+  E2E_PASSWORD: "Test1234!"
+---
+- launchApp:
+    clearState: true
+# Two possible entry states into the dev client:
+#  (A) it auto-reopens its last URL behind an "Open in rounds?" dialog → confirm it.
+#  (B) plain launcher listing discovered Metro servers → tap the emulator one (:8082).
+- runFlow:
+    when:
+      visible: "Open in"
+    commands:
+      - tapOn:
+          text: "^Open$"
+- runFlow:
+    when:
+      visible:
+        text: "http://localhost:8082"
+    commands:
+      - tapOn:
+          text: "http://localhost:8082"
+
+# On a fresh load the dev client shows a one-time "developer menu" sheet over the
+# app. First bundle build can take a while, so wait generously for its Continue
+# button, then dismiss it to reveal the app.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 120000
+- tapOn: "Continue"
+# "Continue" advances into the full dev menu; close it via the X (top-right) to
+# reveal the app underneath.
+- tapOn:
+    point: "91%, 47%"
+
+# Unauthenticated entry routes to /login.
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 60000
+
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_PASSWORD}"
+# hideKeyboard is unreliable on the iOS dev client — tap the (non-interactive)
+# title to dismiss the keyboard instead.
+- tapOn:
+    id: "login-title"
+
+- tapOn:
+    id: "login-submit"
+
+# Success: login submit unmounts AND the Friends surface renders.
+- extendedWaitUntil:
+    notVisible:
+      id: "login-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 30000

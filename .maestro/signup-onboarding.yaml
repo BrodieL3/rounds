@@ -1,0 +1,130 @@
+# Rounds — NEW-USER signup + onboarding E2E for the iOS DEV CLIENT
+# (com.eidorbeel.rounds).
+#
+# Shares the proven pre-login PREAMBLE with devclient-auth-login.yaml (launch →
+# load the emulator bundle on Metro :8082 → dismiss the dev menu → land on
+# /login), then DIVERGES: instead of logging in as alice, it taps through to
+# /signup, creates a brand-new account against the Firebase Auth emulator, and
+# completes /onboarding (DOB ≥ 18, display name, unique username), asserting it
+# lands on Friends.
+#
+# A fresh, unique email + username are generated per run (Maestro evaluates ${}
+# as JavaScript) so re-runs never collide with auth/email-already-in-use or a
+# taken username left over from a prior run.
+#
+# Prereqs (identical to devclient-auth-login.yaml):
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. node scripts/e2e-auth-seed.js && node scripts/friends-seed.js
+#   3. EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo start --dev-client --port 8082
+#   4. iOS Simulator booted with the dev client installed
+#
+# Run: ~/.maestro/bin/maestro test .maestro/signup-onboarding.yaml
+appId: com.eidorbeel.rounds
+---
+- launchApp:
+    clearState: true
+# Two possible entry states into the dev client:
+#  (A) it auto-reopens its last URL behind an "Open in rounds?" dialog → confirm it.
+#  (B) plain launcher listing discovered Metro servers → tap the emulator one (:8082).
+- runFlow:
+    when:
+      visible: "Open in"
+    commands:
+      - tapOn:
+          text: "^Open$"
+- runFlow:
+    when:
+      visible:
+        text: "http://localhost:8082"
+    commands:
+      - tapOn:
+          text: "http://localhost:8082"
+
+# On a fresh load the dev client shows a one-time "developer menu" sheet over the
+# app. First bundle build can take a while, so wait generously for its Continue
+# button, then dismiss it to reveal the app.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 120000
+- tapOn: "Continue"
+# "Continue" advances into the full dev menu; close it via the X (top-right) to
+# reveal the app underneath.
+- tapOn:
+    point: "91%, 47%"
+
+# Unauthenticated entry routes to /login.
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 60000
+
+# ── DIVERGENCE: login → signup → onboarding → Friends ─────────────────────────
+
+# Generate a unique suffix once and reuse it for both email and username so each
+# run is fresh (email: avoids auth/email-already-in-use; username: avoids the
+# "That username is taken" guard in lib/onboarding.js).
+- evalScript: ${output.suffix = Math.floor(Math.random() * 1000000000)}
+
+# From /login, follow the "Create an account" link to /signup.
+- tapOn:
+    id: "login-to-signup"
+- extendedWaitUntil:
+    visible:
+      id: "signup-title"
+    timeout: 30000
+
+# Create the new account. Password satisfies the 6+ char Firebase minimum
+# (lib/auth-signup.js PASSWORD_MIN_LENGTH).
+- tapOn:
+    id: "signup-email-input"
+- inputText: "e2e+onboard${output.suffix}@example.com"
+- tapOn:
+    id: "signup-password-input"
+- inputText: "Test1234!"
+# hideKeyboard is unreliable on the iOS dev client — tap the (non-interactive)
+# title to dismiss the keyboard before pressing submit.
+- tapOn:
+    id: "signup-title"
+- tapOn:
+    id: "signup-submit"
+
+# Success: signUp resolves and signup.js does router.replace('/onboarding').
+# New accounts have no users/{uid} doc yet → isOnboarded is false → onboarding.
+- extendedWaitUntil:
+    notVisible:
+      id: "signup-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-title"
+    timeout: 30000
+
+# Complete onboarding. DOB makes the user ≥ MIN_AGE (18); validateOnboardingInput
+# is day-granular so a 1995 birthdate is comfortably an adult on 2026-06-29.
+- tapOn:
+    id: "onboarding-dob-input"
+- inputText: "1995-06-15"
+- tapOn:
+    id: "onboarding-displayName-input"
+- inputText: "E2E Tester"
+- tapOn:
+    id: "onboarding-username-input"
+# Username regex is ^[a-z0-9_]+$, 3–20 chars; "e2euser" + digits stays in range.
+- inputText: "e2euser${output.suffix}"
+# Dismiss the keyboard so onboarding-submit is tappable (see login note above).
+- tapOn:
+    id: "onboarding-title"
+- tapOn:
+    id: "onboarding-submit"
+
+# Success: persistOnboarding writes the profile (onboardingComplete: true),
+# reloadProfile flips isOnboarded, and onboarding.js does
+# router.replace('/(tabs)/friends'). Assert submit unmounts AND Friends renders.
+- extendedWaitUntil:
+    notVisible:
+      id: "onboarding-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 30000

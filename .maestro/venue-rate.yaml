@@ -1,0 +1,187 @@
+# Rounds — Venue browsing → Rating creation E2E for the iOS DEV CLIENT.
+#
+# Surface: browse a seeded venue (My List → Browse) → venue detail
+# (/venue/[id]) → "Log a visit" → rating screen (/venue/[id]/rate).
+# Asserts the rating screen and its controls (loved/fine/disliked, notes,
+# submit) render, and that selecting a sentiment surfaces the live Preview.
+#
+# PREAMBLE (lines through the `friends-screen-title` assertion) is copied
+# VERBATIM from .maestro/devclient-auth-login.yaml — the proven harness that
+# launches the dev client, loads the :8082 emulator bundle, dismisses the dev
+# menu, logs in as alice@example.com, and lands on Friends.
+#
+# TESTID GAP: this whole surface (tab bar, VenueRow, venue detail, rate screen)
+# ships NO testIDs — only auth/onboarding/friends do. So every step AFTER the
+# preamble matches by visible text / accessibility label, not `id:`. Those are
+# best-effort selectors; see the accompanying report for the full testID-gap
+# list that blocks fully id-based navigation here.
+#
+# Prereqs (identical to the auth harness):
+#   1. firebase emulators:start --only auth,firestore,functions,storage
+#   2. node scripts/e2e-auth-seed.js && node scripts/friends-seed.js
+#   3. EXPO_PUBLIC_USE_FIREBASE_EMULATORS=1 npx expo start --dev-client --port 8082
+#   4. iOS Simulator booted with the dev client installed
+#
+# Run: ~/.maestro/bin/maestro test .maestro/venue-rate.yaml
+appId: com.eidorbeel.rounds
+env:
+  E2E_EMAIL: "alice@example.com"
+  E2E_PASSWORD: "Test1234!"
+  # A real seeded Boston venue (assets/venues.json → cities.boston). Used as the
+  # search needle so the catalog filters to a single tappable row (no scrolling).
+  E2E_VENUE_NAME: "Treehouse"
+---
+- launchApp:
+    clearState: true
+# Two possible entry states into the dev client:
+#  (A) it auto-reopens its last URL behind an "Open in rounds?" dialog → confirm it.
+#  (B) plain launcher listing discovered Metro servers → tap the emulator one (:8082).
+- runFlow:
+    when:
+      visible: "Open in"
+    commands:
+      - tapOn:
+          text: "^Open$"
+- runFlow:
+    when:
+      visible:
+        text: "http://localhost:8082"
+    commands:
+      - tapOn:
+          text: "http://localhost:8082"
+
+# On a fresh load the dev client shows a one-time "developer menu" sheet over the
+# app. First bundle build can take a while, so wait generously for its Continue
+# button, then dismiss it to reveal the app.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 120000
+- tapOn: "Continue"
+# "Continue" advances into the full dev menu; close it via the X (top-right) to
+# reveal the app underneath.
+- tapOn:
+    point: "91%, 47%"
+
+# Unauthenticated entry routes to /login.
+- extendedWaitUntil:
+    visible:
+      id: "login-title"
+    timeout: 60000
+
+- tapOn:
+    id: "login-email-input"
+- inputText: "${E2E_EMAIL}"
+- tapOn:
+    id: "login-password-input"
+- inputText: "${E2E_PASSWORD}"
+# hideKeyboard is unreliable on the iOS dev client — tap the (non-interactive)
+# title to dismiss the keyboard instead.
+- tapOn:
+    id: "login-title"
+
+- tapOn:
+    id: "login-submit"
+
+# Success: login submit unmounts AND the Friends surface renders.
+- extendedWaitUntil:
+    notVisible:
+      id: "login-submit"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "friends-screen-title"
+    timeout: 30000
+
+# ─────────────────────────────────────────────────────────────────────────────
+# END OF VERBATIM PREAMBLE — venue browse → rate begins here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1) Friends → My List tab. The tab bar is icon-only with hidden labels and NO
+#    testIDs (lib/navigation-shell.js tab order: Friends, Discover, Plus, List,
+#    Profile). My List is the 4th of 5 tabs, so we point-tap its slot near the
+#    bottom edge — mirroring the preamble's own point-tap pattern. GAP: tab
+#    buttons need testIDs (e.g. id:"tab-list") for a stable, resolution-proof tap.
+- tapOn:
+    point: "70%, 96%"
+
+# Confirm we actually landed on My List (not the Plus modal or Profile). "Browse
+# bars" + the "My List" title are unique to app/(tabs)/list.js.
+- extendedWaitUntil:
+    visible:
+      text: "My List"
+    timeout: 30000
+- assertVisible:
+    text: "Browse bars"
+
+# 2) Filter the seeded catalog to one venue via the inline search field. The
+#    TextInput has no testID; we match its accessibilityLabel ("Search bars by
+#    name"). GAP: search field needs id:"list-search-input".
+- tapOn:
+    text: "Search bars by name"
+- inputText: "${E2E_VENUE_NAME}"
+
+# The catalog collapses to the matching row(s); tap the venue to open its detail
+# screen (/venue/[id], app/venue/[id]/index.js). GAP: VenueRow needs a testID
+# (e.g. id:"venue-row-${id}") — matching by venue name is data-coupled.
+- extendedWaitUntil:
+    visible:
+      text: "${E2E_VENUE_NAME}"
+    timeout: 20000
+- tapOn:
+    text: "${E2E_VENUE_NAME}"
+
+# 3) Venue DETAIL screen. "Log a visit" + "Report miscategorized" are unique to
+#    the detail screen and confirm we navigated into /venue/[id], not /rate.
+- extendedWaitUntil:
+    visible:
+      text: "Log a visit"
+    timeout: 30000
+- assertVisible:
+    text: "Report miscategorized"
+# GAP: rate CTA needs id:"venue-log-visit"; report CTA needs id:"venue-report".
+- tapOn:
+    text: "Log a visit"
+
+# 4) RATING screen (/venue/[id]/rate, app/venue/[id]/rate.js). "How was it?" is
+#    unique to this screen and is our anchor that the rate flow rendered.
+- extendedWaitUntil:
+    visible:
+      text: "How was it?"
+    timeout: 30000
+
+# All three sentiment controls render (sentimentButton: 'loved'/'fine'/'disliked').
+# GAP: each needs id:"rate-sentiment-loved" / "...-fine" / "...-disliked".
+- assertVisible:
+    text: "Loved it"
+- assertVisible:
+    text: "It was fine"
+- assertVisible:
+    text: "Didn't like it"
+
+# Notes input + submit render. GAP: notes needs id:"rate-notes-input",
+# submit needs id:"rate-submit".
+- assertVisible:
+    text: "Notes (optional)"
+- assertVisible:
+    text: "Submit"
+
+# Photo affordance renders but we DO NOT exercise it: the iOS simulator has no
+# camera and "+ Add photos" opens the OS image picker, which would block the
+# flow. GAP/limitation: media capture/selection is unverifiable in CI on the
+# simulator; assert presence only.
+- assertVisible:
+    text: "+ Add photos"
+
+# 5) Select a sentiment and verify the control responds: choosing "Loved it"
+#    mounts the live Preview card (rendered only when `sentiment` is set).
+- tapOn:
+    text: "Loved it"
+- extendedWaitUntil:
+    visible:
+      text: "Preview"
+    timeout: 15000
+
+# Stop before Submit: a real submit writes a Rating + Post projection to
+# Firestore (createRatingWithProjectionAsync) and pops a native Alert. Asserting
+# the controls render + a sentiment selection takes effect satisfies this
+# surface's E2E scope without seeding write side-effects.
