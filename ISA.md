@@ -79,7 +79,7 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
 - [ ] ISC-18: The ranked list is shown greyed with "rank unlocks at 5 visits" until N≥5. Probe: Read the list screen gating logic.
 - [ ] ISC-19: At N≥5 logs, the personal ranked list unlocks and orders venues via the existing Elo (`lib/ranking.js`). Probe: device check at 5 logs.
 - [ ] ISC-20: Pairwise comparison flow (`app/compare.js`) is reachable and feeds the ranking. Probe: device check.
-- [ ] ISC-21: `app/post/new.js` placeholder is either implemented or removed from the Plus CTA (no dead-end). Probe: Grep "placeholder" gone from reachable routes.
+- [x] ISC-21: `app/post/new.js` placeholder is either implemented or removed from the Plus CTA (no dead-end). Probe: Grep "placeholder" gone from reachable routes. [2026-06-24: redirects to /add; placeholder removed]
 - [ ] ISC-22: Search (`app/search.js`) returns the seeded city's venues. Probe: device check the search is wired to the venue store.
 - [ ] ISC-23: Anti: logging the same bar twice does not corrupt the ranking or create a duplicate canonical identity.
 - [ ] ISC-24: Antecedent: a brand-new user with zero friends can complete the entire loop (find → log → rate → history) with no other users present.
@@ -101,10 +101,10 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
 - [ ] ISC-36: `/`-equivalent health: the app boots to a usable screen from cold install. Probe: device check.
 
 ### F. Hygiene (un-rot the safety net)
-- [ ] ISC-37: The 3 rotted test suites (`path-alias-config`, `figma-route-shell-ui`, `navigation-shell`) are reconciled to the real auth-gated architecture. Probe: `npm test` → 0 failed suites.
-- [ ] ISC-38: `npm test` is green (0 failing suites). Probe: test run.
-- [ ] ISC-39: `npx expo-doctor` stays 18/18. Probe: command.
-- [ ] ISC-40: `npx expo export --platform web` still bundles clean. Probe: command.
+- [x] ISC-37: The 3 rotted test suites (`path-alias-config`, `figma-route-shell-ui`, `native-ui-media-adapter-ui`) are reconciled to the real auth-gated architecture. Probe: `npm test` → 0 failed suites. [2026-06-24: 5 stale assertions reconciled — all confirmed rot, not regressions]
+- [x] ISC-38: `npm test` is green (0 failing suites). Probe: test run. [2026-06-24: 615 passing, 0 failing]
+- [x] ISC-39: `npx expo-doctor` stays 18/18. Probe: command. [2026-06-24: 18/18 after expo-location add]
+- [x] ISC-40: `npx expo export --platform web` still bundles clean. Probe: command. [2026-06-24: exit 0]
 - [ ] ISC-41: Firestore rules cover the beta read/write paths (ratings, venues, users). Probe: `npm run test:rules`.
 - [ ] ISC-42: Anti: no secret (Figma token, Firebase keys) committed during the sprint. Probe: scan diff.
 
@@ -121,7 +121,7 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
 - [ ] ISC-52: Anti: no implementation agent is dispatched before ISC-43..51 are answered.
 
 ### H. VERIFY-pass additions (Advisor commitment-boundary review)
-- [ ] ISC-53: City bar list offers a **distance-from-me sort** (client-side haversine on seeded coords; one `expo-location` permission request). KEPT from location scope — nightlife feel, ~a few lines. Probe: Grep haversine + location permission.
+- [x] ISC-53: City bar list offers a **distance-from-me sort** (client-side haversine on seeded coords; one `expo-location` permission request). KEPT from location scope — nightlife feel, ~a few lines. Probe: Grep haversine + location permission. [2026-06-24: lib/geo.js + add.js Nearest toggle; expo-location ~19.0.8 added; needs device GPS to fully confirm]
 - [ ] ISC-54: A new user's **first session is guided toward their first log** (empty-state walks them to log a bar) — the app is not a dead feed at zero logs. Probe: device check of first run.
 - [ ] ISC-55: Either a small set of plausible **seeded ranked entries** exists OR a fast guided path-to-5-logs, so the loop isn't dead before the N≥5 unlock. Probe: device check / Read seeding.
 - [ ] ISC-56: OSM bar/club **density + metadata for the chosen city is spot-checked BEFORE** committing it as the demo surface (≥50 real bars, usable names). Probe: Overpass count + manual review.
@@ -183,6 +183,34 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
 - 2026-06-17: Theme CHOSEN — **05 Minimal Mono Luxe** (near-monochrome `#111`/`#E8E2D6` + single lime `#C0FF3E` micro-accent, tight Inter, type-and-space driven). ISC-45 satisfied. Figma-overhaul branch should REDIRECT from the light `#F0F0F0` theme to this dark token theme (ISC-48). Preview rendered via headless Chromium (Interceptor still uninstallable on this box) at `docs/design/theme-05.png`.
 
 - 2026-06-17 — **CORE BETA LOOP CODE-COMPLETE + merged to `main`** (`bca237c`): F1 (email signup + onboarding 18+/username + `isOnboarded` routing + 05 theme), F2 (238 OSM Boston+Cambridge venues, Google data removed), F3 (browse/search catalog → log a visit + rating → My-List history → **rank-unlock-at-5** via the existing Elo + compare). Suite: 521 pass, only the 3 rotted suites fail (ISC-37 pending). **On-device verification DEFERRED** — no browser/device on this box; UI/flow ISCs are code+test-verified but need Expo Go / TestFlight to mark `[x]`. Remaining to ship: on-device smoke test; EAS dev build + Apple Sign-In + TestFlight + nearest-bar sort (Apple-gated); ISC-37 un-rot; seed cohort refinement; polish (DOB date-picker, Cambridge neighborhood subtitles).
+
+- 2026-06-24 ("zero to one" build session) — Closed several remaining beta gaps on the
+  already-code-complete loop (bca237c): **ISC-37/38** the 3 rotted suites (`path-alias-config`,
+  `figma-route-shell-ui`, `native-ui-media-adapter-ui`) reconciled to the real auth-gated
+  architecture — confirmed all 5 failing assertions were ROT (asserted the pre-auth Figma shell:
+  static Redirect, login.js-must-not-exist, old icon-padding props, a stale Discover avatar
+  string) not regressions (Discover correctly uses MediaImage). **ISC-21** `app/post/new.js`
+  dead-end killed — the deferred "Create a post" action now redirects to `/add` (the hero log
+  flow) instead of a placeholder. **ISC-40** `expo export --platform web` verified clean (exit 0).
+  **ISC-53** nearest-bar distance sort built by Forge + verified: `lib/geo.js` (pure haversine +
+  sortVenuesByDistance + formatDistance, 11 green tests) + Default/Nearest toggle wired into
+  `app/add.js` with defensive `expo-location` (guarded require, graceful fallback). Added
+  `expo-location ~19.0.8` (SDK-54-compatible; Expo Go bundles it) — dev server needs a restart to
+  pick it up. **Full suite now 615 passing, 0 failing (ISC-38 ✓); expo-doctor 18/18 (ISC-39 ✓).**
+  Ranking Tier A (ADR 008) + comparison-log schema (ADR 009) landed earlier this day; rules deployed.
+  ENV-GATED, NOT done here (owner): on-device smoke test, EAS build + Apple Sign-In + TestFlight
+  (ISC-30..32, 49), since this box has no device/Apple/Interceptor (see 2026-06-16 INFRA GAP).
+
+- 2026-06-25 (ranking bug-fix — ISC-19 correctness) — Owner reported "existing ratings are not
+  sorted into a hierarchy." Reproduced deterministically: `buildStackRankings` early-returned an
+  UNRANKED list whenever there were 0 comparisons, and `hasPersonalRank` required a comparison —
+  so ratings alone never formed a hierarchy, and `list.js`/`profile.js` never passed
+  `sentimentByVenue`. Fix (ADR 008 §1 — ratings SEED, comparisons REFINE): a venue earns a
+  personal rank if it's rated (has a sentiment band) OR compared; both surfaces now thread
+  `sentimentByVenue` (built from the latest rating per venue). Result: rated venues order
+  loved(7–10) > fine(5–6.9) > disliked(0–4.9) with zero comparisons; comparisons refine within
+  band. RED→GREEN test added; full suite 619 pass. Note: the 5-log unlock gate (ISC-18) is
+  unchanged — under 5 logs still shows the locked card by design.
 
 ## Changelog
 

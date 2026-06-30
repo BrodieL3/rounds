@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
+const { FieldValue } = require('firebase-admin/firestore');
 const { createGroupConversationCallable } = require('./group-create');
 const {
   inviteToGroupCallable,
@@ -19,8 +20,8 @@ function callableDeps() {
   return {
     db: admin.firestore(),
     ErrorClass: HttpsError,
-    now: () => admin.firestore.FieldValue.serverTimestamp(),
-    FieldValue: admin.firestore.FieldValue,
+    now: () => FieldValue.serverTimestamp(),
+    FieldValue,
   };
 }
 

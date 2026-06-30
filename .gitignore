@@ -41,6 +41,7 @@ yarn-error.*
 /ios
 /android
 firestore-debug.log
+firebase-debug.log
 
 # local agent/MCP workspace
 mcp.json
