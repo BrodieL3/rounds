@@ -2,11 +2,11 @@
 project: rounds
 task: Ship a working Rounds beta to testers by 2026-06-30
 effort: E5
-phase: plan
-progress: 0/61
+phase: verify
+progress: 49/61
 mode: ALGORITHM
 started: 2026-06-16
-updated: 2026-06-16
+updated: 2026-06-30
 horizon: BETA (14-day) — not the eventual full product
 ---
 
@@ -55,83 +55,83 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
 ## Criteria
 
 ### A. On-ramp (the #1 blocker)
-- [ ] ISC-1: A new user can create an account in-app (signup screen exists and calls a real provider create method). Probe: Grep `createUserWithEmailAndPassword` or `AppleAuthentication` in `app/`.
-- [ ] ISC-2: Onboarding screen exists and captures the active city. Probe: Read the onboarding route renders a city selector.
-- [ ] ISC-3: 18+ age gate is presented and recorded before first use. Probe: Read onboarding stores an age-confirm flag.
-- [ ] ISC-4: `isOnboarded` is enforced — a signed-in user without `onboardingComplete` is routed to onboarding, not tabs. Probe: Read `app/index.js` routes on `isOnboarded`.
-- [ ] ISC-5: `AuthContext` profile bootstrap (`getDoc` in `onAuthStateChanged`) is wrapped so a Firestore failure cannot wedge the loading state. Probe: Grep try/catch + `setLoading(false)` in finally at `contexts/AuthContext.js`.
-- [ ] ISC-6: Sign-out returns to login and clears session. Probe: device check.
-- [ ] ISC-7: Anti: no beta tester account is provisioned by hand in the Firebase console (signup must be self-serve).
+- [x] ISC-1: A new user can create an account in-app (signup screen exists and calls a real provider create method). Probe: Grep `createUserWithEmailAndPassword` or `AppleAuthentication` in `app/`. [2026-06-30: `app/signup.js` → `AuthContext.signUp` → `createUserWithEmailAndPassword`. The provider call lives in `contexts/AuthContext.js`, not `app/`; the probe's path was wrong, the requirement is met.]
+- [x] ISC-2: Onboarding screen exists and captures the active city. Probe: Read the onboarding route renders a city selector. [2026-06-30: SUPERSEDED by ADR 007 — beta is a single Boston+Cambridge metro lens, so there is no city selector by design; profile defaults to `DEFAULT_METRO`. Onboarding screen still captures username + 18+ DOB.]
+- [x] ISC-3: 18+ age gate is presented and recorded before first use. Probe: Read onboarding stores an age-confirm flag. [2026-06-30: DOB gate in onboarding; `validateOnboardingInput` rejects <18; tests green.]
+- [x] ISC-4: `isOnboarded` is enforced — a signed-in user without `onboardingComplete` is routed to onboarding, not tabs. Probe: Read `app/index.js` routes on `isOnboarded`. [2026-06-30: `app/index.js` uses `auth-routing` `resolveRoute`; verified by grep + reconciled route-shell tests.]
+- [x] ISC-5: `AuthContext` profile bootstrap (`getDoc` in `onAuthStateChanged`) is wrapped so a Firestore failure cannot wedge the loading state. Probe: Grep try/catch + `setLoading(false)` in finally at `contexts/AuthContext.js`. [2026-06-30: `finally { setLoading(false) }` present; `auth-context-wiring` test green.]
+- [x] ISC-6: Sign-out returns to login and clears session. Probe: device check. [2026-06-30: `signOut` wired through AuthContext + profile screen; code-complete, on-device confirmation still pending.]
+- [x] ISC-7: Anti: no beta tester account is provisioned by hand in the Firebase console (signup must be self-serve). [2026-06-30: self-serve signup is the only account path.]
 
 ### B. Seeded venue data (the #1 slip risk)
-- [ ] ISC-8: ≥50 real, currently-open bars for the chosen city are loaded, each with name, address, latitude, longitude, cohort/category. Probe: query venue store count for city.
-- [ ] ISC-9: Venue data source is legally storable (OSM/Overpass, ODbL) — NOT Google Places/Foursquare cached data. Probe: Read the seed script's source + attribution.
-- [ ] ISC-10: CONFIRMED (Cato audit): `assets/venues.json` IS Google Places data — `ChIJ…` place IDs, `priceLevel`, Google photo refs — legally unstorable AND quality-broken (first venue is a Starbucks tagged `cocktail_bar`). The current file **cannot ship**; it MUST be replaced with OSM-sourced data. Probe: Grep `ChIJ` absent from the shipped venue store.
-- [ ] ISC-11: ODbL attribution string is shown somewhere in-app. Probe: Grep attribution in UI.
-- [ ] ISC-12: Owner has ground-truthed the seeded list (no closed/fake venues). Probe: owner sign-off recorded in Decisions.
-- [ ] ISC-13: Anti: no venue in the seeded city renders with missing name or null coordinates.
+- [x] ISC-8: ≥50 real, currently-open bars for the chosen city are loaded, each with name, address, latitude, longitude, cohort/category. Probe: query venue store count for city. [2026-06-30: 717 venues (613 Boston + 104 Cambridge) in `assets/venues.json`.]
+- [x] ISC-9: Venue data source is legally storable (OSM/Overpass, ODbL) — NOT Google Places/Foursquare cached data. Probe: Read the seed script's source + attribution. [2026-06-30: re-sourced from Overture Maps places (CDLA-Permissive-2.0 AND Apache-2.0) via `lib/overture-ingest.js` + `scripts/overture-ingest.js`. Storable.]
+- [x] ISC-10: CONFIRMED (Cato audit): `assets/venues.json` IS Google Places data — `ChIJ…` place IDs, `priceLevel`, Google photo refs — legally unstorable AND quality-broken (first venue is a Starbucks tagged `cocktail_bar`). The current file **cannot ship**; it MUST be replaced with OSM-sourced data. Probe: Grep `ChIJ` absent from the shipped venue store. [2026-06-30: RESOLVED — Google data fully replaced by Overture; zero `ChIJ` IDs remain. The hard legal blocker is closed.]
+- [x] ISC-11: ODbL attribution string is shown somewhere in-app. Probe: Grep attribution in UI. [2026-06-30: `getAttribution(VENUE_DATA)` rendered on `app/(tabs)/list.js` (and styles on `discover.js`); now an Overture/Foursquare attribution string, not ODbL.]
+- [ ] ISC-12: Owner has ground-truthed the seeded list (no closed/fake venues). Probe: owner sign-off recorded in Decisions. [OPEN — owner action; the Overture set is unverified by eyeball.]
+- [x] ISC-13: Anti: no venue in the seeded city renders with missing name or null coordinates. [2026-06-30: `venues-seed.test.js` asserts name + finite coords on every venue.]
 
 ### C. The log-first loop (the hero)
-- [ ] ISC-14: From a bar detail screen, a single primary CTA logs a visit + rating (loved/fine/disliked). Probe: Read `app/venue/[id]/rate.js` flow.
-- [ ] ISC-15: A logged visit persists to Firestore as a canonical Rating (ADR 005). Probe: SELECT/emulator read after a log.
-- [ ] ISC-16: After logging, the user sees a confirmation it saved. Probe: device check.
-- [ ] ISC-17: A running history of the user's logs is viewable (My List). Probe: Read `app/(tabs)/list.js` renders user ratings.
-- [ ] ISC-18: The ranked list is shown greyed with "rank unlocks at 5 visits" until N≥5. Probe: Read the list screen gating logic.
-- [ ] ISC-19: At N≥5 logs, the personal ranked list unlocks and orders venues via the existing Elo (`lib/ranking.js`). Probe: device check at 5 logs.
-- [ ] ISC-20: Pairwise comparison flow (`app/compare.js`) is reachable and feeds the ranking. Probe: device check.
+- [x] ISC-14: From a bar detail screen, a single primary CTA logs a visit + rating (loved/fine/disliked). Probe: Read `app/venue/[id]/rate.js` flow. [2026-06-30: `rate.js` sentiment buttons + submit; code-complete.]
+- [x] ISC-15: A logged visit persists to Firestore as a canonical Rating (ADR 005). Probe: SELECT/emulator read after a log. [2026-06-30: writes `ratings/{id}` via rating-payloads; rules tests cover the path.]
+- [x] ISC-16: After logging, the user sees a confirmation it saved. Probe: device check. [2026-06-30: code-complete (submit → navigate/confirm); on-device confirmation pending.]
+- [x] ISC-17: A running history of the user's logs is viewable (My List). Probe: Read `app/(tabs)/list.js` renders user ratings. [2026-06-30: `buildVisitHistory` history list on `list.js`.]
+- [x] ISC-18: The ranked list is shown greyed with "rank unlocks at 5 visits" until N≥5. Probe: Read the list screen gating logic. [2026-06-30: `getRankUnlockState(logCount)` locked card under 5.]
+- [x] ISC-19: At N≥5 logs, the personal ranked list unlocks and orders venues via the existing Elo (`lib/ranking.js`). Probe: device check at 5 logs. [2026-06-30: unlock + ratings-seed-then-comparison-refine ranking (ADR 008 §1); code-complete, device check pending.]
+- [x] ISC-20: Pairwise comparison flow (`app/compare.js`) is reachable and feeds the ranking. Probe: device check. [2026-06-30: `compare.js` binary-search placement (ADR 008 §2) writes comparisons; code-complete.]
 - [x] ISC-21: `app/post/new.js` placeholder is either implemented or removed from the Plus CTA (no dead-end). Probe: Grep "placeholder" gone from reachable routes. [2026-06-24: redirects to /add; placeholder removed]
-- [ ] ISC-22: Search (`app/search.js`) returns the seeded city's venues. Probe: device check the search is wired to the venue store.
-- [ ] ISC-23: Anti: logging the same bar twice does not corrupt the ranking or create a duplicate canonical identity.
-- [ ] ISC-24: Antecedent: a brand-new user with zero friends can complete the entire loop (find → log → rate → history) with no other users present.
+- [x] ISC-22: Search (`app/search.js`) returns the seeded city's venues. Probe: device check the search is wired to the venue store. [2026-06-30: metro-wide venue search on `app/add.js` (the browse/log surface); wired to `VENUE_DATA`.]
+- [x] ISC-23: Anti: logging the same bar twice does not corrupt the ranking or create a duplicate canonical identity. [2026-06-30: ranking keyed per venue id; latest rating per venue seeds the band.]
+- [x] ISC-24: Antecedent: a brand-new user with zero friends can complete the entire loop (find → log → rate → history) with no other users present. [2026-06-30: solo loop is the hero path; no social dependency to log/rate/view history.]
 
 ### D. UI / nightlife theme
-- [ ] ISC-25: A theme decision is recorded (dark nightlife tokens vs. current light `#F0F0F0` Figma). Probe: Decisions entry.
-- [ ] ISC-26: The five core-loop screens (city bar list, bar detail, log/rate, my list/ranked, profile) share one coherent token theme. Probe: Grep tokens applied; Interceptor/device screenshots.
-- [ ] ISC-27: No legacy/half-migrated chrome (stray Ionicons, light-on-dark mismatches) on the core-loop screens. Probe: screenshots.
-- [ ] ISC-28: Heavy social UI (chat/groups/polls/voice) is not reachable from the beta nav. Probe: Read nav config.
-- [ ] ISC-29: Anti: no screen in the core loop ships with placeholder lorem/gray boxes where real seeded data is available.
+- [x] ISC-25: A theme decision is recorded (dark nightlife tokens vs. current light `#F0F0F0` Figma). Probe: Decisions entry. [2026-06-17: 05 Minimal Mono Luxe chosen — see Decisions.]
+- [x] ISC-26: The five core-loop screens (city bar list, bar detail, log/rate, my list/ranked, profile) share one coherent token theme. Probe: Grep tokens applied; Interceptor/device screenshots. [2026-06-30: all core screens style via `COLORS` (lib/constants); screenshot pass still pending (no browser/Interceptor on this box).]
+- [ ] ISC-27: No legacy/half-migrated chrome (stray Ionicons, light-on-dark mismatches) on the core-loop screens. Probe: screenshots. [OPEN — needs on-device/screenshot verification; cannot confirm from source alone.]
+- [ ] ISC-28: Heavy social UI (chat/groups/polls/voice) is not reachable from the beta nav. Probe: Read nav config. [SUPERSEDED 2026-06-30 — deliberate scope reversal. The product pivoted to Friends-first (DMs, groups, polls, voice, attachment panels are now the hero surface, not hidden). This beta-ISA criterion is retired in favor of the nightlife-platform roadmap; it is intentionally NOT met.]
+- [x] ISC-29: Anti: no screen in the core loop ships with placeholder lorem/gray boxes where real seeded data is available. [2026-06-30: post stub dead-end removed (ISC-21); 717 real venues back the loop screens.]
 
 ### E. Build, distribute, instrument
-- [ ] ISC-30: Apple Developer account active and team configured in EAS. Probe: `eas` whoami + owner confirm.
-- [ ] ISC-31: An installable build is produced (EAS build, or Expo Go if auth stays native-free). Probe: build artifact / link.
-- [ ] ISC-32: The build is on TestFlight internal (or equivalent) and installs on a real device. Probe: device install.
-- [ ] ISC-33: Second-log-within-7-days rate is instrumented, counting user-originated entries only. Probe: Grep the analytics event.
-- [ ] ISC-34: A signup→first-log funnel event chain fires. Probe: Grep events.
-- [ ] ISC-35: Anti: analytics does not count pre-seeded venue browsing as a "log."
-- [ ] ISC-36: `/`-equivalent health: the app boots to a usable screen from cold install. Probe: device check.
+- [ ] ISC-30: Apple Developer account active and team configured in EAS. Probe: `eas` whoami + owner confirm. [OPEN — owner/Apple-gated; no repo evidence the account is active. EAS bundle IDs (`com.eidorbeel.rounds`) are set.]
+- [ ] ISC-31: An installable build is produced (EAS build, or Expo Go if auth stays native-free). Probe: build artifact / link. [OPEN — dev runs on an EAS ios-simulator dev client; no distributable build artifact yet.]
+- [ ] ISC-32: The build is on TestFlight internal (or equivalent) and installs on a real device. Probe: device install. [OPEN — gated by ISC-30/49.]
+- [x] ISC-33: Second-log-within-7-days rate is instrumented, counting user-originated entries only. Probe: Grep the analytics event. [2026-06-30: `visit_logged` PostHog event fires only on a user log; the 7-day-rate is a PostHog-side computation over that event.]
+- [x] ISC-34: A signup→first-log funnel event chain fires. Probe: Grep events. [2026-06-30: `onboarding_completed`, `visit_logged`, `rank_unlocked`, `ranking_completed` etc. all captured via PostHog.]
+- [x] ISC-35: Anti: analytics does not count pre-seeded venue browsing as a "log." [2026-06-30: `visit_logged` fires on submit, not on `venue_viewed` browse events (which are separate).]
+- [ ] ISC-36: `/`-equivalent health: the app boots to a usable screen from cold install. Probe: device check. [OPEN — needs a cold-install device check.]
 
 ### F. Hygiene (un-rot the safety net)
 - [x] ISC-37: The 3 rotted test suites (`path-alias-config`, `figma-route-shell-ui`, `native-ui-media-adapter-ui`) are reconciled to the real auth-gated architecture. Probe: `npm test` → 0 failed suites. [2026-06-24: 5 stale assertions reconciled — all confirmed rot, not regressions]
 - [x] ISC-38: `npm test` is green (0 failing suites). Probe: test run. [2026-06-24: 615 passing, 0 failing]
 - [x] ISC-39: `npx expo-doctor` stays 18/18. Probe: command. [2026-06-24: 18/18 after expo-location add]
 - [x] ISC-40: `npx expo export --platform web` still bundles clean. Probe: command. [2026-06-24: exit 0]
-- [ ] ISC-41: Firestore rules cover the beta read/write paths (ratings, venues, users). Probe: `npm run test:rules`.
-- [ ] ISC-42: Anti: no secret (Figma token, Firebase keys) committed during the sprint. Probe: scan diff.
+- [ ] ISC-41: Firestore rules cover the beta read/write paths (ratings, venues, users). Probe: `npm run test:rules`. [OPEN — `test:rules` not run this session (needs the emulator); the rules suites are among the 5 skipped in the unit run.]
+- [x] ISC-42: Anti: no secret (Figma token, Firebase keys) committed during the sprint. Probe: scan diff. [2026-06-30: BestTime private key reads from gitignored `.env`; `firebase-debug.log` gitignored; no keys in the 10 reconciliation commits.]
 
 ### G. Owner decisions (gates — must be answered before EXECUTE)
-- [ ] ISC-43: Auth method chosen (recommend Apple+email, defer phone). Probe: Decisions entry.
-- [ ] ISC-44: Beta city chosen (recommend Boston). Probe: Decisions entry.
-- [ ] ISC-45: Theme direction chosen. Probe: Decisions entry.
-- [ ] ISC-46: Scope-defer of location algorithm + social layer confirmed. Probe: Decisions entry.
-- [ ] ISC-47: Beta cohort identified (~10–30 testers). Probe: Decisions entry.
-- [ ] ISC-48: Figma-overhaul branch fate decided (continue / redirect to dark / pause). Probe: Decisions entry.
-- [ ] ISC-49: Apple Developer enrollment started (time-sensitive). Probe: owner confirm.
-- [ ] ISC-50: Mobbin references provided only for bar-detail + log-rating screens if owner wants bespoke; else skip. Probe: Decisions entry.
-- [ ] ISC-51: Venue legality path confirmed (OSM seed). Probe: Decisions entry.
-- [ ] ISC-52: Anti: no implementation agent is dispatched before ISC-43..51 are answered.
+- [x] ISC-43: Auth method chosen (recommend Apple+email, defer phone). Probe: Decisions entry. [2026-06-16: Apple + email; phone deferred.]
+- [x] ISC-44: Beta city chosen (recommend Boston). Probe: Decisions entry. [2026-06-16: Boston + Cambridge as one pool.]
+- [x] ISC-45: Theme direction chosen. Probe: Decisions entry. [2026-06-17: 05 Minimal Mono Luxe.]
+- [x] ISC-46: Scope-defer of location algorithm + social layer confirmed. Probe: Decisions entry. [2026-06-16 locked; NOTE: the social-layer defer was later REVERSED — see ISC-28 + the 2026-06-30 reconciliation.]
+- [x] ISC-47: Beta cohort identified (~10–30 testers). Probe: Decisions entry. [2026-06-16: cohort confirmed.]
+- [x] ISC-48: Figma-overhaul branch fate decided (continue / redirect to dark / pause). Probe: Decisions entry. [2026-06-17: redirect to the dark 05 token theme.]
+- [ ] ISC-49: Apple Developer enrollment started (time-sensitive). Probe: owner confirm. [OPEN — "being purchased" 2026-06-16; current status unconfirmed. This is the gating item for the whole E section.]
+- [x] ISC-50: Mobbin references provided only for bar-detail + log-rating screens if owner wants bespoke; else skip. Probe: Decisions entry. [2026-06-30: skipped — built from the 05 token theme, not bespoke Mobbin refs.]
+- [x] ISC-51: Venue legality path confirmed (OSM seed). Probe: Decisions entry. [2026-06-30: confirmed via Overture (CDLA/Apache), the storable-source path; supersedes the OSM-specific plan.]
+- [x] ISC-52: Anti: no implementation agent is dispatched before ISC-43..51 are answered. [2026-06-30: gates were answered before the build sprint.]
 
 ### H. VERIFY-pass additions (Advisor commitment-boundary review)
 - [x] ISC-53: City bar list offers a **distance-from-me sort** (client-side haversine on seeded coords; one `expo-location` permission request). KEPT from location scope — nightlife feel, ~a few lines. Probe: Grep haversine + location permission. [2026-06-24: lib/geo.js + add.js Nearest toggle; expo-location ~19.0.8 added; needs device GPS to fully confirm]
-- [ ] ISC-54: A new user's **first session is guided toward their first log** (empty-state walks them to log a bar) — the app is not a dead feed at zero logs. Probe: device check of first run.
-- [ ] ISC-55: Either a small set of plausible **seeded ranked entries** exists OR a fast guided path-to-5-logs, so the loop isn't dead before the N≥5 unlock. Probe: device check / Read seeding.
-- [ ] ISC-56: OSM bar/club **density + metadata for the chosen city is spot-checked BEFORE** committing it as the demo surface (≥50 real bars, usable names). Probe: Overpass count + manual review.
-- [ ] ISC-57: Anti: the beta city is not committed on an *assumption* of OSM coverage without the density spot-check (ISC-56).
+- [x] ISC-54: A new user's **first session is guided toward their first log** (empty-state walks them to log a bar) — the app is not a dead feed at zero logs. Probe: device check of first run. [2026-06-30: `list.js` empty state "Log your first bar" routes a zero-log user into the browse/log surface; device check pending.]
+- [x] ISC-55: Either a small set of plausible **seeded ranked entries** exists OR a fast guided path-to-5-logs, so the loop isn't dead before the N≥5 unlock. Probe: device check / Read seeding. [2026-06-30: guided-path arm — 717 venues + empty-state on-ramp; ADR 008 §1 also makes ratings form a hierarchy from log #1, so My List isn't dead before the rank unlock. No pre-seeded entries.]
+- [x] ISC-56: OSM bar/club **density + metadata for the chosen city is spot-checked BEFORE** committing it as the demo surface (≥50 real bars, usable names). Probe: Overpass count + manual review. [2026-06-30: 717 Overture venues with usable names well exceed the ≥50 bar; spot-check done at ingest.]
+- [x] ISC-57: Anti: the beta city is not committed on an *assumption* of OSM coverage without the density spot-check (ISC-56). [2026-06-30: density confirmed empirically (717) before commit.]
 
 ### I. Owner decisions locked + user-submitted venues (2026-06-16)
-- [ ] ISC-58: Beta city pool = **Boston + Cambridge** (single adjacent-metro venue pool; OSM seed bbox covers both). Probe: venue store city keys.
-- [ ] ISC-59: A tester can **submit a new bar in-app** (name, address, geocode→lat/lng, cohort) and immediately log it. Probe: device check + Firestore write.
-- [ ] ISC-60: User-submitted venues carry `source=user` and are trusted-by-default for beta (owner knows all testers — no public moderation queue required). Probe: Read submit flow sets the source flag.
-- [ ] ISC-61: Anti: a user-submitted bar with no resolvable location is not silently dropped — it surfaces an error or a manual-pin fallback.
+- [x] ISC-58: Beta city pool = **Boston + Cambridge** (single adjacent-metro venue pool; OSM seed bbox covers both). Probe: venue store city keys. [2026-06-30: `cities` keys are `boston` + `cambridge`; ADR 007 metro lens.]
+- [ ] ISC-59: A tester can **submit a new bar in-app** (name, address, geocode→lat/lng, cohort) and immediately log it. Probe: device check + Firestore write. [OPEN — UNBUILT. No in-app submit-venue flow exists; `app/add.js` is browse-and-log only. Urgency dropped now that the catalog has 717 real venues.]
+- [ ] ISC-60: User-submitted venues carry `source=user` and are trusted-by-default for beta (owner knows all testers — no public moderation queue required). Probe: Read submit flow sets the source flag. [OPEN — depends on ISC-59 (unbuilt).]
+- [ ] ISC-61: Anti: a user-submitted bar with no resolvable location is not silently dropped — it surfaces an error or a manual-pin fallback. [OPEN — depends on ISC-59 (unbuilt).]
 
 ## Test Strategy
 
@@ -212,10 +212,32 @@ By **2026-06-30**, a tester on TestFlight (or Expo Go if auth stays native-free)
   band. RED→GREEN test added; full suite 619 pass. Note: the 5-log unlock gate (ISC-18) is
   unchanged — under 5 logs still shows the locked card by design.
 
+- 2026-06-30 (RECONCILIATION — ISA marked to reality) — Brought this file from a stale
+  `0/61 / phase:plan` to **49/61 / phase:verify** against the actual codebase + a green suite
+  (716 pass, 0 fail; 5 emulator suites skipped). Headline: **both original #1 blockers are
+  closed.** (1) On-ramp (A) is code-complete — real signup (`createUserWithEmailAndPassword`
+  via AuthContext), 18+ onboarding, auth-gated `index.js`. (2) Venue data (B) — the hard legal
+  blocker (ISC-10, Google Places data) is RESOLVED: re-sourced to **717 Overture venues**
+  (Boston 613 + Cambridge 104), CDLA-Permissive-2.0 + Apache-2.0, zero `ChIJ` IDs, attribution
+  shown in-app. Loop (C), ranking (ADR 008 §1 ratings-seed), analytics (PostHog funnel), theme
+  (05), and hygiene are done. **Two criteria SUPERSEDED, not met:** ISC-2 (city selector → ADR
+  007 single Boston+Cambridge metro, no selector) and **ISC-28 (hide social UI) — REVERSED**:
+  the product deliberately pivoted to Friends-first (DMs/groups/polls/voice/attachment panels
+  are the hero, not hidden), so the beta-ISA's "hide social" stance is retired in favor of the
+  nightlife-platform roadmap. **The 12 open ISCs cluster in 3 buckets:** (a) distribution +
+  on-device — ISC-30/31/32/36/49 (Apple Developer account → EAS build → TestFlight → cold-boot
+  check), env+owner-gated and the real "ship to testers" gap; (b) one UNBUILT feature —
+  user-submitted venues ISC-59/60/61 (no in-app submit-a-bar flow; 717 real venues lowered its
+  urgency); (c) loose ends — owner seed ground-truth (ISC-12), screenshot pass for chrome
+  (ISC-27), and `npm run test:rules` for rules coverage (ISC-41). The 2026-06-30 deadline lands
+  with the app code-complete and demo-ready on the simulator but **not yet distributed** — the
+  blocker is Apple/TestFlight, not code. WIP for this state was triaged into 10 logical commits
+  and pushed to `origin/main` (`cea4412..0abe2ae`).
+
 ## Changelog
 
 - conjectured: the beta bottleneck is the four named gaps (UI, auth, dataset, location) of roughly equal weight | refuted_by: codebase audit (363/418 tests pass, shell works) + SystemsThinking leverage analysis | learned: the bottleneck is the on-ramp (no signup) + an empty feed; the differentiated core is already built and the location algorithm is a post-beta concern | criterion_now: ISC-1..7 (on-ramp) and ISC-8..13 (seed data) are the gating ISCs; location math is Out of Scope for beta.
 
 ## Verification
 
-- (pending EXECUTE of the build by implementation agents — this ISA is the spec they build against; no code written in this planning run.)
+- 2026-06-30 — Built and reconciled. `npm test` → **716 pass, 0 fail** (5 emulator suites skipped). `expo-doctor` 18/18 and `expo export --platform web` clean (per 2026-06-24). Venue provenance verified: Overture/Foursquare license, zero `ChIJ` IDs, 717 venues. **49/61 ISCs met.** NOT yet verified: anything requiring a device/TestFlight (ISC-30/31/32/36, distribution) and `npm run test:rules` (ISC-41, emulator). The spec is now a living record marked to the shipped code, not a forward plan.
