@@ -14,6 +14,15 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.eidorbeel.rounds',
+      infoPlist: {
+        // Answered "yes/exempt" interactively on the first build; persist it so
+        // submit/TestFlight never stalls on the encryption-compliance prompt.
+        ITSAppUsesNonExemptEncryption: false,
+        // Required: the nearest-bar sort (ISC-53) requests foreground location.
+        // Without this string iOS terminates the app on the permission request.
+        NSLocationWhenInUseUsageDescription:
+          'Allow Rounds to use your location to sort nearby bars by distance.',
+      },
     },
     android: {
       package: 'com.eidorbeel.rounds',

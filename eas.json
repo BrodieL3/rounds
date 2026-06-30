@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.0.0"
+    "version": ">= 5.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -25,6 +26,14 @@
     "production": {
       "ios": {
         "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "brodieslee@gmail.com",
+        "appleTeamId": "K52MAVGUYM"
       }
     }
   }
