@@ -8,15 +8,11 @@ import { db } from '../../lib/firebase';
 import ScreenContainer from '../../components/ui/ScreenContainer';
 import SwipeableRow from '../../components/ui/SwipeableRow';
 import { useAuth } from '../../contexts/AuthContext';
-import { usePostHog } from 'posthog-react-native';
 
 const {
-  FRIENDS_EMPTY_INBOX,
   buildFriendsInboxViewModel,
 } = require('../../lib/friends/inbox-display');
 const {
-  acceptFriendRequest,
-  declineFriendRequest,
   subscribeIncomingFriendRequests,
 } = require('../../lib/friends/friendship-service');
 const {
@@ -28,13 +24,10 @@ const {
 } = require('../../lib/friends/dm-service');
 
 export default function FriendsScreen() {
-  const { user, reloadProfile } = useAuth();
-  const posthog = usePostHog();
+  const { user } = useAuth();
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [conversations, setConversations] = useState([]);
-  const [requestsExpanded, setRequestsExpanded] = useState(false);
   const [hiddenExpanded, setHiddenExpanded] = useState(false);
-  const [mutatingRequestId, setMutatingRequestId] = useState(null);
   const viewModel = buildFriendsInboxViewModel(conversations, {}, user?.uid);
 
   // Keep only one row swiped open at a time: each opening row registers its close fn and we
@@ -69,28 +62,6 @@ export default function FriendsScreen() {
       onError: (err) => console.error('Conversation inbox snapshot error:', err),
     });
   }, [user]);
-
-  const requestSummary = incomingRequests.length === 0
-    ? FRIENDS_EMPTY_INBOX.friendRequestsEmpty
-    : `${incomingRequests.length} pending requests`;
-
-  const respondToRequest = async (request, action) => {
-    if (!user) return;
-    setMutatingRequestId(request.id);
-    try {
-      if (action === 'accept') {
-        await acceptFriendRequest({ db, fromUid: request.fromUid, toUid: user.uid });
-        posthog.capture('friend_request_accepted', { from_uid: request.fromUid });
-        await reloadProfile?.();
-      } else {
-        await declineFriendRequest({ db, fromUid: request.fromUid, toUid: user.uid });
-      }
-    } catch (err) {
-      Alert.alert('Friend request failed', err.message);
-    } finally {
-      setMutatingRequestId(null);
-    }
-  };
 
   // subscribeUserConversations listens to the `conversations` collection, not
   // `conversationStates`, so pin/hide writes don't re-fire the snapshot. Patch the affected
@@ -145,46 +116,19 @@ export default function FriendsScreen() {
     togglePin(conversation);
   };
 
+  // Guard against a double-tap opening the same chat twice (two pushes before the conversation
+  // screen covers the list). Short cooldown that self-clears, so the row is tappable again once
+  // you return to the inbox.
+  const openingRef = useRef(false);
+
   const openConversation = (conversation) => {
+    if (openingRef.current) return;
+    openingRef.current = true;
+    setTimeout(() => { openingRef.current = false; }, 600);
     router.push({
       pathname: '/conversation/[id]',
       params: { id: conversation.id, otherUid: conversation.otherUid },
     });
-  };
-
-  const renderIncomingRequest = (request) => {
-    const fromUser = request.fromUser || {};
-    const displayName = fromUser.displayName || fromUser.username || request.fromUid;
-    const username = fromUser.username ? `@${fromUser.username}` : 'Incoming request';
-    const disabled = mutatingRequestId === request.id;
-
-    return (
-      <View key={request.id} style={styles.requestRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{displayName.charAt(0).toUpperCase()}</Text>
-        </View>
-        <View style={styles.requestUserCopy}>
-          <Text style={styles.requestUserName}>{displayName}</Text>
-          <Text style={styles.requestUserHandle}>{username}</Text>
-        </View>
-        <View style={styles.requestActions}>
-          <Pressable
-            style={[styles.responseBtn, styles.declineBtn]}
-            disabled={disabled}
-            onPress={() => respondToRequest(request, 'decline')}
-          >
-            <Text style={styles.declineText}>Decline</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.responseBtn, styles.acceptBtn]}
-            disabled={disabled}
-            onPress={() => respondToRequest(request, 'accept')}
-          >
-            <Text style={styles.acceptText}>Accept</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
   };
 
   // iMessage pinned chats: a grid of large circular avatars floating above the row list.
@@ -301,40 +245,30 @@ export default function FriendsScreen() {
         <View style={styles.headerCopy}>
           <Text style={styles.title} testID="friends-screen-title">{viewModel.screenTitle}</Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={viewModel.actions.createChatLabel}
-          style={styles.createButton}
-          onPress={() => router.push('/conversation/new')}
-        >
-          <AppIcon name="add" size={26} color={COLORS.bg} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={viewModel.actions.friendRequestsLabel}
+            style={styles.iconButton}
+            onPress={() => router.push('/friend-requests')}
+          >
+            <AppIcon name="person-add-outline" focused size={28} color={COLORS.accent} />
+            {incomingRequests.length > 0 ? (
+              <View style={styles.requestBadge}>
+                <Text style={styles.requestBadgeText}>{incomingRequests.length}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={viewModel.actions.createChatLabel}
+            style={styles.iconButton}
+            onPress={() => router.push('/conversation/new')}
+          >
+            <AppIcon name="add" focused size={32} color={COLORS.accent} />
+          </Pressable>
+        </View>
       </View>
-
-      <Pressable
-        accessibilityRole="button"
-        style={styles.requestCard}
-        onPress={() => setRequestsExpanded((expanded) => !expanded)}
-      >
-        <View style={styles.requestIcon}>
-          <AppIcon name="person-add-outline" size={20} color={COLORS.accent} />
-        </View>
-        <View style={styles.requestCopy}>
-          <Text style={styles.requestTitle}>{viewModel.actions.friendRequestsLabel}</Text>
-          <Text style={styles.requestSub}>{requestSummary}</Text>
-        </View>
-        <AppIcon
-          name={requestsExpanded ? 'chevron-down' : 'chevron-forward'}
-          size={20}
-          color={COLORS.textMuted}
-        />
-      </Pressable>
-
-      {requestsExpanded && incomingRequests.length > 0 ? (
-        <View style={styles.requestsList}>
-          {incomingRequests.map(renderIncomingRequest)}
-        </View>
-      ) : null}
 
       {viewModel.isEmpty ? (
         <View style={styles.emptyCard}>
@@ -416,74 +350,23 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '800',
   },
-  createButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: COLORS.hero,
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  iconButton: { padding: 6 },
+  requestBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: COLORS.danger,
+    borderWidth: 2,
+    borderColor: COLORS.bg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  requestCard: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginHorizontal: SIDE,
-  },
-  requestIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(192, 255, 62, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  requestCopy: { flex: 1 },
-  requestTitle: {
-    color: COLORS.textPrimary,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  requestSub: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    marginTop: 3,
-  },
-  requestsList: {
-    gap: 10,
-    marginBottom: 16,
-    paddingHorizontal: SIDE,
-  },
-  requestRow: {
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: 16,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.bgCard,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { color: COLORS.accent, fontSize: 16, fontWeight: '800' },
-  requestUserCopy: { flex: 1 },
-  requestUserName: { color: COLORS.textPrimary, fontSize: 14, fontWeight: '800' },
-  requestUserHandle: { color: COLORS.textMuted, fontSize: 12, marginTop: 2 },
-  requestActions: { flexDirection: 'row', gap: 8 },
-  responseBtn: { borderRadius: 14, paddingHorizontal: 10, paddingVertical: 8 },
-  declineBtn: { backgroundColor: COLORS.bgCard },
-  acceptBtn: { backgroundColor: COLORS.accent },
-  declineText: { color: COLORS.textMuted, fontWeight: '800', fontSize: 12 },
-  acceptText: { color: '#ffffff', fontWeight: '800', fontSize: 12 },
+  requestBadgeText: { color: '#ffffff', fontSize: 10, fontWeight: '800' },
 
   inbox: { flex: 1 },
 
@@ -491,6 +374,7 @@ const styles = StyleSheet.create({
   pinnedGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
     marginBottom: 8,
     paddingHorizontal: SIDE - 4,
   },
