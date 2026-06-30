@@ -2,11 +2,12 @@ import { useState, useCallback, useMemo } from 'react';
 import { Alert, Share, StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import AppIcon from '../../components/ui/AppIcon';
-import { collection, query, where, getCountFromServer, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS, DEFAULT_METRO, getMetroCities } from '../../lib/constants';
 import { buildStackRankings } from '../../lib/personal-rankings';
+import { buildVisitHistory } from '../../lib/my-list';
 import VenueRow from '../../components/VenueRow';
 import CopyableText from '../../components/ui/CopyableText';
 import MediaImage from '../../components/ui/media-image';
@@ -93,6 +94,7 @@ export default function ProfileScreen() {
   const { user, profile, signOut, reloadProfile } = useAuth();
   const [stats, setStats] = useState({ been: 0 });
   const [comparisons, setComparisons] = useState([]);
+  const [ratings, setRatings] = useState([]);
   const [hiddenSuggestionIds, setHiddenSuggestionIds] = useState([]);
 
   // Personal ranked list spans the metro lens (Boston + Cambridge), not a
@@ -100,31 +102,42 @@ export default function ProfileScreen() {
   const metro = profile?.metro || DEFAULT_METRO;
   const cityVenues = getMetroCities(metro)
     .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
+  // Latest sentiment band per rated venue — the seed that makes ratings form a
+  // hierarchy even before any comparison (ADR 008 §1).
+  const sentimentByVenue = useMemo(() => {
+    const map = {};
+    for (const entry of buildVisitHistory(ratings)) map[entry.venueId] = entry.sentiment;
+    return map;
+  }, [ratings]);
+
   const personalList = useMemo(() => {
     const cohorts = [...new Set(cityVenues.map((v) => v.cohort))];
     return cohorts.flatMap((cohort) =>
       buildStackRankings(
         cityVenues.filter((v) => v.cohort === cohort),
         comparisons,
-        { cohort }
+        { cohort, sentimentByVenue }
       ).filter((venue) => venue.hasPersonalRank)
     );
-  }, [cityVenues, comparisons]);
+  }, [cityVenues, comparisons, sentimentByVenue]);
 
   const loadData = useCallback(async () => {
     if (!user) {
       setStats({ been: 0 });
       setComparisons([]);
+      setRatings([]);
       return;
     }
     try {
       const ratingsQ = query(collection(db, 'ratings'), where('userId', '==', user.uid));
       const comparisonsQ = query(collection(db, 'comparisons'), where('userId', '==', user.uid));
       const [ratingsSnap, comparisonsSnap] = await Promise.all([
-        getCountFromServer(ratingsQ),
+        getDocs(ratingsQ),
         getDocs(comparisonsQ),
       ]);
-      setStats({ been: ratingsSnap.data().count });
+      const ratingDocs = ratingsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setRatings(ratingDocs);
+      setStats({ been: ratingDocs.length });
       setComparisons(comparisonsSnap.docs.map((doc) => doc.data()));
     } catch (err) {
       console.error('Profile load error:', err);

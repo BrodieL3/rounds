@@ -101,6 +101,14 @@ export default function ListScreen() {
   // The user's logged-visit history (most-recent-first, one entry per venue).
   const history = useMemo(() => buildVisitHistory(ratings), [ratings]);
 
+  // Each rated venue's latest sentiment band — the seed the ranking orders by, so a
+  // user's ratings form a hierarchy even before they compare anything (ADR 008 §1).
+  const sentimentByVenue = useMemo(() => {
+    const map = {};
+    for (const entry of history) map[entry.venueId] = entry.sentiment;
+    return map;
+  }, [history]);
+
   // The rank-unlock-at-5 gate is keyed on logged visits (ISC-18/19).
   const logCount = getLogCount(ratings);
   const unlock = useMemo(() => getRankUnlockState(logCount), [logCount]);
@@ -122,10 +130,10 @@ export default function ListScreen() {
       buildStackRankings(
         cityVenues.filter((v) => v.cohort === cohort),
         comparisons,
-        { cohort }
+        { cohort, sentimentByVenue }
       ).filter((venue) => venue.hasPersonalRank)
     );
-  }, [unlocked, cityVenues, comparisons]);
+  }, [unlocked, cityVenues, comparisons, sentimentByVenue]);
 
   const isEmpty = history.length === 0;
 

@@ -8,9 +8,11 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { COLORS, COHORT_LABELS } from '../lib/constants';
+import { COLORS, COHORT_LABELS, DEFAULT_METRO, getMetroCities } from '../lib/constants';
 import { computeRankings } from '../lib/ranking';
 import { normalizeComparison } from '../lib/personal-rankings';
+import { assignDisplayScores } from '../lib/scoring';
+import { nextComparison } from '../lib/compare-select';
 import { buildComparisonPayload, newSessionId } from '../lib/comparisons/comparison-payload';
 import { usePostHog } from 'posthog-react-native';
 
@@ -24,24 +26,8 @@ function findVenue(id) {
   return null;
 }
 
-function pickRandomPair(venues, history) {
-  const ids = venues.map((v) => v.id);
-  const compared = new Set(
-    history
-      .map(normalizeComparison)
-      .filter(Boolean)
-      .map((h) => `${h.a}-${h.b}`)
-  );
-  const pairs = [];
-  for (let i = 0; i < ids.length; i++) {
-    for (let j = i + 1; j < ids.length; j++) {
-      const key = `${ids[i]}-${ids[j]}`;
-      if (!compared.has(key)) pairs.push([ids[i], ids[j]]);
-    }
-  }
-  if (pairs.length === 0) return null;
-  return pairs[Math.floor(Math.random() * pairs.length)];
-}
+// Pair selection now lives in lib/compare-select.js (binary-search insertion,
+// ADR 008 §2) — ~log2(n) taps instead of all-pairs O(n^2).
 
 export default function CompareScreen() {
   const { user, profile } = useAuth();
@@ -56,7 +42,7 @@ export default function CompareScreen() {
   const sequenceRef = useRef(0);
 
   useEffect(() => {
-    if (!user || !profile?.city) return;
+    if (!user) return;
     loadData();
   }, [user, profile]);
 
@@ -97,9 +83,12 @@ export default function CompareScreen() {
       }
       setCohort(targetCohort);
 
-      // Get venues in this cohort
-      const cityVenues = VENUE_DATA.cities[profile.city]?.venues || [];
-      const cohortVenues = cityVenues.filter((v) => v.cohort === targetCohort);
+      // Venues span the whole metro lens (Boston + Cambridge), matching My List —
+      // not a per-user city field, which is never written (ADR 007).
+      const metro = profile?.metro || DEFAULT_METRO;
+      const metroVenues = getMetroCities(metro)
+        .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
+      const cohortVenues = metroVenues.filter((v) => v.cohort === targetCohort);
       setVenues(cohortVenues);
 
       // Get existing comparisons
@@ -112,7 +101,11 @@ export default function CompareScreen() {
       const comps = compSnap.docs.map((d) => normalizeComparison(d.data())).filter(Boolean);
       setComparisons(comps);
 
-      const nextPair = pickRandomPair(cohortVenues, comps);
+      const nextPair = nextComparison({
+        venues: cohortVenues,
+        comparisons: comps,
+        sentimentByVenue: sentByVenue,
+      });
       setPair(nextPair);
     } catch (err) {
       console.error('Compare load error:', err);
@@ -133,10 +126,10 @@ export default function CompareScreen() {
         result,
         sentimentA: sentimentByVenue[a] || null,
         sentimentB: sentimentByVenue[b] || null,
-        city: profile?.city || null,
+        city: profile?.metro || DEFAULT_METRO,
         sessionId: sessionIdRef.current || newSessionId(),
         sequence: sequenceRef.current,
-        context: 'pairwise',
+        context: 'placement-search',
         createdAt: serverTimestamp(),
       });
       sequenceRef.current += 1;
@@ -152,7 +145,7 @@ export default function CompareScreen() {
 
       const next = [...comparisons, { a, b, result }];
       setComparisons(next);
-      const nextPair = pickRandomPair(venues, next);
+      const nextPair = nextComparison({ venues, comparisons: next, sentimentByVenue });
       if (!nextPair) {
         posthog.capture('ranking_completed', {
           cohort,
@@ -175,12 +168,14 @@ export default function CompareScreen() {
   }
 
   if (!pair) {
-    const ranking = computeRankings(venues, comparisons);
+    const ranked = computeRankings(venues, comparisons, { seedBySentiment: sentimentByVenue });
+    const ranking = assignDisplayScores(ranked, sentimentByVenue)
+      .sort((a, b) => b.displayScore - a.displayScore);
     return (
       <View style={styles.screen}>
         <Text style={styles.eyebrow}>{COHORT_LABELS[cohort] || cohort}</Text>
         <Text style={styles.title}>All caught up!</Text>
-        <Text style={styles.copy}>You've compared every pairing in this cohort.</Text>
+        <Text style={styles.copy}>Your {COHORT_LABELS[cohort] || cohort} ranking is set.</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your ranking</Text>
@@ -188,7 +183,7 @@ export default function CompareScreen() {
             <View key={v.id} style={styles.rankRow}>
               <Text style={styles.rankNum}>{i + 1}</Text>
               <Text style={styles.rankName}>{v.name}</Text>
-              <Text style={styles.rankScore}>{v.rating}</Text>
+              <Text style={styles.rankScore}>{v.displayScore?.toFixed(1)}</Text>
             </View>
           ))}
         </View>
