@@ -170,7 +170,7 @@ export default function RateScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [sentiment, notes, photos, user, profile, venue]);
+  }, [sentiment, notes, photos, companions, user, profile, venue]);
 
   const sentimentButton = (key, label) => {
     const active = sentiment === key;

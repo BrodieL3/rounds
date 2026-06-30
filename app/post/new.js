@@ -1,33 +1,13 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { COLORS } from '../../lib/constants';
+import { useEffect } from 'react';
+import { router } from 'expo-router';
 
+// Posting is deferred for the beta (the social layer is Out of Scope in ISA.md).
+// The Plus "Create a post" action must never dead-end (ISC-21), so route it to the
+// hero beta action — logging a visit — instead of a placeholder screen.
 export default function CreatePostScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Create a post</Text>
-      <Text style={styles.copy}>Post composer placeholder for Figma Plus Menu action.</Text>
-    </View>
-  );
-}
+  useEffect(() => {
+    router.replace('/add');
+  }, []);
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    color: COLORS.textPrimary,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  copy: {
-    color: COLORS.textSecondary,
-    fontSize: 16,
-    lineHeight: 22,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-});
+  return null;
+}
