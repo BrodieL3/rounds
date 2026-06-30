@@ -507,6 +507,7 @@ export default function useConversationSurface({ conversationId, recipientUid, u
 
   return {
     conversation,
+    otherUser,
     messages,
     conversationReady,
     notFound,

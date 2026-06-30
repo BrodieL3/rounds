@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import AppIcon from '../../../components/ui/AppIcon';
+import GlassBackButton from '../../../components/ui/GlassBackButton';
 import { COLORS } from '../../../lib/constants';
 import { db, functions } from '../../../lib/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -179,8 +180,14 @@ export default function GroupInfoScreen() {
     ]);
   };
 
+  const openMemberProfile = (member) => {
+    if (member.username) {
+      router.push({ pathname: '/user/[username]', params: { username: member.username } });
+    }
+  };
+
   const renderMember = ({ item }) => (
-    <View style={styles.memberRow}>
+    <Pressable style={styles.memberRow} onPress={() => openMemberProfile(item)} accessibilityRole="button">
       <View style={styles.avatar}><Text style={styles.avatarText}>{item.label.charAt(0).toUpperCase()}</Text></View>
       <View style={styles.memberCopy}>
         <Text style={styles.memberName}>{item.label}</Text>
@@ -190,8 +197,10 @@ export default function GroupInfoScreen() {
         <Pressable style={styles.removeButton} disabled={mutating} onPress={() => confirmRemove(item)}>
           <Text style={styles.removeText}>Remove</Text>
         </Pressable>
-      ) : null}
-    </View>
+      ) : (
+        <AppIcon name="chevron-forward" size={18} color={COLORS.textMuted} />
+      )}
+    </Pressable>
   );
 
   const renderFriend = ({ item }) => {
@@ -225,11 +234,9 @@ export default function GroupInfoScreen() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
+    <ScrollView style={styles.scrollFill} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
+        <GlassBackButton onPress={() => router.back()} />
         <Text style={styles.title}>{conversation?.name || 'Group info'}</Text>
       </View>
 
@@ -304,6 +311,7 @@ export default function GroupInfoScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollFill: { flex: 1, backgroundColor: COLORS.bg },
   screen: { flexGrow: 1, backgroundColor: COLORS.bg, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 24 },
   backButton: { padding: 4 },

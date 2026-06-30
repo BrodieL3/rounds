@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import AppIcon from '../../components/ui/AppIcon';
+import GlassBackButton from '../../components/ui/GlassBackButton';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -99,11 +100,9 @@ export default function ShareReviewScreen() {
   const sentimentColor = review.sentiment === 'loved' ? COLORS.success : review.sentiment === 'fine' ? COLORS.accent : COLORS.danger;
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
+    <ScrollView style={styles.scrollFill} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
-          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
+        <GlassBackButton onPress={() => router.back()} />
         <Text style={styles.headerTitle}>Send review</Text>
       </View>
 
@@ -164,6 +163,7 @@ export default function ShareReviewScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollFill: { flex: 1, backgroundColor: COLORS.bg },
   screen: {
     flexGrow: 1,
     backgroundColor: COLORS.bg,

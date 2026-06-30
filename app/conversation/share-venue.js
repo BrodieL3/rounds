@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import AppIcon from '../../components/ui/AppIcon';
+import GlassBackButton from '../../components/ui/GlassBackButton';
 import { COLORS, COHORT_LABELS } from '../../lib/constants';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -92,11 +93,9 @@ export default function ShareVenueScreen() {
   }
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
+    <ScrollView style={styles.scrollFill} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" style={styles.backButton} onPress={() => router.back()}>
-          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
+        <GlassBackButton onPress={() => router.back()} />
         <Text style={styles.headerTitle}>Send venue</Text>
       </View>
 
@@ -150,6 +149,7 @@ export default function ShareVenueScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollFill: { flex: 1, backgroundColor: COLORS.bg },
   screen: {
     flexGrow: 1,
     backgroundColor: COLORS.bg,

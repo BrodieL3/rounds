@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import AppIcon from '../../components/ui/AppIcon';
+import GlassBackButton from '../../components/ui/GlassBackButton';
 import ScreenContainer from '../../components/ui/ScreenContainer';
 import { COLORS } from '../../lib/constants';
 import { db, functions } from '../../lib/firebase';
@@ -99,9 +100,7 @@ export default function NewConversationScreen() {
   return (
     <ScreenContainer style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.backButton}>
-          <AppIcon name="chevron-back" size={24} color={COLORS.textPrimary} />
-        </Pressable>
+        <GlassBackButton onPress={() => router.back()} />
         <Text style={styles.title}>Create group</Text>
       </View>
 

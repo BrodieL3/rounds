@@ -11,6 +11,8 @@ import { db, functions as cloudFunctions } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { COLORS } from '../../lib/constants';
 import MediaImage from '../../components/ui/media-image';
+import GlassBackButton from '../../components/ui/GlassBackButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const {
   acceptFriendRequest,
@@ -29,6 +31,7 @@ const {
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const { user: currentUser, reloadProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -64,7 +67,10 @@ export default function UserProfileScreen() {
         return;
       }
 
-      const data = snap.docs[0].data();
+      // The doc id IS the uid; carry it so `data.uid` (follow, friend request,
+      // DM route params, the ratings query below) is never undefined for a
+      // profile doc written without an explicit uid field.
+      const data = { ...snap.docs[0].data(), uid: snap.docs[0].id };
       setProfile(data);
 
       const currentSnap = currentUser ? await getDoc(doc(db, 'users', currentUser.uid)) : null;
@@ -293,7 +299,8 @@ export default function UserProfileScreen() {
   );
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
+    <View style={styles.root}>
+      <ScrollView style={styles.scrollFill} contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.screen}>
       <View style={styles.header}>
         {profile?.photoURL ? (
           <MediaImage source={{ uri: profile.photoURL }} style={styles.avatarImage} />
@@ -372,12 +379,17 @@ export default function UserProfileScreen() {
           contentContainerStyle={{ paddingBottom: 12 }}
         />
       )}
-    </ScrollView>
+      </ScrollView>
+      <GlassBackButton onPress={() => router.back()} style={[styles.floatingBack, { top: insets.top + 6 }]} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flexGrow: 1, backgroundColor: COLORS.bg, padding: 24 },
+  root: { flex: 1, backgroundColor: COLORS.bg },
+  scrollFill: { flex: 1, backgroundColor: COLORS.bg },
+  floatingBack: { position: 'absolute', left: 12 },
+  screen: { flexGrow: 1, backgroundColor: COLORS.bg, paddingTop: 56, paddingHorizontal: 24, paddingBottom: 24 },
   title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 16 },
   header: { alignItems: 'center', marginTop: 24, marginBottom: 24 },
   avatar: {
