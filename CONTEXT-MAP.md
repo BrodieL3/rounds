@@ -30,6 +30,10 @@ Minimal bootstrap pointer for agent context loading. `AGENTS.md` is the dispatch
 - `docs/adr/004-trusted-group-creation-boundary.md` — trusted Cloud Function boundary for group membership grants.
 - `docs/adr/005-rating-canonical-opinion-and-public-projection.md` — Rating identity, Post projection, and media-path rules.
 - `docs/adr/006-figma-discover-ui-overhaul.md` — Figma UI overhaul, Discover replacing Feed product language, Plus menu actions, SDK 54/Expo Go target.
+- `docs/adr/007-location-is-a-venue-property.md` — location is a venue property; metro is the lens; beta = Boston+Cambridge catalog.
+- `docs/adr/008-personal-ranking-elo-banded-with-binary-search-selection.md` — Tier A personal ranking: sentiment-banded Elo + binary-search selection + 0–10 banded display. **§1 superseded by ADR 010; §2/§3 still current.**
+- `docs/adr/009-global-per-cohort-ranking-bradley-terry-conservative-bound.md` — Tier B global ranking: per-cohort Bradley-Terry posterior, conservative lower bound, one-directional firewall (Tier B never writes Tier A); designed-not-built.
+- `docs/adr/010-personal-ranking-per-user-bradley-terry.md` — Tier A moves to per-user Bayesian Bradley-Terry ranked by lower bound; one-tap Stop decoupled from Rating; supersedes ADR 008 §1, preserves §2/§3, reaffirms ADR 009 firewall.
 
 ## Trust rules
 
