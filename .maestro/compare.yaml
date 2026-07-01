@@ -82,6 +82,13 @@ env:
     notVisible:
       id: "login-submit"
     timeout: 30000
+# iOS keychain "Save Password?" system dialog can appear over Friends after a
+# form login — dismiss it so it doesn't hide the surface underneath.
+- runFlow:
+    when:
+      visible: "Save Password?"
+    commands:
+      - tapOn: "Not Now"
 - extendedWaitUntil:
     visible:
       id: "friends-screen-title"
@@ -108,42 +115,31 @@ env:
       text: "My List"
     timeout: 20000
 
-# NEEDS-MORE-DATA assertion (the brief's fallback): alice has 0 logged ratings, so
-# the ranked area renders its locked gate. This proves Compare is correctly gated
-# behind the rank-unlock threshold and that the seed cannot produce a pair.
+# ADR 010 (e2e-ratings-seed.js): alice has 5 ratings (3 cocktail_bar), so My List is
+# UNLOCKED and the ranked area — the BT lower-bound ranking from personal-rankings.js
+# → ranking-bt.js — renders with a "Rank more" / "Compare bars" entry into compare.js.
 - extendedWaitUntil:
     visible:
-      text: ".*rank unlocks at 5 visits.*"
+      text: ".*(Rank more|Compare bars).*"
     timeout: 20000
+# BT PERSONAL RANKING screenshot (the unlocked My List ranked area).
+- takeScreenshot: /private/tmp/claude-501/-Users-brodielee-rounds/38717554-ac9c-4c0f-b90b-a0fff79bb007/scratchpad/e2e-bt-ranking
+- tapOn:
+    text: ".*(Rank more|Compare bars).*"
 
-# ─────────────── DATA-GATED COMPARISON (no-op with current seed) ───────────────
-# Once enough ratings exist AND the profile carries a `city` (see Bug #1), My List
-# unlocks and shows a "Rank more" / "Compare bars" button into app/compare.js.
-# This block auto-activates then; it is skipped today because that button is absent.
-# NOTE: the compare buttons ("Too tough" + two venue-name buttons) have NO testID,
-# so the only stable selector on the Compare screen is the literal "Too tough" text
-# and the per-pair venue names. GAP: add testIDs (e.g. compare-pick-a / compare-pick-b
-# / compare-too-tough / compare-title) so this can be driven deterministically.
-- runFlow:
-    when:
-      visible:
-        text: ".*(Rank more|Compare bars).*"
-    commands:
-      - tapOn:
-          text: ".*(Rank more|Compare bars).*"
-      # Compare screen header (app/compare.js: <Text>Which was better?</Text>).
-      - extendedWaitUntil:
-          visible:
-            text: "Which was better?"
-          timeout: 20000
-      # Make a comparison via the canonical too-tough escape hatch (stable text;
-      # venue-name buttons are dynamic per pair).
-      - tapOn:
-          text: "Too tough"
-      # Expected next state: either a fresh pair ("Which was better?" persists) or
-      # the cohort is fully placed ("All caught up!"). Assert the surface advanced
-      # without crashing — the cohort eyebrow + one of the two headers remains.
-      - extendedWaitUntil:
-          visible:
-            text: ".*(Which was better\\?|All caught up!).*"
-          timeout: 20000
+# THE DUEL LOOP (app/compare.js — BT + info-gain duel-select). Header renders
+# "Which was better?" with two venue buttons + "Too tough".
+- extendedWaitUntil:
+    visible:
+      text: "Which was better?"
+    timeout: 30000
+- takeScreenshot: /private/tmp/claude-501/-Users-brodielee-rounds/38717554-ac9c-4c0f-b90b-a0fff79bb007/scratchpad/e2e-duel-loop
+# Advance via the stable "Too tough" escape hatch — ADR 010 cools THIS pair but the
+# venue stays matchable, so the loop presents a fresh pair (or the cohort is placed).
+- tapOn:
+    text: "Too tough"
+- extendedWaitUntil:
+    visible:
+      text: ".*(Which was better\\?|All caught up!).*"
+    timeout: 30000
+- takeScreenshot: /private/tmp/claude-501/-Users-brodielee-rounds/38717554-ac9c-4c0f-b90b-a0fff79bb007/scratchpad/e2e-duel-advanced
