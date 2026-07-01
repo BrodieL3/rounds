@@ -1,5 +1,7 @@
 STATUS: ACTIVE — agents must read before touching tab navigation, Discover/Feed, Plus menu, auth/onboarding frontend, or Figma UI overhaul work.
 
+> **Amendment (2026-06-30):** the "Expo Go remains the first sanity-check path" assumption below did not hold — native modules (maps, camera) forced a move to the EAS `ios-simulator` dev client (`eas.json`). Nothing else in this ADR's Discover/Friends/Plus decision changed. Current runtime guidance lives in `CLAUDE.md`.
+
 # ADR 006: Figma Discover UI Overhaul
 
 ## Status

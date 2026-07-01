@@ -15,7 +15,7 @@ npx expo start --android            # Android only
 npx expo start --ios                # iOS only
 ```
 
-**Dev server:** The Expo dev server may already be running on `localhost:8081`. Do not run `npx expo start` again if it is already active. Read Metro console output from the existing server or use `curl` against it. `expo export` and `expo-doctor` are safe to run alongside it.
+**Dev server:** The Expo dev server may already be running on `localhost:8081`. Do not run `npx expo start` again if it is already active. Read Metro console output from the existing server or use `curl` against it. `expo export` and `expo-doctor` are safe to run alongside it. The client connecting to Metro is the EAS `ios-simulator` dev-client build (`eas.json`), **not Expo Go** — native modules (maps, camera) require it.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ Current legacy tab route order (defined in `lib/tab-config.js`): **Friends → D
 
 ### Figma UI overhaul note
 
-Active target: rebuild frontend from Figma file `8CcbpAdt4AMYS9hulRy15n` using SDK 54/Expo Go-first. Discover replaces Feed in user-facing UI. Old auth/onboarding frontend can be removed for this UI pass; future auth plans are separate. Preserve Firebase/domain seams in `lib/**`, `functions/**`, and rules.
+Active target: rebuild frontend from Figma file `8CcbpAdt4AMYS9hulRy15n` on SDK 54, verified on the EAS `ios-simulator` dev client (not Expo Go — see Dev server note above). Discover replaces Feed in user-facing UI. Old auth/onboarding frontend can be removed for this UI pass; future auth plans are separate. Preserve Firebase/domain seams in `lib/**`, `functions/**`, and rules.
 
 ### Data model
 
@@ -64,7 +64,7 @@ Core collections and direction:
 - `friendRequests`, `friendships`, `conversations`, `users/{uid}/conversationStates`, `users/{uid}/notifications` — Friends/social planning state
 - `feedItems`, `leaderboardEntries` — backend-reserved; do not write from client
 
-Venue data is static JSON from `assets/venues.json`, not a Firestore collection. City keys: `nyc`, `boston`, `chicago`, `sf`.
+Venue data is static JSON from `assets/venues.json`, not a Firestore collection. Current city keys under `cities`: `boston`, `cambridge` (beta catalog per ADR 007 — `nyc`/`chicago`/`sf` are not yet seeded).
 
 ### Key domain terms
 
@@ -73,7 +73,7 @@ Venue data is static JSON from `assets/venues.json`, not a Firestore collection.
 - **Review** — user-facing word for a Rating; not a separate canonical object.
 - **Post** — derived public projection of a public Rating; owns public engagement (`likes`, comments, bookmarks), not opinion identity.
 - **Comparison** — pairwise decision between two venues in the same Cohort; result is a winning venue id or `too-tough`.
-- **Personal Ranking** — Elo-like local computation over Comparisons in `lib/ranking.js`.
+- **Personal Ranking** — per-user Bayesian Bradley-Terry posterior over Comparisons (`lib/ranking-bt.js` + `lib/personal-rankings.js`, ADR 010); supersedes the earlier Elo model (`lib/ranking.js` + `lib/compare-select.js`), which was deleted 2026-06-30 after confirming zero live consumers.
 - **Friends** — hero planning surface for DMs, groups, links, polls, and companion context.
 - **Friendship** — private accepted relationship, stronger than Follow, created only on Friend Request acceptance.
 
@@ -88,8 +88,9 @@ Pure/domain logic should live in `/lib` and be tested before screen wiring.
 | `auth-routing.js` | `resolveRoute` state machine |
 | `auth-cache.js` | AsyncStorage wrapper for profile cache |
 | `tab-config.js` | Tab order, icon helpers, hidden routes |
-| `ranking.js` | Elo-like ranking over comparisons |
-| `personal-rankings.js` | Cohort-scoped ranking with `getMyTopSpots` |
+| `ranking-bt.js` | Per-user Bradley-Terry posterior fit + lower-bound scoring (ADR 010) — live ranking engine |
+| `personal-rankings.js` | Cohort-scoped ranking with `getMyTopSpots`, built on `ranking-bt.js` |
+| `duel-select.js` | Info-gain comparison selection over the BT posterior (ADR 010 §3); wired into `app/compare.js` |
 | `feed-display.js` | Legacy Feed / new Discover query/sort/display helpers |
 | `venue-display.js` | Venue metadata display helpers |
 | `media-upload.js` | Firebase Storage upload helpers |
@@ -107,8 +108,10 @@ Pure helpers should avoid Firebase imports. Adapter/rules behavior belongs in em
 
 ## Current priorities
 
+This list drifts; `ISA.md` (root, `phase`/`progress` frontmatter) and `AGENTS.md`'s active-slice table are the live source of truth — check those before trusting this section.
+
 1. Make **Friends** the hero product surface: DMs, group chats, polls, review links, review companions
-2. Complete Rating canonicalization before building review links/unlisted shares
+2. Continue Rating canonicalization; unlisted shares (`functions/unlisted-share.js`, `lib/unlisted-share-service.js`) already ship — remaining work is deeper canonicalization, not building shares from scratch
 3. Stabilize MVP flows: onboarding, auth routing, venue list/detail, rating/posting, feed, profile, comparison
 4. Enforce Cohort isolation everywhere Ratings and Comparisons interact
 5. Move chat/feed/ranking/rating logic into deeper `lib/` modules before adding new surface area

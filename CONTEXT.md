@@ -8,7 +8,7 @@ A nightlife place users discover, rate, post about, and compare. Current venue m
 
 ### City
 
-A market-scoped venue pool. Current city keys: `nyc`, `boston`, `chicago`, `sf`.
+A market-scoped venue pool. Current city keys (beta catalog, ADR 007): `boston`, `cambridge`. `nyc`/`chicago`/`sf` are not yet seeded.
 
 ### Cohort
 
@@ -36,7 +36,7 @@ Escape hatch for a Comparison when the user cannot choose. Current ranking compu
 
 ### Personal Ranking
 
-User-specific ordered list produced from Comparisons within a Cohort. Current implementation is local Elo-like calculation in `lib/ranking.js`; no canonical server-side ranking exists yet.
+User-specific ordered list produced from Comparisons within a Cohort. Current implementation is a per-user Bayesian Bradley-Terry posterior (`lib/ranking-bt.js` + `lib/personal-rankings.js`, ADR 010), ranked by posterior lower bound; the earlier Elo calculation (`lib/ranking.js` + `lib/compare-select.js`) was deleted after confirming zero live consumers. No canonical server-side ranking exists yet (see ADR 009, designed-not-built).
 
 ### Friends
 

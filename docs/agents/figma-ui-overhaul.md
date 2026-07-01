@@ -18,13 +18,13 @@ Status: IN PROGRESS — owner decisions captured in ADR 006; Figma extraction, r
 
 - Figma file: `Rounds`, file key `8CcbpAdt4AMYS9hulRy15n`, page node `0:1`.
 - Durable domain docs: `CONTEXT.md`; ADRs `003`, `004`, `005`, `006`.
-- Expo target: SDK 54 (`expo ~54.0.0`). Use SDK 54 docs and Expo Go as first sanity check.
+- Expo target: SDK 54 (`expo ~54.0.0`). Use SDK 54 docs; sanity-check on the EAS `ios-simulator` dev client (`eas.json`), **not Expo Go** — native modules (maps, camera) require a custom dev client.
 - Product language: use `Discover`, not `Feed`, in new user-facing UI. Legacy feed modules may remain as implementation seams during migration.
 
 ## Accepted owner decisions
 
 1. Figma `Discover` replaces current user-facing `Feed` surface.
-2. Bottom nav choice is implementation-owned: choose the simplest route that matches Figma icon-only feel and works in Expo Go/SDK 54. If using JS tabs/custom nav, document why. Do not force NativeTabs if it blocks the plus drawer behavior.
+2. Bottom nav choice is implementation-owned: choose the simplest route that matches Figma icon-only feel and works on SDK 54 in the EAS dev client. If using JS tabs/custom nav, document why. Do not force NativeTabs if it blocks the plus drawer behavior.
 3. Keep SDK 54. Do not upgrade Expo SDK for this overhaul.
 4. Delete/rebuild frontend auth/onboarding for simplicity. Future auth plans are separate.
 5. Do not block on LINE Seed JP. Use a modern system sans-serif that fits Heroicons/Figma feel.
@@ -119,7 +119,7 @@ Add/adjust tests for:
 - Delete old route screens/components once contract tests exist.
 - Recreate minimal Expo Router shell with root layout and Figma app shell.
 - Keep route files thin: compose view-models + presentational components only.
-- Implement plus drawer as route-backed sheet/modal or custom drawer, whichever best preserves Figma and Expo Go.
+- Implement plus drawer as route-backed sheet/modal or custom drawer, whichever best preserves the Figma feel and works on the EAS dev client.
 
 ### 4. Build Figma UI primitives
 
@@ -166,7 +166,7 @@ Required before implementation handoff/merge:
 - `npm run test:rules` if Firebase paths touched.
 - `npx expo-doctor`.
 - `npx expo export --platform web`.
-- Manual Expo Go pass on SDK 54: Friends, Plus drawer, Discover/List/Profile, Chat composer/keyboard/extension tray, Firebase emulator or approved real env.
+- Manual pass on the EAS `ios-simulator` dev client (SDK 54, not Expo Go): Friends, Plus drawer, Discover/List/Profile, Chat composer/keyboard/extension tray, Firebase emulator or approved real env.
 
 ## Fresh-agent start checklist
 
