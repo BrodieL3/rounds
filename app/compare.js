@@ -9,25 +9,19 @@ import {
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { COLORS, COHORT_LABELS, DEFAULT_METRO, getMetroCities } from '../lib/constants';
-import { computeRankings } from '../lib/ranking';
-import { normalizeComparison } from '../lib/personal-rankings';
-import { assignDisplayScores } from '../lib/scoring';
-import { nextComparison } from '../lib/compare-select';
+import { normalizeComparison, buildStackRankings } from '../lib/personal-rankings';
+import { nextComparison } from '../lib/duel-select';
 import { buildComparisonPayload, newSessionId } from '../lib/comparisons/comparison-payload';
 import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../assets/venues.json');
 
-function findVenue(id) {
-  for (const cityKey of Object.keys(VENUE_DATA.cities)) {
-    const v = VENUE_DATA.cities[cityKey].venues.find((x) => x.id === id);
-    if (v) return v;
-  }
-  return null;
-}
-
-// Pair selection now lives in lib/compare-select.js (binary-search insertion,
-// ADR 008 §2) — ~log2(n) taps instead of all-pairs O(n^2).
+const RATED_SENTIMENTS = new Set(['loved', 'fine', 'disliked']);
+// Stopping rule (ADR 010 section 3): a venue is confidently placed once its
+// posterior variance drops to/under this; the session also ends at a soft cap.
+// Tunable per ADR 010 sections 2/3.
+const PLACEMENT_VARIANCE_TARGET = 0.5;
+const SESSION_COMPARISON_CAP = 10;
 
 export default function CompareScreen() {
   const { user, profile } = useAuth();
@@ -38,8 +32,10 @@ export default function CompareScreen() {
   const [cohort, setCohort] = useState('');
   const [loading, setLoading] = useState(true);
   const [sentimentByVenue, setSentimentByVenue] = useState({});
+  const [cooldownPairs, setCooldownPairs] = useState([]);
   const sessionIdRef = useRef(null);
   const sequenceRef = useRef(0);
+  const sessionCountRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -49,7 +45,6 @@ export default function CompareScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Get user's ratings to find cohorts with 2+ ratings
       const ratingsQ = query(
         collection(db, 'ratings'),
         where('userId', '==', user.uid)
@@ -57,41 +52,44 @@ export default function CompareScreen() {
       const ratingsSnap = await getDocs(ratingsQ);
       const ratings = ratingsSnap.docs.map((d) => d.data());
 
-      // Map each rated venue → the user's sentiment so each comparison can carry
-      // both venues' sentiment band (ADR 009 §5 — the connectivity prior Tier B uses).
       const sentByVenue = {};
       for (const r of ratings) {
         if (r.venueId) sentByVenue[r.venueId] = r.sentiment || null;
       }
       setSentimentByVenue(sentByVenue);
 
-      // One session id per compare session; sequence increments per decision so
-      // Tier B can reconstruct "one user, N comparisons" (anti-gaming, ADR 009 §6).
       sessionIdRef.current = newSessionId();
       sequenceRef.current = 0;
+      sessionCountRef.current = 0;
+      setCooldownPairs([]);
 
-      // Find first cohort with 2+ ratings
-      const cohortCounts = {};
-      for (const r of ratings) {
-        cohortCounts[r.cohort] = (cohortCounts[r.cohort] || 0) + 1;
+      const metro = profile?.metro || DEFAULT_METRO;
+      const metroVenues = getMetroCities(metro)
+        .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
+
+      const ratedVenueIdsByCohort = {};
+      for (const venue of metroVenues) {
+        if (!RATED_SENTIMENTS.has(sentByVenue[venue.id])) continue;
+        if (!ratedVenueIdsByCohort[venue.cohort]) ratedVenueIdsByCohort[venue.cohort] = new Set();
+        ratedVenueIdsByCohort[venue.cohort].add(venue.id);
       }
-      const targetCohort = Object.keys(cohortCounts).find((c) => cohortCounts[c] >= 2);
+      const targetCohort = Object.keys(ratedVenueIdsByCohort)
+        .find((c) => ratedVenueIdsByCohort[c].size >= 2);
+
       if (!targetCohort) {
-        Alert.alert('Not enough ratings', 'Rate at least 2 venues of the same type first.');
-        router.back();
+        setCohort('');
+        setVenues([]);
+        setPair(null);
+        setLoading(false);
         return;
       }
       setCohort(targetCohort);
 
-      // Venues span the whole metro lens (Boston + Cambridge), matching My List —
-      // not a per-user city field, which is never written (ADR 007).
-      const metro = profile?.metro || DEFAULT_METRO;
-      const metroVenues = getMetroCities(metro)
-        .flatMap((c) => VENUE_DATA.cities[c]?.venues || []);
-      const cohortVenues = metroVenues.filter((v) => v.cohort === targetCohort);
+      const cohortVenues = metroVenues.filter((v) =>
+        v.cohort === targetCohort && RATED_SENTIMENTS.has(sentByVenue[v.id])
+      );
       setVenues(cohortVenues);
 
-      // Get existing comparisons
       const compQ = query(
         collection(db, 'comparisons'),
         where('userId', '==', user.uid),
@@ -105,6 +103,8 @@ export default function CompareScreen() {
         venues: cohortVenues,
         comparisons: comps,
         sentimentByVenue: sentByVenue,
+        cooldownPairs: [],
+        varianceTarget: PLACEMENT_VARIANCE_TARGET,
       });
       setPair(nextPair);
     } catch (err) {
@@ -116,6 +116,10 @@ export default function CompareScreen() {
 
   const submit = useCallback(async (result) => {
     if (!pair) return;
+    if (!user) {
+      Alert.alert('Sign in required', 'Sign in before comparing spots.');
+      return;
+    }
     const [a, b] = pair;
     try {
       const payload = buildComparisonPayload({
@@ -143,9 +147,19 @@ export default function CompareScreen() {
         is_too_tough: result === 'too-tough',
       });
 
-      const next = [...comparisons, { a, b, result }];
+      const next = [...comparisons, { a, b, result, cohort }];
       setComparisons(next);
-      const nextPair = nextComparison({ venues, comparisons: next, sentimentByVenue });
+      const nextCooldown = result === 'too-tough' ? [...cooldownPairs, [a, b]] : cooldownPairs;
+      setCooldownPairs(nextCooldown);
+      sessionCountRef.current += 1;
+      const reachedCap = sessionCountRef.current >= SESSION_COMPARISON_CAP;
+      const nextPair = reachedCap ? null : nextComparison({
+        venues,
+        comparisons: next,
+        sentimentByVenue,
+        cooldownPairs: nextCooldown,
+        varianceTarget: PLACEMENT_VARIANCE_TARGET,
+      });
       if (!nextPair) {
         posthog.capture('ranking_completed', {
           cohort,
@@ -157,7 +171,7 @@ export default function CompareScreen() {
     } catch (err) {
       Alert.alert('Error', err.message);
     }
-  }, [pair, comparisons, venues, cohort, user, profile, sentimentByVenue]);
+  }, [pair, comparisons, venues, cohort, user, profile, sentimentByVenue, cooldownPairs]);
 
   if (loading) {
     return (
@@ -167,10 +181,20 @@ export default function CompareScreen() {
     );
   }
 
+  if (!cohort) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.title}>Nothing to rank yet</Text>
+        <Text style={styles.copy}>Rate a couple of spots to start ranking.</Text>
+        <Pressable style={styles.ctaButton} onPress={() => router.push('/add')}>
+          <Text style={styles.buttonText}>Find spots to rate</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   if (!pair) {
-    const ranked = computeRankings(venues, comparisons, { seedBySentiment: sentimentByVenue });
-    const ranking = assignDisplayScores(ranked, sentimentByVenue)
-      .sort((a, b) => b.displayScore - a.displayScore);
+    const ranking = buildStackRankings(venues, comparisons, { cohort, sentimentByVenue }).filter((v) => v.hasPersonalRank);
     return (
       <View style={styles.screen}>
         <Text style={styles.eyebrow}>{COHORT_LABELS[cohort] || cohort}</Text>
@@ -179,11 +203,11 @@ export default function CompareScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your ranking</Text>
-          {ranking.map((v, i) => (
+          {ranking.map((v) => (
             <View key={v.id} style={styles.rankRow}>
-              <Text style={styles.rankNum}>{i + 1}</Text>
+              <Text style={styles.rankNum}>{v.personalRank}</Text>
               <Text style={styles.rankName}>{v.name}</Text>
-              <Text style={styles.rankScore}>{v.displayScore?.toFixed(1)}</Text>
+              <Text style={styles.rankScore}>{v.personalScore?.toFixed(1)}</Text>
             </View>
           ))}
         </View>
@@ -238,6 +262,11 @@ const styles = StyleSheet.create({
   },
   title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800', marginTop: 8 },
   copy: { color: COLORS.textSecondary, fontSize: 16, marginTop: 8, lineHeight: 22 },
+  ctaButton: {
+    backgroundColor: COLORS.accent, borderRadius: 12,
+    paddingVertical: 12, paddingHorizontal: 16,
+    alignItems: 'center', alignSelf: 'flex-start', marginTop: 20,
+  },
   card: {
     backgroundColor: COLORS.bgElevated, borderRadius: 20,
     padding: 24, marginVertical: 20, gap: 16,
