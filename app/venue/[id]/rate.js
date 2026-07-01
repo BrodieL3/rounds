@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Alert,
   FlatList,
@@ -15,12 +15,13 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import AppIcon from '../../../components/ui/AppIcon';
 import {
-  collection, query, where, getDocs, onSnapshot, doc, getDoc,
+  collection, query, where, getDocs, onSnapshot, doc, getDoc, addDoc, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import { pickReviewImagesAsync } from '../../../lib/media-upload';
 import { createRatingWithProjectionAsync } from '../../../lib/ratings/rating-service';
 import { buildLogConfirmation } from '../../../lib/log-visit';
+import { buildStopPayload } from '../../../lib/stops';
 import { useAuth } from '../../../contexts/AuthContext';
 import { COLORS, COHORT_LABELS } from '../../../lib/constants';
 import { getVenueVisualFallback } from '../../../lib/venue-visuals';
@@ -49,37 +50,60 @@ export default function RateScreen() {
   const [photos, setPhotos] = useState([]);
   const [companions, setCompanions] = useState([]);
   const [friends, setFriends] = useState([]);
-  const [friendsLoading, setFriendsLoading] = useState(true);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [friendsLoaded, setFriendsLoaded] = useState(false);
+  const [showCompanions, setShowCompanions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const friendsUnsubRef = useRef(null);
+  const friendsMountedRef = useRef(true);
 
-  useEffect(() => {
-    if (!user) return;
+  const loadFriends = useCallback(() => {
+    if (!user || friendsLoaded || friendsUnsubRef.current) return;
+    setFriendsLoading(true);
     const q = query(collection(db, 'friendships'), where('memberUids', 'array-contains', user.uid));
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const friendUids = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return data.memberUids.find((uid) => uid !== user.uid);
-      }).filter(Boolean);
+      try {
+        const friendUids = snapshot.docs.map((friendshipDoc) => {
+          const data = friendshipDoc.data();
+          return data.memberUids.find((uid) => uid !== user.uid);
+        }).filter(Boolean);
 
-      const friendProfiles = await Promise.all(
-        friendUids.map(async (uid) => {
-          const userSnap = await getDoc(doc(db, 'users', uid));
-          const userData = userSnap.exists() ? userSnap.data() : {};
-          return { uid, ...userData };
-        })
-      );
+        const friendProfiles = await Promise.all(
+          friendUids.map(async (uid) => {
+            const userSnap = await getDoc(doc(db, 'users', uid));
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            return { uid, ...userData };
+          })
+        );
 
-      setFriends(friendProfiles.sort((a, b) =>
-        (a.displayName || a.username || a.uid).localeCompare(b.displayName || b.username || b.uid)
-      ));
-      setFriendsLoading(false);
+        if (!friendsMountedRef.current) return;
+        setFriends(friendProfiles.sort((a, b) =>
+          (a.displayName || a.username || a.uid).localeCompare(b.displayName || b.username || b.uid)
+        ));
+        setFriendsLoading(false);
+        setFriendsLoaded(true);
+      } catch (err) {
+        console.error('Friends load error:', err);
+        if (!friendsMountedRef.current) return;
+        setFriendsLoading(false);
+      }
     }, (err) => {
       console.error('Friends load error:', err);
+      if (!friendsMountedRef.current) return;
       setFriendsLoading(false);
     });
+    friendsUnsubRef.current = unsubscribe;
+  }, [user, friendsLoaded]);
 
-    return unsubscribe;
-  }, [user]);
+  const openCompanions = useCallback(() => {
+    setShowCompanions(true);
+    loadFriends();
+  }, [loadFriends]);
+
+  useEffect(() => () => {
+    friendsMountedRef.current = false;
+    if (friendsUnsubRef.current) friendsUnsubRef.current();
+  }, []);
 
   if (!venue) {
     return (
@@ -111,6 +135,27 @@ export default function RateScreen() {
       prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
     );
   };
+
+  const logStop = useCallback(async () => {
+    if (!user) {
+      Alert.alert('Sign in required', 'Sign in before logging a stop.');
+      return;
+    }
+    try {
+      const payload = buildStopPayload({ userId: user.uid, venue, createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'stops'), payload);
+      posthog.capture('stop_logged', {
+        venue_id: venue.id,
+        venue_name: venue.name,
+        cohort: venue.cohort,
+      });
+      Alert.alert('Logged', 'Saved this stop to your visit history.', [
+        { text: 'Done', onPress: () => router.back() },
+      ]);
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    }
+  }, [user, venue, posthog]);
 
   const submit = useCallback(async () => {
     if (!sentiment) {
@@ -209,6 +254,10 @@ export default function RateScreen() {
       <Text style={styles.title}>{venue.name}</Text>
       <Text style={styles.meta}>{COHORT_LABELS[venue.cohort] || venue.cohort}</Text>
 
+      <Pressable style={styles.stopButton} onPress={logStop}>
+        <Text style={styles.stopButtonText}>I was here</Text>
+      </Pressable>
+
       <Text style={styles.sectionTitle}>How was it?</Text>
       <View style={styles.sentimentRow}>
         {sentimentButton('loved', 'Loved it')}
@@ -240,7 +289,11 @@ export default function RateScreen() {
       </Pressable>
 
       <Text style={styles.sectionTitle}>Who went with you?</Text>
-      {friendsLoading ? (
+      {!showCompanions ? (
+        <Pressable style={styles.photoBtn} onPress={openCompanions}>
+          <Text style={styles.photoBtnText}>+ Tag companions</Text>
+        </Pressable>
+      ) : friendsLoading ? (
         <Text style={styles.emptyText}>Loading friends...</Text>
       ) : friends.length === 0 ? (
         <Text style={styles.emptyText}>Add friends to tag companions</Text>
@@ -324,6 +377,18 @@ const styles = StyleSheet.create({
   screen: { flexGrow: 1, backgroundColor: COLORS.bg, padding: 24, paddingBottom: 48 },
   title: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '800' },
   meta: { color: COLORS.textMuted, fontSize: 14, marginTop: 4 },
+  stopButton: {
+    backgroundColor: COLORS.bgCard,
+    borderColor: COLORS.accent,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: 16,
+  },
+  stopButtonText: { color: COLORS.accent, fontWeight: '800', fontSize: 14 },
   sectionTitle: {
     color: COLORS.textSecondary, fontSize: 16, fontWeight: '700',
     marginTop: 24, marginBottom: 12,

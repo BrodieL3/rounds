@@ -672,6 +672,19 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // Stops: a user's own one-tap "I was here" check-ins (ADR 010 section 4). A
+    // Stop is distinct from a Rating (no sentiment) and never moves ranking.
+    // Owner-only: self create + read, no update, self delete (mirrors comparisons).
+    match /stops/{stopId} {
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
     // Posts: interim public projection for public Ratings.
     match /posts/{postId} {
       allow read: if true;

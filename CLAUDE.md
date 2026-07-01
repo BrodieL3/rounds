@@ -60,6 +60,7 @@ Core collections and direction:
 - `posts/{ratingId}` — interim public projection for public Ratings only; engagement lives here
 - `reviews` — legacy read/migration data only; do not add new canonical behavior
 - `comparisons` — user-owned pairwise decisions for Personal Ranking
+- `stops` — user-owned one-tap "I was here" check-ins (ADR 010 section 4); client-writable (create/read/delete your own), distinct from a Rating (no sentiment, never moves ranking)
 - `friendRequests`, `friendships`, `conversations`, `users/{uid}/conversationStates`, `users/{uid}/notifications` — Friends/social planning state
 - `feedItems`, `leaderboardEntries` — backend-reserved; do not write from client
 
