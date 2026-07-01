@@ -20,6 +20,8 @@ import CopyableText from '../../../components/ui/CopyableText';
 import { usePostHog } from 'posthog-react-native';
 
 const VENUE_DATA = require('../../../assets/venues.json');
+const { buildEventItemDisplay } = require('../../../lib/events/event-display');
+const { getVenueCoordinates } = require('../../../lib/venue-coordinates');
 
 function findVenue(id) {
   for (const cityKey of Object.keys(VENUE_DATA.cities)) {
@@ -85,6 +87,8 @@ export default function VenueDetailScreen() {
   const [recentRatings, setRecentRatings] = useState([]);
   const [averageScore, setAverageScore] = useState(null);
   const [ratingsLoading, setRatingsLoading] = useState(true);
+  const [venueEvents, setVenueEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
 
   useEffect(() => {
     if (!venue) return;
@@ -133,6 +137,43 @@ export default function VenueDetailScreen() {
 
     return () => { canceled = true; };
   }, [user, venue]);
+
+  useEffect(() => {
+    if (!venue) return;
+    let canceled = false;
+
+    async function loadEvents() {
+      setEventsLoading(true);
+      try {
+        // Equality-only query avoids a new composite index; a single venue's event
+        // list is small, so recency filtering and ordering stay client-side.
+        const q = query(
+          collection(db, 'events'),
+          where('venueId', '==', venue.id)
+        );
+        const snap = await getDocs(q);
+        const now = Date.now();
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((event) => {
+            const start = new Date(event.startTime).getTime();
+            return Number.isFinite(start) && start >= now;
+          })
+          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+          .slice(0, 5);
+        if (!canceled) setVenueEvents(docs);
+      } catch (err) {
+        console.error('Venue events load error:', err);
+        if (!canceled) setVenueEvents([]);
+      } finally {
+        if (!canceled) setEventsLoading(false);
+      }
+    }
+
+    loadEvents();
+
+    return () => { canceled = true; };
+  }, [venue?.id]);
 
   const toggleBookmark = async () => {
     if (!user || bookmarkLoading) return;
@@ -196,7 +237,9 @@ export default function VenueDetailScreen() {
 
   const tags = formatTypes(venue.types);
   const price = PRICE_LABELS[venue.priceLevel] || null;
-  const { latitude, longitude } = venue.location || {};
+  const coordinates = getVenueCoordinates(venue);
+  const latitude = coordinates?.latitude;
+  const longitude = coordinates?.longitude;
   const visual = getVenueVisualFallback(venue);
   const openStatus = formatOpenClosedStatus(venue.hours);
 
@@ -266,8 +309,43 @@ export default function VenueDetailScreen() {
         </Pressable>
       </View>
 
-      {/* Location map — single pin (native: Apple Maps; web: placeholder). */}
+      {/* Location map — single pin (native: Apple Maps; web: OSM tile preview). */}
       <VenueMap latitude={latitude} longitude={longitude} name={venue.name} />
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Upcoming events</Text>
+        {eventsLoading ? (
+          <Text style={styles.cardRow}>Loading events...</Text>
+        ) : venueEvents.length > 0 ? (
+          venueEvents.map((event) => {
+            const eventDisplay = buildEventItemDisplay(event);
+            return (
+              <View key={event.id} style={styles.eventRow}>
+                <View style={styles.eventTimeBlock}>
+                  <Text style={styles.eventTime}>{eventDisplay.time || 'Soon'}</Text>
+                </View>
+                <View style={styles.eventCopy}>
+                  <Text style={styles.eventTitle}>{eventDisplay.title}</Text>
+                  <Text style={styles.eventMeta}>
+                    {[eventDisplay.metadata, eventDisplay.sourceLabel].filter(Boolean).join(' · ')}
+                  </Text>
+                  {eventDisplay.lineupLabel ? (
+                    <Text style={styles.eventDetail}>Lineup: {eventDisplay.lineupLabel}</Text>
+                  ) : null}
+                  {eventDisplay.genreLabel ? (
+                    <Text style={styles.eventDetail}>Genres: {eventDisplay.genreLabel}</Text>
+                  ) : null}
+                  {eventDisplay.priceLabel ? (
+                    <Text style={styles.eventDetail}>Tickets: {eventDisplay.priceLabel}</Text>
+                  ) : null}
+                </View>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={styles.cardRow}>No upcoming events found.</Text>
+        )}
+      </View>
 
       {/* Community signal — only what we actually have (OSM venues carry no Google data) */}
       {recentRatings.length > 0 && (
@@ -475,6 +553,22 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: COLORS.textPrimary, fontSize: 16, fontWeight: '700', marginBottom: 8 },
   cardRow: { color: COLORS.textSecondary, fontSize: 14, marginBottom: 4 },
+  eventRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.bgCard,
+  },
+  eventTimeBlock: {
+    width: 64,
+    alignItems: 'flex-start',
+  },
+  eventTime: { color: COLORS.accent, fontSize: 13, fontWeight: '800' },
+  eventCopy: { flex: 1 },
+  eventTitle: { color: COLORS.textPrimary, fontSize: 14, fontWeight: '800' },
+  eventMeta: { color: COLORS.textMuted, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  eventDetail: { color: COLORS.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
   tagsCard: {
     backgroundColor: COLORS.bgElevated, padding: 16,
     borderRadius: 16, marginBottom: 12,
