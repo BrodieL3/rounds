@@ -1,6 +1,6 @@
 # Rounds
 
-**Live web preview:** [rounds-web-bice.vercel.app](https://rounds-web-bice.vercel.app) *(mobile-first app — best viewed in a narrow window or on a phone)*
+**Site:** [rounds-web-bice.vercel.app](https://rounds-web-bice.vercel.app) — coming soon to iPhone (lander source in `lander/`)
 
 Rounds is a social nightlife discovery app: rate the bars and clubs you visit, compare them head-to-head, and build a personal ranking you can share with friends. Think "Beli for nightlife."
 
