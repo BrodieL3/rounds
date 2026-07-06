@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rounds — your bars, ranked</title>
+<meta name="description" content="Rate the bars you visit, compare them head-to-head, and build a personal ranking your friends can actually use. Boston · Cambridge beta. Coming soon to iPhone.">
+<link rel="canonical" href="https://rounds-web-bice.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rounds-web-bice.vercel.app/">
+<meta property="og:title" content="Rounds — your bars, ranked">
+<meta property="og:description" content="Rate the bars you visit, compare them head-to-head, and build a personal ranking your friends can actually use. Coming soon to iPhone.">
+<meta property="og:image" content="https://rounds-web-bice.vercel.app/phone.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#101010">
+<style>
+  :root {
+    --ink: #101010;
+    --panel: #161616;
+    --line: #262626;
+    --text: #ececec;
+    --dim: #9a9a94;
+    --lime: #c8ff4d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+  a { color: inherit; }
+  a:focus-visible, .chip:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; border-radius: 4px; }
+
+  .stage {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 30rem) minmax(0, 24rem);
+    justify-content: center;
+    align-items: center;
+    gap: clamp(2rem, 6vw, 6rem);
+    width: 100%;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 3rem 1.75rem 0;
+  }
+
+  .eyebrow {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .eyebrow b { color: var(--lime); font-weight: 500; }
+
+  h1 {
+    margin-top: 1.1rem;
+    font-size: clamp(2.6rem, 7vw, 4.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 800;
+    text-wrap: balance;
+  }
+  .sub {
+    margin-top: 1.15rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--dim);
+    max-width: 26rem;
+  }
+  .sub strong { color: var(--text); font-weight: 600; }
+
+  .chip {
+    margin-top: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .chip .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--lime);
+  }
+  .notify {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--dim);
+    text-decoration: none;
+  }
+  .notify u { text-decoration: underline; text-underline-offset: 3px; color: var(--text); }
+  .notify:hover u { color: var(--lime); }
+
+  .phone-col { display: flex; justify-content: center; align-items: center; }
+  .phone {
+    width: min(20.5rem, 78vw);
+    max-height: min(42rem, 82vh);
+    object-fit: cover;
+    object-position: top;
+    border-radius: 2.4rem;
+    display: block;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+    border: 1px solid var(--line);
+  }
+
+  footer {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.6rem 1.75rem 1.8rem;
+    font-size: 0.8rem;
+    color: var(--dim);
+  }
+  footer a { color: var(--dim); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 760px) {
+    body { display: block; }
+    .stage {
+      grid-template-columns: 1fr;
+      padding-top: 4.5rem;
+      gap: 3rem;
+      text-align: left;
+    }
+    .phone-col { margin-bottom: -4rem; overflow: hidden; }
+    .phone { margin-bottom: -5.5rem; }
+    footer { position: relative; background: var(--ink); border-top: 1px solid var(--line); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rise { opacity: 0; transform: translateY(14px); animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+    .rise.d1 { animation-delay: 0.05s; }
+    .rise.d2 { animation-delay: 0.14s; }
+    .rise.d3 { animation-delay: 0.23s; }
+    .rise.d4 { animation-delay: 0.32s; }
+    .phone-col.rise { animation-delay: 0.2s; animation-duration: 0.9s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+  <main class="stage">
+    <section>
+      <p class="eyebrow rise d1">Boston · Cambridge — <b>beta</b></p>
+      <h1 class="rise d2">Your bars,<br>ranked.</h1>
+      <p class="sub rise d3">Rate the bars you visit, compare them head-to-head, and build a personal ranking your friends can actually use. <strong>Rounds</strong> remembers every round.</p>
+      <div class="chip rise d4" aria-label="Coming soon to iPhone"><span class="dot" aria-hidden="true"></span>Coming soon to iPhone</div>
+      <a class="notify rise d4" href="mailto:bsl54@georgetown.edu?subject=Rounds%20beta">Want in early? <u>Get notified</u></a>
+    </section>
+    <div class="phone-col rise">
+      <img class="phone" src="phone.jpg" width="690" height="1425" alt="Rounds app: a ranked list of Boston cocktail bars — The Hawthorne, Backbar, Yvonne's — with loved and fine ratings">
+    </div>
+  </main>
+  <footer>
+    <span>Rounds · built in Boston</span>
+    <span aria-hidden="true">·</span>
+    <a href="https://github.com/BrodieL3/rounds">GitHub</a>
+  </footer>
+</body>
+</html>
